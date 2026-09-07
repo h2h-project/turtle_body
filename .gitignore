@@ -216,3 +216,27 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ---------------------------------------------------------------------------
+# Turtle Body source tree. The generic Python template above ignores build/
+# and lib/; those are first-class source directories in this hardware repo.
+# ---------------------------------------------------------------------------
+!/build/
+!/build/**
+!/lib/
+!/lib/**
+!/src/
+!/src/**
+!/tests/
+!/tests/**
+
+# OpenSCAD / render scratch
+*.stl
+!/v1.0 STLs/**
+/tests/_scratch/
+*.deps
+
+# ...but never Python bytecode, even under the re-included source dirs
+build/__pycache__/
+**/__pycache__/
+*.pyc

@@ -1,0 +1,37 @@
+{
+  "target": "ballast_fin",
+  "render": "fin",
+  "source": "v1.0 SCADs/Turtle_Bottom_Ballast_Fin_v1.scad",
+  "defines": {
+    "part": "fin"
+  },
+  "returncode": 0,
+  "timed_out": false,
+  "seconds": 0.0,
+  "bounds": {
+    "min": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "max": [
+      246.0,
+      93.0,
+      12.0
+    ],
+    "size": [
+      246.0,
+      93.0,
+      12.0
+    ],
+    "tris": 40
+  },
+  "warnings": [],
+  "errors": [],
+  "echoes": [
+    "ECHO: \"Green slats: width / length / thickness = \", 58, 360, 12",
+    "ECHO: \"Green slat inner-face gap = \", 82",
+    "ECHO: \"M6 hole diameter / distance from slat top = \", 6.4, 69",
+    "ECHO: \"Bottom board length / width = \", 287, 93"
+  ]
+}

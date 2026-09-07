@@ -1,0 +1,107 @@
+{
+  "version": "1.6.0",
+  "updated": "2026-09-07",
+  "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
+  "bump_rules": {
+    "patch": "+0.0.1  component-scoped change (one lib/<subsystem>.scad or one src/components/*.scad)",
+    "minor": "+0.1.0  full-turtle-scoped change: src/Full_Turtle.scad, a world transform, the assembly_view dispatch, or a lib/params.scad value that moves a mating interface",
+    "major": "+1.0.0  bottle / board / hardware interface break (existing builds no longer fit)"
+  },
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-09-06",
+      "files": [
+        "build/",
+        "tests/",
+        "VERSION.json",
+        ".gitignore"
+      ],
+      "note": "Baseline. Build/lint/test tooling added; regression baseline captured for all 27 renders (OpenSCAD 2021.01). No geometry change."
+    },
+    {
+      "version": "1.1.0",
+      "date": "2026-09-06",
+      "files": [
+        "lib/*.scad",
+        "src/components/*.scad",
+        "src/Full_Turtle.scad (renamed)",
+        "Full_Turtle_v1.scad (now generated)",
+        "v1.0 SCADs/*.scad (now generated)"
+      ],
+      "note": "Shared-library refactor M1-M6. All 8 standalone components now generated from lib/ parametric modules + lib/params.scad (the shared dimension contract). Full_Turtle_v1.scad relocated to src/Full_Turtle.scad and is now a generated bundle (M1.5). Geometry changes to the standalones: TB-03 kept (cap 5 mm roof / 2 mm boss - was already in the committed cap); TB-04 applied (axle round section re-derived to the 5 mm roof -> overall length 58->59 mm, magnet recess retained); TB-07 applied (rear-fin green-slat mounting hole 50->103 mm, derived from the mating Ecojoiner John). Every standalone render matches its pre-refactor bounding box except the two documented above (see tests/expected_bounds.json notes). Full assembly (src/Full_Turtle.scad) NOT yet rewired to lib - M7 pending - so TB-01/02/03/04 are not yet applied there."
+    },
+    {
+      "version": "1.2.0",
+      "date": "2026-09-06",
+      "files": [
+        "src/Full_Turtle.scad",
+        "Full_Turtle_v1.scad"
+      ],
+      "note": "M7 partial. src/Full_Turtle.scad now uses lib/bottle_mockup.scad, lib/ecojoiner.scad, lib/ballast_fin.scad and lib/util.scad (wood_color + m6_bolt_placeholder); ~750 lines of embedded geometry removed and the ecojoiner_and_bottles / installed_ballast entry points rewired to the eco_* / bl_* lib API. All three assembly_view renders (full_turtle, top_sail, core) still match tests/expected_bounds.json exactly - NO geometry change, so no baseline update. Still embedded: the rear-fin part modules (deferred - visible solar panel + fasteners not in lib/rear_fin.scad) and the whole hope_turtle_sail_apparatus control head (cap + axle + cage + frame). TB-01/02/03/04 still not applied to the full assembly - see CLAUDE.md section 15 step B."
+    },
+    {
+      "version": "1.3.0",
+      "date": "2026-09-06",
+      "files": [
+        "src/Full_Turtle.scad",
+        "lib/sail_frame.scad",
+        "lib/bottle_mockup.scad",
+        "lib/params.scad",
+        "Full_Turtle_v1.scad"
+      ],
+      "note": "M7 sail frame + cut bottle. The full turtle's sail wooden frame now comes from lib/sail_frame.scad (new part='native_assembly' -> sail_frame_native_group(), placed by a single positioned_sail_frame() with the same install transform the deleted positioned_* modules used), and its cut control bottle from a new lib/bottle_mockup.scad cut_bottle() (+ p_bottle_cut_height/p_bottle_cut_extra). ~810 more embedded lines removed (24 frame modules + the buzdagi bottle + its dome fns). This lands TB-01 (no non-sail-batten bottom bores, no C-piece M6 bores) and TB-02 (brown bottom rails) in the full assembly - bounds unchanged (internal bores + colour), so all three full_turtle views and all 8 sail_apparatus renders still match the baseline; no baseline update. STILL EMBEDDED: the control head cap + axle + cage (control_cap, turtle_control_axle, positioned_cage_assembly and the cage_* modules) - TB-03/TB-04 land when those move to lib/control_cap + lib/hex_shaft + lib/control_cage (CLAUDE.md 15.B). Rear fin still deferred (15.A)."
+    },
+    {
+      "version": "1.4.0",
+      "date": "2026-09-07",
+      "files": [
+        "src/Full_Turtle.scad",
+        "Full_Turtle_v1.scad"
+      ],
+      "note": "M7 rear fin. The full turtle's rear-fin WOODEN parts (yellow fin, two green shafts, red holder) now come from lib/rear_fin.scad via a renamed full_rear_fin_assembly(); the visible solid solar panel + M3 screws stay embedded (lib/rear_fin.scad only carries a %-reference panel). The solar_panel_width/height/thickness globals now reference p_solar_panel_w/h/t() (still 148/223/2.5). Every derived rear-fin value (fin polygon, both joint slots, solar notch, shaft, holder) was checked equal to lib/rear_fin.scad beforehand; all three full_turtle views still match the baseline exactly - no baseline update. Only the control head (cap + axle + cage) remains embedded - see CLAUDE.md 15.B."
+    },
+    {
+      "version": "1.5.0",
+      "date": "2026-09-07",
+      "files": [
+        "src/Full_Turtle.scad",
+        "Full_Turtle_v1.scad",
+        "tests/expected_bounds.json"
+      ],
+      "note": "M7 COMPLETE - control head cap + axle + cage now from lib/. (a) control_cap -> lib/control_cap.scad: TB-03 applied to the full assembly (roof 8->5 mm, + 2 mm boss, twin 2x2 mm grooves replace the single 13x1.1). top_disk_thickness = p_cap_roof_t(); control_assembly_z = bottle_cut_height - top_disk_thickness unchanged, so the whole control head + sail frame drop 3 mm -> full_turtle & top_sail Z-max 309.5 -> 306.5 (only axis that moved; core unchanged). Baseline updated with a note. (b) turtle_control_axle -> lib/hex_shaft.scad control_axle(): TB-04 (59 mm + \u00d83x1 magnet recess). Placed at control_assembly_z - (p_axle_hex_len()+p_axle_round_ext()) to align lib's hex-bottom origin with the cap face; geometry proven identical to the embedded axle after that shift, magnet recess is internal -> bounds unchanged. (c) cage_* build + positioned_cage_assembly -> lib/control_cage.scad: the embedded cage-native frame put bearing tips at Z=cage_bearing_tip_native_z (39.5); lib puts them at Z=0, so positioned_cage_assembly drops the '+ cage_bearing_tip_native_z' term. button_angle=cage_button_angle(0) + the 90-deg install rotate nets to 90 as before. Bounds unchanged. src/Full_Turtle.scad 4656 -> 2749 lines. Every subsystem in the full turtle now flows from lib/. TB-01/02/03/04/07 all applied to the full assembly. Remaining: physical/interface checks only (CH-2, TB-08) + external generators (TB-06) + an STL release (TB-05 residual)."
+    },
+    {
+      "version": "1.5.1",
+      "date": "2026-09-07",
+      "files": [
+        "lib/control_cage.scad",
+        "lib/params.scad",
+        "src/components/Bottle_Control_Cage_v1.scad",
+        "v1.0 SCADs/*.scad",
+        "Full_Turtle_v1.scad",
+        "CLAUDE.md",
+        "tests/expected_bounds.json"
+      ],
+      "note": "Cage roof-top bevel (workflow test). New p_cage_roof_bevel() = 4 mm: a 45-deg OUTWARD chamfer on the roof-top outer edge, masked away within (notch_w/2 + bevel) of each batten groove so the groove walls stay square. Printable roof-face-down (radius only grows from the bed up). Bounding box unchanged on every render (control_cage__print/upright and all 3 full_turtle views) - the wedge is internal to the Oe115 x 70 envelope; only tris change. control_cage + full_turtle re-baselined to refresh tris; no dimensional change. All 9 bundles regenerated (p_cage_roof_bevel added to params.scad cascades to every inline). Added a FABRICATION note to lib/control_cage.scad, the cage wrapper header and CLAUDE.md s6/s16: the cage prints ROOF-FACE-DOWN and roof-top changes must stay self-supporting in that pose or be flagged.",
+      "component_bump": true
+    },
+    {
+      "version": "1.6.0",
+      "date": "2026-09-07",
+      "files": [
+        "lib/params.scad",
+        "lib/control_cap.scad",
+        "lib/silicone_ring_mold.scad",
+        "src/components/Bottle_Control_Cap_v1.scad",
+        "src/components/Silicone_Ring_Mold.scad",
+        "build/manifest.json",
+        "v1.0 SCADs/*.scad",
+        "Full_Turtle_v1.scad",
+        "CLAUDE.md",
+        "tests/expected_bounds.json"
+      ],
+      "note": "Axle rotary-seal O-ring + its mold. (a) control_cap: new oring_gland (default on) - an annular groove in the axle bore (Oe11.5 root x 2.6 wide, centred 3.5 mm below the outer face) that seats a round-section O-ring against the spinning axle round section, waterproofing the 0.3 mm bore gap. Internal to the Oe100 x 40 envelope -> cap + full_turtle bounds unchanged; only tris. Asserts guard gland-OD vs bore/boss wall and groove+lands vs the 7 mm bore column. (b) lib/silicone_ring_mold.scad: added the axle O-ring (round torus, ID = p_axle_round_d() = 8, CS 2, OD 12) and a TWO-PART PRESSED mold for it - part=oring_bottom / oring_top (print flat, half-torus channel up), oring_pair (exploded view), oring (cast torus), all (flat + O-ring molds laid out). 3 male pegs on the bottom half seat in 3 female holes in the top half so the halves stay aligned when pressed; fill + vent through the top half. oring_mold_half() asserts the pegs stay inside the plate. part=mold / rings unchanged (190 x 91 x 4.5) - backward compatible. New params p_axle_oring_* / p_cap_oring_gland_*. manifest.json gains 4 mold renders (oring_bottom/oring_top export STLs). No dimensional change on any existing render; control_cap + silicone_ring_mold + full_turtle re-baselined to record the new renders + refreshed tris. CLAUDE.md s7 (O-ring gland) + s8 (two-part O-ring mold) updated."
+    }
+  ]
+}

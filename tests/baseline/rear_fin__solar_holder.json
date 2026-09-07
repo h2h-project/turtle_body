@@ -1,0 +1,32 @@
+{
+  "target": "rear_fin",
+  "render": "solar_holder",
+  "source": "v1.0 SCADs/Turtle_Rear_Fin_v2.scad",
+  "defines": {
+    "part": "solar_holder"
+  },
+  "returncode": 0,
+  "timed_out": false,
+  "seconds": 0.1,
+  "bounds": {
+    "min": [
+      84.0,
+      -74.0,
+      210.0
+    ],
+    "max": [
+      96.0,
+      74.0,
+      246.0
+    ],
+    "size": [
+      12.0,
+      148.0,
+      36.0
+    ],
+    "tris": 36
+  },
+  "warnings": [],
+  "errors": [],
+  "echoes": []
+}

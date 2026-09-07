@@ -1,0 +1,33 @@
+{
+  "target": "hex_shaft",
+  "render": "default",
+  "source": "v1.0 SCADs/Bottle_Hex_Shaft_v1.scad",
+  "defines": {},
+  "returncode": 0,
+  "timed_out": false,
+  "seconds": 0.5,
+  "bounds": {
+    "min": [
+      -5.7735,
+      -5.0,
+      0.0
+    ],
+    "max": [
+      5.7735,
+      5.0,
+      59.0
+    ],
+    "size": [
+      11.547,
+      10.0,
+      59.0
+    ],
+    "tris": 980
+  },
+  "warnings": [],
+  "errors": [],
+  "echoes": [
+    "ECHO: \"AXLE: total / round / hex length = \", 59, 36, 23",
+    "ECHO: \"AXLE: round dia / hex across flats / hex corners = \", 8, 10, 11.547"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "target": "sail_apparatus",
+  "render": "strengtheners",
+  "source": "v1.0 SCADs/Turtle_Sail_Apparatus.scad",
+  "defines": {
+    "part": "strengtheners"
+  },
+  "returncode": 0,
+  "timed_out": false,
+  "seconds": 0.2,
+  "bounds": {
+    "min": [
+      -75.8,
+      -12.0,
+      -128.0
+    ],
+    "max": [
+      75.8,
+      12.0,
+      -77.0
+    ],
+    "size": [
+      151.6,
+      24.0,
+      51.0
+    ],
+    "tris": 640
+  },
+  "warnings": [],
+  "errors": [],
+  "echoes": [
+    "ECHO: \"Side batten to bottle clearance = \", 12.8, \" mm\"",
+    "ECHO: \"Bottom sail bar to bottle clearance = \", 1, \" mm\"",
+    "ECHO: \"Bottom sail bar inward protrusion = \", 11.8, \" mm\"",
+    "ECHO: \"Bottom sail bar inner-edge radius = \", 42, \" mm\"",
+    "ECHO: \"Cage M3 mount heights / hole diameter = \", [22, -10], 3.2",
+    "ECHO: \"Cage mount hole diameter / vertical pitch = \", 3.2, 32",
+    "ECHO: \"Cage mount centres from batten bottom = \", [150, 118]"
+  ]
+}

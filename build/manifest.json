@@ -1,0 +1,99 @@
+{
+  "_comment": "Renderable targets for the Turtle Body build system. 'src' is the editable source (lib/ + src/); 'out' is the generated, committed, self-contained bundle. Until the src/ layer exists for a target, build.py skips it and lint/test/baseline operate on 'out'. Each render lists the -D defines to pass; 'export_stl' marks the PLA parts that build/export_stl.py writes by default (matches the historical v1.0 STLs/ set).",
+  "targets": [
+    {
+      "id": "control_cap",
+      "src": "src/components/Bottle_Control_Cap_v1.scad",
+      "out": "v1.0 SCADs/Bottle_Control_Cap_v1.scad",
+      "renders": [
+        { "name": "default", "defines": {}, "export_stl": true, "stl": "Bottle_Control_Cap_v1" }
+      ]
+    },
+    {
+      "id": "control_cage",
+      "src": "src/components/Bottle_Control_Cage_v1.scad",
+      "out": "v1.0 SCADs/Bottle_Control_Cage_v1.scad",
+      "renders": [
+        { "name": "print", "defines": { "part": "print" }, "export_stl": true, "stl": "Bottle_Control_Cage_v1" },
+        { "name": "upright", "defines": { "part": "upright" } }
+      ]
+    },
+    {
+      "id": "hex_shaft",
+      "src": "src/components/Bottle_Hex_Shaft_v1.scad",
+      "out": "v1.0 SCADs/Bottle_Hex_Shaft_v1.scad",
+      "renders": [
+        { "name": "default", "defines": {}, "export_stl": true, "stl": "Bottle_Hex_Shaft_v1" }
+      ]
+    },
+    {
+      "id": "silicone_ring_mold",
+      "src": "src/components/Silicone_Ring_Mold.scad",
+      "out": "v1.0 SCADs/Silicone_Ring_Mold.scad",
+      "renders": [
+        { "name": "mold", "defines": { "part": "mold" }, "export_stl": true, "stl": "Silicone_Ring_Mold" },
+        { "name": "rings", "defines": { "part": "rings" } },
+        { "name": "oring_bottom", "defines": { "part": "oring_bottom" }, "export_stl": true, "stl": "Silicone_Oring_Mold_bottom" },
+        { "name": "oring_top", "defines": { "part": "oring_top" }, "export_stl": true, "stl": "Silicone_Oring_Mold_top" },
+        { "name": "oring_pair", "defines": { "part": "oring_pair" } },
+        { "name": "oring", "defines": { "part": "oring" } }
+      ]
+    },
+    {
+      "id": "ballast_fin",
+      "src": "src/components/Turtle_Bottom_Ballast_Fin_v1.scad",
+      "out": "v1.0 SCADs/Turtle_Bottom_Ballast_Fin_v1.scad",
+      "renders": [
+        { "name": "assembly", "defines": { "part": "assembly" } },
+        { "name": "core_slat", "defines": { "part": "core_slat" } },
+        { "name": "bottom_board", "defines": { "part": "bottom_board" } },
+        { "name": "lock_foot", "defines": { "part": "lock_foot" } },
+        { "name": "fin", "defines": { "part": "fin" } }
+      ]
+    },
+    {
+      "id": "ecojoiner",
+      "src": "src/components/Turtle_Core_Ecojoiner_v1.scad",
+      "out": "v1.0 SCADs/Turtle_Core_Ecojoiner_v1.scad",
+      "renders": [
+        { "name": "default", "defines": {} }
+      ]
+    },
+    {
+      "id": "rear_fin",
+      "src": "src/components/Turtle_Rear_Fin_v2.scad",
+      "out": "v1.0 SCADs/Turtle_Rear_Fin_v2.scad",
+      "renders": [
+        { "name": "assembly", "defines": { "part": "assembly", "show_solar_panel": false, "show_bottle_mockup": false } },
+        { "name": "fin", "defines": { "part": "fin" } },
+        { "name": "solar_holder", "defines": { "part": "solar_holder" } },
+        { "name": "shaft", "defines": { "part": "shaft" } }
+      ]
+    },
+    {
+      "id": "sail_apparatus",
+      "src": "src/components/Turtle_Sail_Apparatus.scad",
+      "out": "v1.0 SCADs/Turtle_Sail_Apparatus.scad",
+      "renders": [
+        { "name": "assembly", "defines": { "part": "assembly", "show_hardware": false } },
+        { "name": "top_bar", "defines": { "part": "top_bar" } },
+        { "name": "sail_batten", "defines": { "part": "sail_batten" } },
+        { "name": "non_sail_batten", "defines": { "part": "non_sail_batten" } },
+        { "name": "bottom_bars", "defines": { "part": "bottom_bars" } },
+        { "name": "strengtheners", "defines": { "part": "strengtheners" } },
+        { "name": "c_end_pieces", "defines": { "part": "c_end_pieces" } },
+        { "name": "sails", "defines": { "part": "sails" } }
+      ]
+    },
+    {
+      "id": "full_turtle",
+      "src": "src/Full_Turtle.scad",
+      "out": "Full_Turtle_v1.scad",
+      "renders": [
+        { "name": "full_turtle", "defines": { "assembly_view": "full_turtle" } },
+        { "name": "top_sail", "defines": { "assembly_view": "top_sail" } },
+        { "name": "core", "defines": { "assembly_view": "core" } }
+      ]
+    }
+  ]
+}

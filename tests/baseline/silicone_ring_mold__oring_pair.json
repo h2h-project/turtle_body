@@ -1,0 +1,35 @@
+{
+  "target": "silicone_ring_mold",
+  "render": "oring_pair",
+  "source": "v1.0 SCADs/Silicone_Ring_Mold.scad",
+  "defines": {
+    "part": "oring_pair"
+  },
+  "returncode": 0,
+  "timed_out": false,
+  "seconds": 21.5,
+  "bounds": {
+    "min": [
+      -12.0,
+      -12.0,
+      0.0
+    ],
+    "max": [
+      12.0,
+      12.0,
+      16.0
+    ],
+    "size": [
+      24.0,
+      24.0,
+      16.0
+    ],
+    "tris": 32044
+  },
+  "warnings": [],
+  "errors": [],
+  "echoes": [
+    "ECHO: \"MOLD (flat insert ring): ID / OD / axial thickness = \", 75, 85, 1.5",
+    "ECHO: \"MOLD (axle O-ring, two-part pressed): ID \", 8, \" / OD \", 12, \" / CS \", 2, \" -- ID tied to the axle shaft \", 8, \". 3 male pegs (bottom) + 3 female holes (top) align the halves; \", \"fill + vent through the top half.\""
+  ]
+}

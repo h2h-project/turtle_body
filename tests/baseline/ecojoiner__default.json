@@ -1,0 +1,57 @@
+{
+  "target": "ecojoiner",
+  "render": "default",
+  "source": "v1.0 SCADs/Turtle_Core_Ecojoiner_v1.scad",
+  "defines": {},
+  "returncode": 0,
+  "timed_out": false,
+  "seconds": 14.6,
+  "bounds": {
+    "min": [
+      0.0,
+      -118.0,
+      -206.0
+    ],
+    "max": [
+      294.0,
+      176.0,
+      88.0
+    ],
+    "size": [
+      294.0,
+      294.0,
+      294.0
+    ],
+    "tris": 24212
+  },
+  "warnings": [
+    "WARNING: Object may not be a valid 2-manifold and may need repair!"
+  ],
+  "errors": [],
+  "echoes": [
+    "ECHO: \"John length = \", 294, \" mm\"",
+    "ECHO: \"John height = \", 58, \" mm\"",
+    "ECHO: \"Wood thickness = \", 12, \" mm\"",
+    "ECHO: \"Little John slot centres = \", 100, \", \", 194, \" mm\"",
+    "ECHO: \"Long John slot centres = \", 88, \", \", 206, \" mm\"",
+    "ECHO: \"Rectangle X between slot centres = \", 94, \" mm\"",
+    "ECHO: \"Rectangle Y between slot centres = \", 118, \" mm\"",
+    "ECHO: \"Shared frame centre = \", [147, 59, 29]",
+    "ECHO: \"Frame step tilt = \", 90, \" deg\"",
+    "ECHO: \"Frame step spin = \", 90, \" deg\"",
+    "ECHO: \"Rectangle count = 3\"",
+    "ECHO: \"Final Key count = 4\"",
+    "ECHO: \"Little John count across 3 rectangles = 6\"",
+    "ECHO: \"Presser count before port exclusions = 12; active pressers carry M6 bolts\"",
+    "ECHO: \"Presser diameter = \", 30, \" mm\"",
+    "ECHO: \"Presser thickness = \", 12, \" mm\"",
+    "ECHO: \"Presser through-hole diameter = \", 6.4, \" mm\"",
+    "ECHO: \"Final Key length = \", 130, \" mm\"",
+    "ECHO: \"Final Key width = \", 24, \" mm\"",
+    "ECHO: \"Final Key thickness = \", 12, \" mm\"",
+    "ECHO: \"Final Key X offset = \", 41, \" mm\"",
+    "ECHO: \"Final Key Z offset = \", 35, \" mm\"",
+    "ECHO: \"Long John count = 2\"",
+    "ECHO: \"Little John count = 2\""
+  ]
+}
