@@ -1,7 +1,7 @@
 // ==========================================================================
 //  GENERATED FILE -- DO NOT EDIT.
 //  Produced by build/build.py from src/Full_Turtle.scad
-//  Turtle Body version 1.6.0
+//  Turtle Body version 1.7.0
 //  Edit lib/ and src/ instead, then run: python3 build/build.py
 // ==========================================================================
 /*
@@ -1600,7 +1600,7 @@ module control_cage(inner_d       = p_cage_inner_d(),
 //  four battens; no tangential M6 bore in the C pieces; no lower joint bore
 //  in the non-sail battens. Bottom rails are brown (TB-02).
 //
-//  Lifted verbatim from the standalone Turtle_Sail_Apparatus.scad, which
+//  Lifted verbatim from the standalone Turtle_Sail_Apparatus_v1.scad, which
 //  already carries those decisions. The inert cap/cage/axle parameter block
 //  is retained only because several live frame asserts read from it.
 //

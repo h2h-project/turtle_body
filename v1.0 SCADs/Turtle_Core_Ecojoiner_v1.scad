@@ -1,7 +1,7 @@
 // ==========================================================================
 //  GENERATED FILE -- DO NOT EDIT.
 //  Produced by build/build.py from components/Turtle_Core_Ecojoiner_v1.scad
-//  Turtle Body version 1.6.0
+//  Turtle Body version 1.7.0
 //  Edit lib/ and src/ instead, then run: python3 build/build.py
 // ==========================================================================
 /*

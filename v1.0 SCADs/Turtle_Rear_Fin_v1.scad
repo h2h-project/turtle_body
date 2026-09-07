@@ -1,11 +1,11 @@
 // ==========================================================================
 //  GENERATED FILE -- DO NOT EDIT.
-//  Produced by build/build.py from components/Turtle_Rear_Fin_v2.scad
-//  Turtle Body version 1.6.0
+//  Produced by build/build.py from components/Turtle_Rear_Fin_v1.scad
+//  Turtle Body version 1.7.0
 //  Edit lib/ and src/ instead, then run: python3 build/build.py
 // ==========================================================================
 /*
- Hope Turtle rear-fin v2. Units: mm. License: CERN-OHL-S-2.0.
+ Hope Turtle rear fin. Units: mm. License: CERN-OHL-S-2.0.
  Four wooden pieces: yellow fin, two green bottle-holder shafts, red solar
  crossbar. Panel + bottle are F5 reference only, excluded from F6/STL.
  Shaft length 334. Slot openings 12.2 mm (0.2 mm TOTAL, centred).

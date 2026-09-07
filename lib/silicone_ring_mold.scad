@@ -1,31 +1,36 @@
 // ==========================================================================
-//  Turtle Body -- silicone ring molds  (lib module)
+//  Turtle Body -- silicone ring mold  (lib module)
 // --------------------------------------------------------------------------
-//  Two kinds of mold:
+//  ONE two-part pressed mold that casts, in a single session:
 //
-//  1. FLAT INSERT-SEAL RINGS (part = "mold" / "rings").  Open-top scrape
-//     molds: fill the annular channel with silicone, scrape flush with the
-//     rim + centre island, peel the cured flat ring. Ø75 ID / Ø85 OD, tied
-//     to the cap insert (p_seal_groove_root_d()).
+//    * `ring_count` FLAT insert-seal rings   -- Ø75 ID / Ø85 OD x 1.5, for
+//      the cap insert grooves. Tied to p_seal_groove_root_d().
+//    * ONE round AXLE O-RING                 -- nested in the centre of the
+//      first flat-ring mold ("an additional mold circle"). ID is tied to
+//      the sealing (round) section of the hex-shaft axle,
+//      p_axle_oring_id() = p_axle_round_d() (8); CS 2, OD 12.
 //
-//  2. AXLE ROTARY-SEAL O-RING (part = "oring_bottom" / "oring_top" /
-//     "oring_pair" / "oring").  A round-cross-section O-ring for the control-
-//     cap axle bore. This needs a TWO-PART PRESSED mold: a bottom half and a
-//     top half, each with a half-torus channel, that press together to close
-//     a full round cavity. THREE male pegs on the bottom half enter THREE
-//     female holes in the top half so the halves cannot shift when pressed;
-//     fill + vent holes run through the top half. O-ring ID is tied to the
-//     axle shaft diameter (p_axle_oring_id() = p_axle_round_d()).
+//  The bottom plate carries the flat-ring channels (full depth, scrape-fill),
+//  the LOWER half of the O-ring torus, and THREE male alignment pegs. The top
+//  plate carries the UPPER half of the O-ring torus, THREE female holes, and
+//  the O-ring fill + vent. Press the plates together (pegs seat in holes),
+//  fill, cure, split, peel out the rings.
 //
-//  Nominal dimensions; no shrinkage compensation. The seals are NOT validated
-//  -- see CLAUDE.md s8.  Print all mold bodies flat, cavity openings up.
+//  part = "mold"        exploded inspection view of both plates (NOT a print)
+//  part = "mold_bottom" the bottom plate, printable (channels + pegs up)
+//  part = "mold_top"    the top plate, printable (channel + holes up)
+//  part = "rings"       every cast ring (flat rings + the O-ring torus)
+//  part = "oring"       the bare O-ring torus
+//
+//  Nominal dimensions; no shrinkage compensation. Seals NOT validated (s8).
 //
 //  Definitions only. Geometry is emitted by silicone_ring_molds().
 // ==========================================================================
 
 use <params.scad>
 
-// ---- 1. flat insert-seal ring -----------------------------------------
+// ---- cast shapes ------------------------------------------------------
+// one flat cast ring / flat-channel cutter
 module ring_shape(height,
                   inner_d = p_seal_groove_root_d(),       // 75
                   outer_d = p_seal_groove_root_d() + 2 * p_seal_ring_radial_w(),  // 85
@@ -37,81 +42,90 @@ module ring_shape(height,
     }
 }
 
-module ring_mold(floor_t = 3, outer_wall = 3,
-                 ring_axial_t = p_seal_ring_axial_t(),
-                 inner_d = p_seal_groove_root_d(),
-                 outer_d = p_seal_groove_root_d() + 2 * p_seal_ring_radial_w(),
-                 fn = 240) {
-    mold_outer_d = outer_d + 2 * outer_wall;
-    difference() {
-        cylinder(d = mold_outer_d, h = floor_t + ring_axial_t, $fn = fn);
-        translate([0, 0, floor_t])
-            ring_shape(ring_axial_t + p_eps(), inner_d, outer_d, fn);
-    }
-}
-
-// ---- 2. axle rotary-seal O-ring + its two-part pressed mold ----------
 // the cast O-ring itself (round cross-section torus)
 module oring_torus(mean_r = p_axle_oring_mean_r(),
                    tube_r = p_axle_oring_cs() / 2, fn = 240) {
     rotate_extrude($fn = fn)
-        translate([mean_r, 0]) circle(r = tube_r, $fn = max(24, fn / 4));
+        translate([mean_r, 0]) circle(r = tube_r, $fn = max(24, floor(fn / 4)));
 }
 
-// one half of the pressed mold. Built channel-side UP (prints flat as-is).
-// is_top = false -> 3 alignment PEGS stand up from the parting face.
-// is_top = true  -> 3 alignment HOLES + a fill hole + a vent hole.
-module oring_mold_half(is_top = false,
-                       mean_r  = p_axle_oring_mean_r(),
-                       tube_r  = p_axle_oring_cs() / 2,
-                       wall    = 6, floor_t = 3,
-                       peg_d = 3, peg_h = 3, peg_fit = 0.4,
-                       fill_d = 2, fn = 240) {
-    e        = p_eps();
-    half_t   = floor_t + tube_r;                 // parting face at Z = half_t
-    mold_d   = 2 * (mean_r + tube_r) + 2 * wall;
-    align_r  = mean_r + tube_r + 2;               // clear of the channel
+// ---- the two-part pressed mold -------------------------------------
+function _srm_flat_od() = p_seal_groove_root_d() + 2 * p_seal_ring_radial_w();  // 85
+function _srm_press_wall() = 8;                                                 // rim for the pegs
+function _srm_flat_mold_d() = _srm_flat_od() + 2 * _srm_press_wall();           // 101
+function _srm_centres(n, spacing) =
+    [for (i = [0 : n - 1])
+        [_srm_flat_mold_d() / 2 + i * (_srm_flat_mold_d() + spacing),
+         _srm_flat_mold_d() / 2]];
 
-    assert(align_r + peg_d / 2 + 1 <= mold_d / 2,
-           "oring_mold_half: alignment pegs fall outside the mold plate (raise wall).");
+// bottom plate: flat-ring channels (full depth), lower half-torus in centre 0,
+// three male pegs on the parting face.
+module srm_bottom_plate(ring_count = 2, floor_t = 3, spacing = 8,
+                        ring_axial_t = p_seal_ring_axial_t(),
+                        tube_r = p_axle_oring_cs() / 2,
+                        peg_d = 4, peg_h = 4, fn = 240) {
+    cs      = _srm_centres(ring_count, spacing);
+    fmd     = _srm_flat_mold_d();
+    part_z  = floor_t + ring_axial_t;                 // parting face
+    align_r = _srm_flat_od() / 2 + peg_d / 2 + 2;     // pegs sit in the rim
 
     difference() {
         union() {
-            cylinder(d = mold_d, h = half_t, $fn = fn);
-            // 3 male alignment pegs on the bottom half
-            if (!is_top)
-                for (a = [0 : 120 : 359]) rotate([0, 0, a + 60])
-                    translate([align_r, 0, half_t - e])
-                        cylinder(d = peg_d, h = peg_h + e, $fn = 32);
+            hull() for (c = cs) translate(c) cylinder(d = fmd, h = part_z, $fn = fn);
+            for (a = [90, 210, 330])
+                translate(cs[0] + align_r * [cos(a), sin(a), 0])
+                    translate([0, 0, part_z - p_eps()])
+                        cylinder(d = peg_d, h = peg_h + p_eps(), $fn = 32);
         }
-        // half-torus channel opening at the parting face (plate ends at half_t,
-        // so only the lower half of the torus is subtracted)
-        translate([0, 0, half_t])
-            rotate_extrude($fn = fn)
-                translate([mean_r, 0]) circle(r = tube_r, $fn = max(24, fn / 4));
-
-        if (is_top) {
-            // 3 female alignment holes (blind, into the parting face)
-            for (a = [0 : 120 : 359]) rotate([0, 0, a + 60])
-                translate([align_r, 0, half_t - peg_h - 0.5])
-                    cylinder(d = peg_d + peg_fit, h = peg_h + 0.5 + e, $fn = 32);
-            // fill + vent: through the plate at the channel, 180 deg apart
-            for (a = [45, 225]) rotate([0, 0, a])
-                translate([mean_r, 0, -e])
-                    cylinder(d = fill_d, h = half_t + 2 * e, $fn = 24);
-        }
+        // flat-ring channels
+        for (c = cs) translate([c[0], c[1], floor_t])
+            ring_shape(ring_axial_t + p_eps(), fn = fn);
+        // lower half of the O-ring torus, centre of mold 0
+        translate([cs[0][0], cs[0][1], part_z])
+            oring_torus(tube_r = tube_r, fn = fn);
     }
 }
 
-// ---- assembly / layout ---------------------------------------------
+// top plate: upper half-torus in centre 0, three female holes, fill + vent.
+// built parting-face-DOWN (Z = 0); "mold_top" flips it for printing.
+module srm_top_plate(ring_count = 2, top_floor = 3, spacing = 8,
+                     tube_r = p_axle_oring_cs() / 2,
+                     mean_r = p_axle_oring_mean_r(),
+                     ring_axial_t = p_seal_ring_axial_t(),
+                     peg_d = 4, peg_h = 4, peg_fit = 0.35,
+                     fill_d = 2, fn = 240) {
+    cs      = _srm_centres(ring_count, spacing);
+    fmd     = _srm_flat_mold_d();
+    plate_t = top_floor + tube_r;
+    align_r = _srm_flat_od() / 2 + peg_d / 2 + 2;
+
+    difference() {
+        hull() for (c = cs) translate(c) cylinder(d = fmd, h = plate_t, $fn = fn);
+        // upper half of the O-ring torus (recessed up from the parting face)
+        translate([cs[0][0], cs[0][1], 0])
+            oring_torus(tube_r = tube_r, fn = fn);
+        // 3 female alignment holes
+        for (a = [90, 210, 330])
+            translate(cs[0] + align_r * [cos(a), sin(a), 0])
+                translate([0, 0, -p_eps()])
+                    cylinder(d = peg_d + peg_fit, h = peg_h + 0.5, $fn = 32);
+        // fill + vent for the O-ring cavity, 180 deg apart, over the channel
+        for (a = [45, 225])
+            translate([cs[0][0], cs[0][1], -p_eps()])
+                rotate([0, 0, a]) translate([mean_r, 0, 0])
+                    cylinder(d = fill_d, h = plate_t + 2 * p_eps(), $fn = 24);
+    }
+}
+
+// ---- dispatch --------------------------------------------------------
 module silicone_ring_molds(part = "mold", ring_count = 2,
                            floor_t = 3, outer_wall = 3, spacing = 8,
                            fn = 240) {
-    inner_d = p_seal_groove_root_d();
-    outer_d = p_seal_groove_root_d() + 2 * p_seal_ring_radial_w();
     ring_axial_t = p_seal_ring_axial_t();
-    flat_mold_d = outer_d + 2 * outer_wall;
-    oring_pitch = 2 * (p_axle_oring_mean_r() + p_axle_oring_cs() / 2) + 2 * 6;
+    inner_d = p_seal_groove_root_d();
+    outer_d = _srm_flat_od();
+    tube_r  = p_axle_oring_cs() / 2;
+    part_z  = floor_t + ring_axial_t;
 
     assert(ring_count >= 1 && ring_count == floor(ring_count),
            "silicone_ring_molds: ring_count must be a positive integer.");
@@ -119,49 +133,39 @@ module silicone_ring_molds(part = "mold", ring_count = 2,
            "Cast ring must not be taller than the groove it seats in.");
     assert(p_seal_ring_radial_w() > p_seal_groove_radial_depth(),
            "Ring must project past the groove root to grip.");
-    assert(floor_t > 0 && outer_wall > 0 && spacing > 0);
+    assert(floor_t > 0 && spacing > 0);
     assert(p_axle_oring_id() > 0 && p_axle_oring_cs() > 0);
+    assert(p_axle_oring_od() < inner_d,
+           "silicone_ring_molds: O-ring must fit inside the flat-ring bore.");
 
-    module flat_row()
-        for (i = [0 : ring_count - 1])
-            translate([flat_mold_d / 2 + i * (flat_mold_d + spacing), flat_mold_d / 2, 0]) {
-                if (part == "rings") ring_shape(ring_axial_t, inner_d, outer_d, fn);
-                else ring_mold(floor_t, outer_wall, ring_axial_t, inner_d, outer_d, fn);
-            }
+    cs = _srm_centres(ring_count, spacing);
 
-    if (part == "mold" || part == "rings")
-        flat_row();
+    if (part == "mold") {
+        // exploded: bottom (parting face up), top lifted with its parting
+        // face DOWN toward it -- as the halves actually mate.
+        srm_bottom_plate(ring_count, floor_t, spacing, fn = fn);
+        translate([0, 0, part_z + 10])
+            srm_top_plate(ring_count, spacing = spacing, fn = fn);
+    }
+    else if (part == "mold_bottom")
+        srm_bottom_plate(ring_count, floor_t, spacing, fn = fn);
+    else if (part == "mold_top")
+        // flip about Z so the channel + holes face up for printing; Y stays positive
+        translate([0, 0, 3 + tube_r]) mirror([0, 0, 1])
+            srm_top_plate(ring_count, spacing = spacing, fn = fn);
+    else if (part == "rings") {
+        for (c = cs) translate([c[0], c[1], 0])
+            ring_shape(ring_axial_t, inner_d, outer_d, fn);
+        translate([cs[0][0], cs[0][1], tube_r]) oring_torus(fn = fn);
+    }
     else if (part == "oring")
         oring_torus(fn = fn);
-    else if (part == "oring_bottom")
-        oring_mold_half(is_top = false, floor_t = floor_t, fn = fn);
-    else if (part == "oring_top")
-        oring_mold_half(is_top = true, floor_t = floor_t, fn = fn);
-    else if (part == "oring_pair") {
-        half_t = floor_t + p_axle_oring_cs() / 2;
-        oring_mold_half(is_top = false, floor_t = floor_t, fn = fn);
-        // top half flipped over the bottom, lifted for inspection
-        translate([0, 0, 2 * half_t + spacing]) rotate([180, 0, 0])
-            oring_mold_half(is_top = true, floor_t = floor_t, fn = fn);
-    }
-    else if (part == "all") {
-        // flat molds on the left, the centre O-ring pressed mold to their right
-        flat_row();
-        translate([ring_count * (flat_mold_d + spacing) + oring_pitch / 2,
-                   flat_mold_d / 2, 0]) {
-            oring_mold_half(is_top = false, floor_t = floor_t, fn = fn);
-            translate([oring_pitch + spacing, 0, 0])
-                oring_mold_half(is_top = true, floor_t = floor_t, fn = fn);
-        }
-    }
     else
         assert(false, str("silicone_ring_molds: unknown part '", part, "'"));
 
-    echo("MOLD (flat insert ring): ID / OD / axial thickness = ",
-         inner_d, outer_d, ring_axial_t);
-    echo("MOLD (axle O-ring, two-part pressed): ID ", p_axle_oring_id(),
-         " / OD ", p_axle_oring_od(), " / CS ", p_axle_oring_cs(),
-         " -- ID tied to the axle shaft ", p_axle_round_d(),
-         ". 3 male pegs (bottom) + 3 female holes (top) align the halves; "
-         , "fill + vent through the top half.");
+    echo("MOLD: two-part pressed. Flat ring ID/OD/axial = ",
+         inner_d, outer_d, ring_axial_t, " x ", ring_count,
+         "; centre O-ring ID/OD/CS = ", p_axle_oring_id(), p_axle_oring_od(),
+         p_axle_oring_cs(), " (ID tied to axle round dia ", p_axle_round_d(),
+         "). 3 pegs (bottom) + 3 holes (top) align the halves.");
 }

@@ -73,7 +73,7 @@ Paths below were verified in the inspected GitHub tree.
 | `build/` | `scad_lib.py` (helpers), `bundle.py` (inline `use`/`include`), `build.py` (regenerate all bundles = the sync step), `lint.py`, `test.py`, `baseline.py`, `export_stl.py`, `manifest.json`, `README.md`. Python 3 stdlib only. |
 | `tests/expected_bounds.json` | Regression baseline (per-render bounding box + tris + known warnings) checked by `build/test.py`. `tests/baseline/` holds the full per-render dumps. |
 | `VERSION.json` | Single set-level version + bump rules + changelog. STL exports carry this version in their filename. |
-| `v1.0 STLs/` | Fabrication exports, written on demand by `build/export_stl.py` as `<name>_v<version>.stl`. The pre-refactor un-versioned STLs were deleted at v1.6.0; current set is the six `_v1.6.0` files (cap, cage, hex shaft, flat ring mold, O-ring mold bottom + top). F6-verified, not physically validated. |
+| `v1.0 STLs/` | Fabrication exports, written on demand by `build/export_stl.py` as `<name>_v<version>.stl`. The pre-refactor un-versioned STLs were deleted at v1.6.0. Current printable set: cap, cage, hex shaft, and the two mold plates (`Silicone_Ring_Mold_bottom` / `Silicone_Ring_Mold_top`). F6-verified, not physically validated. |
 | `README.md` | Project overview and generator intent |
 | `LICENSE` | CERN Open Hardware Licence v2, Strongly Reciprocal |
 
@@ -246,24 +246,27 @@ The proposed seal is **not validated**. An Ø85 ring inside the assumed Ø81 bot
 
 Measure the actual bottle interior at both groove positions and along perpendicular axes before concluding the seal is suitable. This ring does not make the entire cap watertight: the axle and button openings are separate interfaces.
 
-### Axle O-ring and its two-part pressed mold
+### One two-part pressed mold — flat rings + the axle O-ring together
 
-`lib/silicone_ring_mold.scad` now makes **two** kinds of ring:
+`lib/silicone_ring_mold.scad` is a single **two-part pressed mold** that casts
+in one session:
 
-1. **Flat insert-seal rings** — unchanged. `part = "mold"` (the two open-top
-   scrape molds, 190 × 91 × 4.5 envelope) / `part = "rings"` (the bare cast
-   rings). Ø75 ID / Ø85 OD, tied to `p_seal_groove_root_d()`.
-2. **Axle rotary-seal O-ring** — round cross-section, for the cap bore gland
-   (section 7). ID = `p_axle_round_d()` (8), CS = `p_axle_oring_cs()` (2),
-   OD 12. A round ring needs a **two-part pressed mold**: `part =
-   "oring_bottom"` and `part = "oring_top"` are the two halves (print each
-   flat, half-torus channel opening up); `part = "oring_pair"` shows them
-   exploded; `part = "oring"` is the cast torus itself. **Three male pegs** on
-   the bottom half seat in **three female holes** in the top half (120° apart,
-   outside the channel) so the halves cannot shift when pressed; fill + vent
-   holes run through the top half. `part = "all"` lays the flat molds and the
-   O-ring mold out together. `oring_mold_half()` asserts the pegs stay inside
-   the plate.
+- `ring_count` **flat insert-seal rings** — Ø75 ID / Ø85 OD × 1.5, tied to
+  `p_seal_groove_root_d()`, scrape-filled in the bottom plate.
+- **one axle O-ring** — round cross-section, nested in the centre of the first
+  flat-ring mold ("an additional mold circle"). ID = `p_axle_oring_id()` =
+  `p_axle_round_d()` (**8 — tied to the sealing round section of the hex-shaft
+  axle**), CS `p_axle_oring_cs()` (2), OD 12. Its torus is split across the two
+  plates (lower half in the bottom, upper half in the top).
+
+`part` values: `mold` = exploded inspection of both plates (**not a print**);
+`mold_bottom` / `mold_top` = the printable plates (channels/pegs/holes up);
+`rings` = every cast ring; `oring` = the bare O-ring torus. **Three male pegs**
+on the bottom plate (in the 8 mm rim, 120° around the first mold) seat in
+**three female holes** in the top plate so the halves cannot shift when
+pressed; the O-ring fill + vent run through the top plate. Process: scrape-fill
+the flat channels, fill the O-ring lower half, press the top plate on (pegs →
+holes), cure, split, peel out `ring_count` flat rings + 1 O-ring.
 
 Neither seal is validated. The O-ring's radial squeeze, the dynamic friction
 of a silicone lip on a rotating PLA shaft, and demoulding a round ring from a
@@ -455,7 +458,7 @@ python3 build/lint.py
 python3 build/test.py                  # or: build/test.py control_cap ecojoiner ...
 python3 build/baseline.py <target>     # re-record baseline (intentional changes only)
 python3 build/export_stl.py            # versioned PLA-part STLs
-openscad -D 'part="non_sail_batten"' -o /tmp/x.stl 'v1.0 SCADs/Turtle_Sail_Apparatus.scad'
+openscad -D 'part="non_sail_batten"' -o /tmp/x.stl 'v1.0 SCADs/Turtle_Sail_Apparatus_v1.scad'
 git diff --stat && git diff --check
 ```
 

@@ -31,11 +31,10 @@
       "src": "src/components/Silicone_Ring_Mold.scad",
       "out": "v1.0 SCADs/Silicone_Ring_Mold.scad",
       "renders": [
-        { "name": "mold", "defines": { "part": "mold" }, "export_stl": true, "stl": "Silicone_Ring_Mold" },
+        { "name": "mold", "defines": { "part": "mold" } },
+        { "name": "mold_bottom", "defines": { "part": "mold_bottom" }, "export_stl": true, "stl": "Silicone_Ring_Mold_bottom" },
+        { "name": "mold_top", "defines": { "part": "mold_top" }, "export_stl": true, "stl": "Silicone_Ring_Mold_top" },
         { "name": "rings", "defines": { "part": "rings" } },
-        { "name": "oring_bottom", "defines": { "part": "oring_bottom" }, "export_stl": true, "stl": "Silicone_Oring_Mold_bottom" },
-        { "name": "oring_top", "defines": { "part": "oring_top" }, "export_stl": true, "stl": "Silicone_Oring_Mold_top" },
-        { "name": "oring_pair", "defines": { "part": "oring_pair" } },
         { "name": "oring", "defines": { "part": "oring" } }
       ]
     },
@@ -61,8 +60,8 @@
     },
     {
       "id": "rear_fin",
-      "src": "src/components/Turtle_Rear_Fin_v2.scad",
-      "out": "v1.0 SCADs/Turtle_Rear_Fin_v2.scad",
+      "src": "src/components/Turtle_Rear_Fin_v1.scad",
+      "out": "v1.0 SCADs/Turtle_Rear_Fin_v1.scad",
       "renders": [
         { "name": "assembly", "defines": { "part": "assembly", "show_solar_panel": false, "show_bottle_mockup": false } },
         { "name": "fin", "defines": { "part": "fin" } },
@@ -72,8 +71,8 @@
     },
     {
       "id": "sail_apparatus",
-      "src": "src/components/Turtle_Sail_Apparatus.scad",
-      "out": "v1.0 SCADs/Turtle_Sail_Apparatus.scad",
+      "src": "src/components/Turtle_Sail_Apparatus_v1.scad",
+      "out": "v1.0 SCADs/Turtle_Sail_Apparatus_v1.scad",
       "renders": [
         { "name": "assembly", "defines": { "part": "assembly", "show_hardware": false } },
         { "name": "top_bar", "defines": { "part": "top_bar" } },

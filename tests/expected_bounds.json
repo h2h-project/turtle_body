@@ -44,28 +44,28 @@
           0.0
         ],
         "max": [
-          190.0,
-          91.0,
-          4.5
+          210.0,
+          101.0,
+          18.5
         ]
       },
-      "tris": 5752,
+      "tris": 35912,
       "warnings": []
     },
     "silicone_ring_mold__rings": {
       "bounds": {
         "min": [
-          3.0,
-          3.0,
+          8.0,
+          8.0,
           0.0
         ],
         "max": [
-          187.0,
-          88.0,
-          1.5
+          202.0,
+          93.0,
+          2.0
         ]
       },
-      "tris": 3840,
+      "tris": 32640,
       "warnings": []
     },
     "ballast_fin__assembly": {
@@ -454,54 +454,6 @@
         "WARNING: Object may not be a valid 2-manifold and may need repair!"
       ]
     },
-    "silicone_ring_mold__oring_bottom": {
-      "warnings": [],
-      "bounds": {
-        "min": [
-          -12.0,
-          -12.0,
-          0.0
-        ],
-        "max": [
-          12.0,
-          12.0,
-          7.0
-        ]
-      },
-      "tris": 16220
-    },
-    "silicone_ring_mold__oring_top": {
-      "warnings": [],
-      "bounds": {
-        "min": [
-          -12.0,
-          -12.0,
-          0.0
-        ],
-        "max": [
-          12.0,
-          12.0,
-          4.0
-        ]
-      },
-      "tris": 15824
-    },
-    "silicone_ring_mold__oring_pair": {
-      "warnings": [],
-      "bounds": {
-        "min": [
-          -12.0,
-          -12.0,
-          0.0
-        ],
-        "max": [
-          12.0,
-          12.0,
-          16.0
-        ]
-      },
-      "tris": 32044
-    },
     "silicone_ring_mold__oring": {
       "warnings": [],
       "bounds": {
@@ -517,6 +469,38 @@
         ]
       },
       "tris": 28800
+    },
+    "silicone_ring_mold__mold_bottom": {
+      "warnings": [],
+      "bounds": {
+        "min": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max": [
+          210.0,
+          101.0,
+          8.5
+        ]
+      },
+      "tris": 20068
+    },
+    "silicone_ring_mold__mold_top": {
+      "warnings": [],
+      "bounds": {
+        "min": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max": [
+          210.0,
+          101.0,
+          4.0
+        ]
+      },
+      "tris": 15844
     }
   }
 }

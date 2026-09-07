@@ -7,7 +7,7 @@
   },
   "returncode": 0,
   "timed_out": false,
-  "seconds": 1.6,
+  "seconds": 24.8,
   "bounds": {
     "min": [
       0.0,
@@ -15,21 +15,20 @@
       0.0
     ],
     "max": [
-      190.0,
-      91.0,
-      4.5
+      210.0,
+      101.0,
+      18.5
     ],
     "size": [
-      190.0,
-      91.0,
-      4.5
+      210.0,
+      101.0,
+      18.5
     ],
-    "tris": 5752
+    "tris": 35912
   },
   "warnings": [],
   "errors": [],
   "echoes": [
-    "ECHO: \"MOLD (flat insert ring): ID / OD / axial thickness = \", 75, 85, 1.5",
-    "ECHO: \"MOLD (axle O-ring, two-part pressed): ID \", 8, \" / OD \", 12, \" / CS \", 2, \" -- ID tied to the axle shaft \", 8, \". 3 male pegs (bottom) + 3 female holes (top) align the halves; \", \"fill + vent through the top half.\""
+    "ECHO: \"MOLD: two-part pressed. Flat ring ID/OD/axial = \", 75, 85, 1.5, \" x \", 2, \"; centre O-ring ID/OD/CS = \", 8, 12, 2, \" (ID tied to axle round dia \", 8, \"). 3 pegs (bottom) + 3 holes (top) align the halves.\""
   ]
 }

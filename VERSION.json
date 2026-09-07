@@ -1,5 +1,5 @@
 {
-  "version": "1.6.0",
+  "version": "1.7.0",
   "updated": "2026-09-07",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
@@ -102,6 +102,22 @@
         "tests/expected_bounds.json"
       ],
       "note": "Axle rotary-seal O-ring + its mold. (a) control_cap: new oring_gland (default on) - an annular groove in the axle bore (Oe11.5 root x 2.6 wide, centred 3.5 mm below the outer face) that seats a round-section O-ring against the spinning axle round section, waterproofing the 0.3 mm bore gap. Internal to the Oe100 x 40 envelope -> cap + full_turtle bounds unchanged; only tris. Asserts guard gland-OD vs bore/boss wall and groove+lands vs the 7 mm bore column. (b) lib/silicone_ring_mold.scad: added the axle O-ring (round torus, ID = p_axle_round_d() = 8, CS 2, OD 12) and a TWO-PART PRESSED mold for it - part=oring_bottom / oring_top (print flat, half-torus channel up), oring_pair (exploded view), oring (cast torus), all (flat + O-ring molds laid out). 3 male pegs on the bottom half seat in 3 female holes in the top half so the halves stay aligned when pressed; fill + vent through the top half. oring_mold_half() asserts the pegs stay inside the plate. part=mold / rings unchanged (190 x 91 x 4.5) - backward compatible. New params p_axle_oring_* / p_cap_oring_gland_*. manifest.json gains 4 mold renders (oring_bottom/oring_top export STLs). No dimensional change on any existing render; control_cap + silicone_ring_mold + full_turtle re-baselined to record the new renders + refreshed tris. CLAUDE.md s7 (O-ring gland) + s8 (two-part O-ring mold) updated."
+    },
+    {
+      "version": "1.7.0",
+      "date": "2026-09-07",
+      "files": [
+        "lib/silicone_ring_mold.scad",
+        "src/components/Silicone_Ring_Mold.scad",
+        "build/manifest.json",
+        "src/components/Turtle_Rear_Fin_v2.scad -> _v1",
+        "src/components/Turtle_Sail_Apparatus.scad -> _v1",
+        "v1.0 SCADs/Turtle_Rear_Fin_v1.scad",
+        "v1.0 SCADs/Turtle_Sail_Apparatus_v1.scad",
+        "CLAUDE.md",
+        "tests/expected_bounds.json"
+      ],
+      "note": "(a) Silicone ring mold restructured into ONE two-part pressed mold that casts the flat insert-seal ring(s) AND the axle O-ring in a single session. The O-ring is nested in the centre of the first flat-ring mold ('an additional mold circle'); its torus is split across the two plates. 3 male pegs (bottom plate, 8 mm rim) seat in 3 female holes (top plate); O-ring fill+vent through the top plate. New part values: mold (exploded inspection, no longer a printable STL), mold_bottom / mold_top (the printable plates, 210 x 101; export_stl), rings, oring. The 1.6.0 standalone oring_bottom/oring_top/oring_pair parts and their STLs are removed - folded in. O-ring ID stays tied to p_axle_round_d() (8) - the sealing round section of the hex-shaft axle. manifest.json + baseline updated (silicone_ring_mold now 5 renders; 3 dead oring_* keys pruned). (b) File renames for naming consistency (versioning lives in VERSION.json): Turtle_Rear_Fin_v2.scad -> Turtle_Rear_Fin_v1.scad, Turtle_Sail_Apparatus.scad -> Turtle_Sail_Apparatus_v1.scad (src wrappers + v1.0 SCADs bundles + manifest + a lib/sail_frame comment + the rear-fin header line). No geometry change - rear_fin and sail_apparatus renders unchanged. CLAUDE.md s3/s8 updated."
     }
   ]
 }
