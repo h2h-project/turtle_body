@@ -1,5 +1,5 @@
 {
-  "version": "1.7.0",
+  "version": "1.7.1",
   "updated": "2026-09-07",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
@@ -118,6 +118,20 @@
         "tests/expected_bounds.json"
       ],
       "note": "(a) Silicone ring mold restructured into ONE two-part pressed mold that casts the flat insert-seal ring(s) AND the axle O-ring in a single session. The O-ring is nested in the centre of the first flat-ring mold ('an additional mold circle'); its torus is split across the two plates. 3 male pegs (bottom plate, 8 mm rim) seat in 3 female holes (top plate); O-ring fill+vent through the top plate. New part values: mold (exploded inspection, no longer a printable STL), mold_bottom / mold_top (the printable plates, 210 x 101; export_stl), rings, oring. The 1.6.0 standalone oring_bottom/oring_top/oring_pair parts and their STLs are removed - folded in. O-ring ID stays tied to p_axle_round_d() (8) - the sealing round section of the hex-shaft axle. manifest.json + baseline updated (silicone_ring_mold now 5 renders; 3 dead oring_* keys pruned). (b) File renames for naming consistency (versioning lives in VERSION.json): Turtle_Rear_Fin_v2.scad -> Turtle_Rear_Fin_v1.scad, Turtle_Sail_Apparatus.scad -> Turtle_Sail_Apparatus_v1.scad (src wrappers + v1.0 SCADs bundles + manifest + a lib/sail_frame comment + the rear-fin header line). No geometry change - rear_fin and sail_apparatus renders unchanged. CLAUDE.md s3/s8 updated."
+    },
+    {
+      "version": "1.7.1",
+      "date": "2026-09-07",
+      "files": [
+        "lib/silicone_ring_mold.scad",
+        "src/components/Silicone_Ring_Mold.scad",
+        "build/manifest.json",
+        "v1.0 SCADs/Silicone_Ring_Mold.scad",
+        "CLAUDE.md",
+        "tests/expected_bounds.json"
+      ],
+      "note": "Silicone mold: (a) part=mold is now the PRINTABLE layout - both plates laid flat and side by side (top plate flipped, working faces up) instead of the exploded face-to-face stack, so the single exported STL prints both halves in one no-support job. manifest.json marks mold export_stl (stl name Silicone_Ring_Mold); mold_bottom / mold_top kept for printing a plate at a time. mold bounds 210x101x18.5 -> 210x222x8.5. (b) An axle O-ring is now nested in the centre of EVERY flat-ring mold (was only the first), so the default 2-ring mold casts two O-rings = two chances at a good one; each gets its own half-torus split across the plates plus a fill+vent in the top plate. rings render gains the second torus; mold_bottom/mold_top/rings tris up. O-ring ID unchanged (p_axle_round_d() = 8). silicone_ring_mold re-baselined (intentional); no other subsystem touched.",
+      "component_bump": true
     }
   ]
 }

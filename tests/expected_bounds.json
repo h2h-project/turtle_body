@@ -45,12 +45,13 @@
         ],
         "max": [
           210.0,
-          101.0,
-          18.5
+          222.0,
+          8.5
         ]
       },
-      "tris": 35912,
-      "warnings": []
+      "tris": 65276,
+      "warnings": [],
+      "note": "v1.7.1: part=mold is now the PRINTABLE side-by-side layout (both plates flat, faces up) instead of the exploded face-to-face stack -> Y 101->222, Z 18.5->8.5. tris also up here + on rings/mold_bottom/mold_top because a second centre O-ring was added (one per flat-ring mold)."
     },
     "silicone_ring_mold__rings": {
       "bounds": {
@@ -65,7 +66,7 @@
           2.0
         ]
       },
-      "tris": 32640,
+      "tris": 61440,
       "warnings": []
     },
     "ballast_fin__assembly": {
@@ -484,7 +485,7 @@
           8.5
         ]
       },
-      "tris": 20068
+      "tris": 34948
     },
     "silicone_ring_mold__mold_top": {
       "warnings": [],
@@ -500,7 +501,7 @@
           4.0
         ]
       },
-      "tris": 15844
+      "tris": 30328
     }
   }
 }

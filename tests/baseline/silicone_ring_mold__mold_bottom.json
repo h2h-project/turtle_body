@@ -1,30 +1,30 @@
 {
   "target": "silicone_ring_mold",
-  "render": "oring",
+  "render": "mold_bottom",
   "source": "v1.0 SCADs/Silicone_Ring_Mold.scad",
   "defines": {
-    "part": "oring"
+    "part": "mold_bottom"
   },
   "returncode": 0,
   "timed_out": false,
-  "seconds": 0.0,
+  "seconds": 32.7,
   "bounds": {
     "min": [
-      -6.0,
-      -6.0,
-      -1.0
+      0.0,
+      0.0,
+      0.0
     ],
     "max": [
-      6.0,
-      6.0,
-      1.0
+      210.0,
+      101.0,
+      8.5
     ],
     "size": [
-      12.0,
-      12.0,
-      2.0
+      210.0,
+      101.0,
+      8.5
     ],
-    "tris": 28800
+    "tris": 34948
   },
   "warnings": [],
   "errors": [],

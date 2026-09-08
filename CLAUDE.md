@@ -253,24 +253,29 @@ in one session:
 
 - `ring_count` **flat insert-seal rings** — Ø75 ID / Ø85 OD × 1.5, tied to
   `p_seal_groove_root_d()`, scrape-filled in the bottom plate.
-- **one axle O-ring** — round cross-section, nested in the centre of the first
-  flat-ring mold ("an additional mold circle"). ID = `p_axle_oring_id()` =
-  `p_axle_round_d()` (**8 — tied to the sealing round section of the hex-shaft
-  axle**), CS `p_axle_oring_cs()` (2), OD 12. Its torus is split across the two
-  plates (lower half in the bottom, upper half in the top).
+- **`ring_count` axle O-rings** — round cross-section, one nested in the centre
+  of **every** flat-ring mold ("an additional mold circle" per ring), so the
+  default 2-ring mold casts **two** O-rings and you get two chances at a good
+  one. ID = `p_axle_oring_id()` = `p_axle_round_d()` (**8 — tied to the sealing
+  round section of the hex-shaft axle**), CS `p_axle_oring_cs()` (2), OD 12.
+  Each torus is split across the two plates (lower half in the bottom, upper
+  half in the top).
 
-`part` values: `mold` = exploded inspection of both plates (**not a print**);
-`mold_bottom` / `mold_top` = the printable plates (channels/pegs/holes up);
-`rings` = every cast ring; `oring` = the bare O-ring torus. **Three male pegs**
-on the bottom plate (in the 8 mm rim, 120° around the first mold) seat in
-**three female holes** in the top plate so the halves cannot shift when
-pressed; the O-ring fill + vent run through the top plate. Process: scrape-fill
-the flat channels, fill the O-ring lower half, press the top plate on (pegs →
-holes), cure, split, peel out `ring_count` flat rings + 1 O-ring.
+`part` values: `mold` = **the printable layout** — both plates laid flat and
+side by side, working faces up, so the single exported STL prints both halves
+in one job (no support); `mold_bottom` / `mold_top` = the same plates alone
+(channels/pegs/holes up); `rings` = every cast ring; `oring` = a bare O-ring
+torus. **Three male pegs** on the bottom plate (in the 8 mm rim, 120° around
+the first mold) seat in **three female holes** in the top plate so the halves
+cannot shift when pressed; each O-ring fill + vent runs through the top plate.
+Process: scrape-fill the flat channels, fill each O-ring lower half, press the
+top plate on (pegs → holes), cure, split, peel out `ring_count` flat rings +
+`ring_count` O-rings.
 
 Neither seal is validated. The O-ring's radial squeeze, the dynamic friction
 of a silicone lip on a rotating PLA shaft, and demoulding a round ring from a
-pressed mold without flash all need real testing.
+pressed mold without flash all need real testing. Casting two O-rings per
+session is a yield hedge, not a fix for any of those.
 
 ## 9. Round/hex centre axle and magnetic sensing
 
