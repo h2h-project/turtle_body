@@ -25,8 +25,15 @@ See `issues_to_fix.md` for the accompanying prioritized repair and verification 
 > 8 → 5 mm (TB-03) drops the sail head 3 mm via `control_assembly_z`, so
 > `full_turtle` / `top_sail` Z-max is 306.5 (was 309.5) — noted in
 > `tests/expected_bounds.json`. Everything else matches the pre-refactor baseline.
-> Remaining `issues_to_fix.md` items are physical / interface checks and an
-> external-generator hookup — no source drift left.
+> Remaining `issues_to_fix.md` items are physical / interface checks and the
+> generator sync — no source drift left in this repository.
+>
+> **2026-09-08 — downstream bridge to the HopeTurtles.org generators.** The
+> Python generators that turn a builder's measurements into cutting files live
+> in the sibling repository `../hopeTurtles.org/generator/`. **`lib/params.scad`
+> is authoritative; they follow it.** Any change to a shared value or a wooden
+> component must be propagated (or logged) there — see **section 19** and step 8
+> of the section 15 workflow.
 
 ## 1. Start here
 
@@ -52,10 +59,10 @@ Related projects:
 | [Turtle Body](https://github.com/h2h-project/turtle_body) | Mechanical source models and fabrication files |
 | [TurtleOS](https://github.com/h2h-project/turtleOS) | Sensing, actuation and navigation software |
 | TurtleShell PCB | Electronics interconnection and power hardware; no repository URL established by this task |
-| [HopeTurtles.org source](https://github.com/h2h-project/hopeTurtles.org) | Builder-facing website and planned body-generator integration |
-| [HopeTurtles.org](https://hopeturtles.org) | Public project website |
+| [HopeTurtles.org source](https://github.com/h2h-project/hopeTurtles.org) | Builder-facing website; hosts the Python turtle generators in `generator/` that are downstream of this repository's `lib/` (section 19). Checked out locally at `../hopeTurtles.org`. |
+| [HopeTurtles.org](https://hopeturtles.org) | Public project website; `/ecojoiners/generate` is the live generator form |
 
-The intended generator accepts local bottle, board, panel and hardware dimensions and produces a compatible set of models. This is an intended integration, not an existing API verified in this repository. Do not invent a deployed geometry service, CI workflow, package manager, or frontend build process.
+The generator accepts a builder's bottle, board and solar-panel dimensions and produces cutting files (SCAD, SVG, DXF, PDF) for the wooden components. It runs as Python inside the HopeTurtles.org Node app, not as a service this repository calls. Do not invent a deployed geometry API, CI workflow, package manager, or frontend build process here.
 
 ## 3. Actual repository map
 
@@ -81,8 +88,9 @@ OpenSCAD is required for `build/lint.py`, `build/test.py`, `build/baseline.py` a
 `build/export_stl.py` (2021.01 was used for the baseline). Scripts find it via
 `$OPENSCAD` → `PATH` → `~/.local/bin/openscad` → the macOS app bundle. `build/build.py`
 and `build/bundle.py` are pure Python. There is no CI service — everything runs locally.
-The three Python geometry generators described in section 14 live in the HopeTurtles.org
-repository, not here; connecting them is future work.
+The Python geometry generators described in section 14 live in the HopeTurtles.org
+repository (`../hopeTurtles.org/generator/`), not here; section 19 is the contract between
+the two.
 
 ## 4. Important differences to reconcile
 
@@ -96,7 +104,7 @@ These are observations, not permission to overwrite the repository with older ve
 | Full assembly axle | Standalone shortened to 58 mm and has magnet pocket | Embedded full-model axle still uses the older roof-based length and lacks the standalone magnet recess |
 | Sail attachment details | No C-piece bores, no non-sail-batten bottom bores, brown bottom rails | Standalone sail file incorporates these changes; full assembly still has old bores and orange bottom rails |
 | Seal ring | Implemented 5 mm radial width; 3.5 mm later suggested | Mold still uses **5 mm radial width**; the narrower suggestion was not implemented |
-| Python generators | Delivered for rear fin, ballast and sails | Missing from inspected repository tree |
+| Python generators | Delivered for rear fin, ballast and sails | Present in `../hopeTurtles.org/generator/` (plus a 6FC Ecojoiner generator), but drifted from `lib/params.scad` — see section 19 |
 
 The repository's 5 mm roof/2 mm boss appears to be a later edit outside the conversation. Preserve it unless the user requests otherwise. It changes the cap-to-axle relationship: the 58 mm axle's round end is 34 mm below the bearing face, so it extends 29 mm beyond a 5 mm roof, rather than the 30 mm assumed by its parameter comments. This is a dimension mismatch to evaluate, not proof that it cannot assemble.
 
@@ -116,7 +124,7 @@ Current principal foundation values:
 | Top / bottom dome heights | 62 / 25 | Canonical bottle profile |
 | Wooden stock thickness | 12 | Shared stock; do not create conflicting subsystem defaults |
 | Fin-board width | 93 | Shared fin-system stock dimension |
-| Ecojoiner port length / height | 82 / 82 | Axial port length and opening height are separate concepts |
+| Ecojoiner port length / height | 82 / 82 | Axial port length and opening height are separate concepts. **Port length is derived**: `p_port_length() = p_top_dome_h() + p_port_allowance()` (62 + 20). It was a fixed 82 until 2026-09-08 (v1.7.2), which was wrong for any bottle whose taper differs from the reference |
 | Rear solar panel W × H × T | 148 × 223 × 2.5 | Actual panel dimensions, not wooden holder thickness |
 
 For the current control-cap insertion model:
@@ -385,29 +393,28 @@ The inspected extraction contains six Long Johns, six Little Johns, four Final K
 
 All six ports have their pressers restored in the standalone Ecojoiner. The full Turtle suppresses selected pressers to accommodate the rear-fin and ballast attachments. Preserve the appropriate configuration for each output.
 
-Current references: 12 mm stock, 82 mm port length, 82 mm port height, 31 mm cap diameter, 34 mm collar diameter, Ø6.4 M6 clearance holes and 0.2 mm slot fit allowance. Bottle dimensions are sizing inputs only; the Ecojoiner-only model must not emit bottle solids.
+Current references: 12 mm stock, 82 mm port length (derived: top dome 62 + 20 mm allowance), 82 mm port height, 31 mm cap diameter, 34 mm collar diameter, Ø6.4 M6 clearance holes and 0.2 mm slot fit allowance. Bottle dimensions are sizing inputs only; the Ecojoiner-only model must not emit bottle solids.
 
 ## 14. Python generation logic
 
-These standalone standard-library generators were created in the conversation, but are missing from the inspected tree:
+The generators live in the HopeTurtles.org repository at `../hopeTurtles.org/generator/` (renamed from `ecojoiner/` on 2026-09-08). There is no `generators/` directory in this repository. Section 19 holds the component-to-generator map and the propagation rule; this section records how the scripts themselves behave.
 
-| Delivered filename | Geometry |
+| File in `../hopeTurtles.org/generator/` | Geometry |
 | --- | --- |
-| `generate_turtle_rear_fin_v2.py` | Corrected rear fin, shafts and solar holder |
-| `generate_turtle_ballast.py` | Ballast assembly and individual components |
-| `generate_turtle_sail_apparatus.py` | Latest sail apparatus and hole/colour corrections |
+| `generate_exports.py` | CLI dispatcher the website runs; no geometry; `OBJECT_MODULES` maps `object_type` → module |
+| `objects/ecojoiner_6fc.py` | 6FC Ecojoiner core — self-contained SCAD f-string plus SVG/DXF/PDF writers (renamed from `six_fc.py` 2026-09-08) |
+| `objects/back_fin.py` + `back_fin_generator.py` | Rear fin, shafts and solar holder; the reference script owns `build_scad()` |
+| `objects/ballast.py` + `bottom_ballast_fin_generator.py` | Ballast assembly and parts (`bottom_fin_raw.py` is an orphan variant) |
+| `objects/sails.py` + `generate_sails.py` | Sail apparatus; SCAD only, other formats reported as unsupported |
 
-They embed their SCAD source/templates and expose `build_scad(...)` plus a CLI. They do not require a remote file or another SCAD include. Output files use UTF-8; existing output is protected unless `--force` is supplied. The rear-fin generator uses `--defaults` for noninteractive default generation. Consult each script's `--help` before changing CLI contracts.
-
-After the scripts are actually added, example commands are:
+The reference scripts embed their SCAD source/templates and expose `build_scad(...)` plus a CLI. They do not require a remote file or another SCAD include. Output files use UTF-8; existing output is protected unless `--force` is supplied. The rear-fin generator uses `--defaults` for noninteractive default generation. Consult each script's `--help` before changing CLI contracts. Example commands, run from the HopeTurtles.org root:
 
 ```bash
-python3 generate_turtle_rear_fin_v2.py --defaults --output /tmp/rear_fin.scad
-python3 generate_turtle_ballast.py --output /tmp/ballast.scad
-python3 generate_turtle_sail_apparatus.py --output /tmp/sails.scad
+python3 generator/back_fin_generator.py --defaults --output /tmp/rear_fin.scad
+python3 generator/bottom_ballast_fin_generator.py --output /tmp/ballast.scad
+python3 generator/generate_sails.py --output /tmp/sails.scad
+generator/.venv/bin/python3 generator/generate_exports.py --json payload.json --dry-run
 ```
-
-These commands are not currently runnable from the inspected repository without first adding the scripts. Do not pretend there is a `generators/` directory already.
 
 Maintain one authoritative definition of an input within each generated file. Reject NaN, infinity, nonpositive dimensions and known invalid geometry. Keep Boolean tolerances distinct from fit clearances. When editing an emitted SCAD and its generator, update both and verify generation reproduces the intended source, including comments and selectors where byte-for-byte reproducibility is expected.
 
@@ -420,6 +427,17 @@ The sail generator currently uses targeted first-occurrence replacements for a f
 `build/lint.py` fails if one is stale. Editing the full turtle and editing a
 component are the same operation: change the shared source, then rebuild
 regenerates every dependent bundle. There is no hand-porting between copies.
+
+**Testing policy.** `build/build.py` and `build/lint.py` run on every geometry
+change — they are fast and do no meshing. The slow mesh regression
+(`build/test.py` and `build/baseline.py`) is **never run automatically by an
+agent.** It exists to catch changes in renders you did not open — a new
+ERROR/WARNING, an empty mesh, a timeout, or a bounding box that drifted past
+tolerance — not to prove geometry is correct. So an agent leaves it to the
+maintainer's own visual inspection in OpenSCAD, and only **recommends** a run
+(then waits) in the two cases in step 5: a shared-contract edit, or a
+pre-commit / STL-release change. A self-contained change whose effect is fully
+visible in one OpenSCAD view needs neither the run nor the recommendation.
 
 On **any** geometry change:
 
@@ -436,40 +454,71 @@ On **any** geometry change:
    hygiene (no top-level side effects), and an OpenSCAD CSG parse of every
    `lib/`, `src/` and bundle file (catches undefined vars, failed asserts,
    unexpected warnings). Seconds, no meshing.
-5. `python3 build/test.py` — meshes every component `part` and every
-   `assembly_view` headless and checks each against `tests/expected_bounds.json`:
-   nonzero exit / timeout / empty mesh / new ERROR line / a WARNING not already
-   in the baseline / bounding box moved more than the tolerance all fail it.
-   If a dimensional change is **intentional**, re-run `python3 build/baseline.py
-   <target>` and review the `tests/expected_bounds.json` diff as the sign-off
-   (add a `note` to the changed entry saying why).
+5. **Decide whether the mesh regression is warranted — do not run it
+   reflexively, and never run it automatically.** `python3 build/test.py` meshes
+   every component `part` and every `assembly_view` headless and checks each
+   against `tests/expected_bounds.json` (nonzero exit / timeout / empty mesh /
+   new ERROR line / a WARNING not already in the baseline / bounding box moved
+   more than the tolerance all fail it). It is slow (see below) and it detects
+   *change in the renders you did not open* — it is not a correctness proof.
+
+   - **Change confined to one subsystem, effect fully visible in an OpenSCAD
+     view** (no shared value touched): `lint.py` plus your own visual
+     inspection is enough. Do **not** run `build/test.py`, and do **not**
+     recommend it — just state what you inspected.
+   - **The edit touched the shared contract** (`lib/params.scad`,
+     `lib/util.scad`, a shared module's signature, or any value feeding more
+     than one subsystem) **or** the change is about to be committed / STLs
+     others rely on are about to be cut: **recommend that the maintainer run
+     `python3 build/test.py`** — and `python3 build/baseline.py <target>` if the
+     dimensional change is intentional — **then wait.** Do not run either
+     yourself unless the user asks. If the user declines, record in the report
+     that the cross-subsystem regression was not run.
+
+   When a baseline *is* re-recorded, review the `tests/expected_bounds.json`
+   diff as the sign-off and add a `note` to each changed entry saying why.
 6. **Bump `VERSION.json`.** `+0.0.1` for a component-scoped change (one
    `lib/<subsystem>.scad` or one `src/components/*.scad`); `+0.1.0` for a
    full-turtle-scoped change (`src/Full_Turtle.scad`, a world transform, the
    `assembly_view` dispatch, or a `lib/params.scad` value that moves a mating
    interface); `+1.0.0` for a bottle / board / hardware interface break. Append
    a `changelog` entry: version, date, files, one-line reason.
-7. **Report** what changed, which bundles regenerated (`git diff --stat`), and
-   the lint/test results. STLs are **not** auto-exported — run
-   `python3 build/export_stl.py` (writes `v1.0 STLs/<name>_v<version>.stl`) only
-   when new fabrication files are actually needed.
+7. **Report** what changed, which bundles regenerated (`git diff --stat`), the
+   `build/lint.py` result, what you inspected visually, and — per step 5 —
+   either that no cross-subsystem regression was needed, or that you have
+   recommended the maintainer run `build/test.py` (with the result if they ran
+   it). STLs are **not** auto-exported — run `python3 build/export_stl.py`
+   (writes `v1.0 STLs/<name>_v<version>.stl`) only when new fabrication files
+   are actually needed.
+
+8. **Propagate to the HopeTurtles.org generators (section 19).** If the change
+   touched `lib/params.scad`, `lib/util.scad`, `lib/ecojoiner.scad`,
+   `lib/rear_fin.scad`, `lib/ballast_fin.scad`, `lib/sail_frame.scad`, a wooden
+   component's wrapper customizer / `part` surface, or bumped `VERSION.json` by
+   a minor or major step: open the matching generator in
+   `../hopeTurtles.org/generator/` and update its defaults, formulas or template.
+   If that is out of the task's scope, append an `open` entry to
+   `../hopeTurtles.org/generator/SYNC_LOG.md` and say so in the report. PLA-only
+   changes (cap, cage, axle, mold) need neither.
 
 Commands from the repository root:
 
 ```bash
-python3 build/build.py                 # regenerate all bundles (the sync step)
+python3 build/build.py                 # regenerate all bundles (the sync step) — every change
 python3 build/build.py --check         # fail if any bundle is stale
-python3 build/lint.py
-python3 build/test.py                  # or: build/test.py control_cap ecojoiner ...
-python3 build/baseline.py <target>     # re-record baseline (intentional changes only)
+python3 build/lint.py                  # parse + freshness, no meshing — every change
+python3 build/test.py                  # cross-subsystem mesh regression — maintainer-run; shared-contract or pre-commit only. accepts target ids: build/test.py control_cap ecojoiner ...
+python3 build/baseline.py <target>     # re-record baseline (intentional changes only; maintainer-run)
 python3 build/export_stl.py            # versioned PLA-part STLs
 openscad -D 'part="non_sail_batten"' -o /tmp/x.stl 'v1.0 SCADs/Turtle_Sail_Apparatus_v1.scad'
 git diff --stat && git diff --check
 ```
 
 Renders are slow under OpenSCAD 2021.01 — the cage is ~90 s per view and a full
-turtle view is 2–10 min. `build/test.py` accepts target ids so you can check
-just the affected subsystem. `rg` may be absent; use `grep -rn`.
+turtle view is 2–10 min. This slowness is the reason `build/test.py` is
+maintainer-run and scoped (step 5), not part of the automatic loop; it accepts
+target ids so a run can cover just the affected subsystem. `rg` may be absent;
+use `grep -rn`.
 
 ### M7 — wire `src/Full_Turtle.scad` to the lib modules  (COMPLETE)
 
@@ -571,8 +620,10 @@ Remaining scoped clean-ups:
   `fixed_control_bottle_unit()` + `rotating_cage_sail_unit()` around lib calls.
 - Add a GitHub Actions job that runs `build/lint.py` + `build/test.py` if the
   project ever wants CI (currently local-only by design).
-- Connect the HopeTurtles.org Python generators to this `lib/` contract after
-  checking that repository's actual architecture and interfaces.
+- Execute the generator sync plan in `../hopeTurtles.org/generator/SYNC_PLAN.md`
+  (items S-1…S-6). S-5 asks this repository for a `build/export_params.py` that
+  dumps every `p_*()` to `build/params.json` so the generators can load the
+  contract instead of retyping it.
 
 ## 18. Provenance and maintenance
 
@@ -581,3 +632,87 @@ This handoff combines the development conversation with direct inspection of the
 Keep this file at the repository root as **`CLAUDE.md`**. That is the project-instruction filename documented by [Claude Code](https://code.claude.com/docs/en/memory). This deliberately extensive handoff can later be split into shorter core instructions and subsystem documents if maintaining it as one file becomes cumbersome.
 
 When updating it, change the inspection date/revision, close resolved discrepancies, and retain enough rationale to prevent a future agent from reintroducing a corrected design error.
+
+## 19. Downstream: the HopeTurtles.org generator bridge
+
+HopeTurtles.org (`../hopeTurtles.org`, sibling checkout; note the capital T) lets a
+builder enter bottle, board and solar-panel measurements at `/ecojoiners/generate` and
+download cutting files. Those files come from Python generators in
+`../hopeTurtles.org/generator/` (renamed from `ecojoiner/` on 2026-09-08, because the
+directory generates the wooden parts of a whole turtle, of which the Ecojoiner is the
+central part). The generators were written against the old monolithic `Full_Turtle`
+SCAD and **drifted** once geometry moved into `lib/`. This section is the contract that
+keeps them in step. The mirror of it lives in `../hopeTurtles.org/CLAUDE.md` →
+"Turtle Generator".
+
+**Direction of truth: `lib/params.scad` (and the wooden `lib/*.scad` modules) win.**
+The generators are consumers. When a value differs, the generator is wrong. The 6FC
+Ecojoiner generator's Master-John / cap 32 / port 85 values are legacy from when the
+website only generated Ecojoiners; they are drift, not a separate design.
+
+### Component map
+
+| Component | Source here | Wrapper / bundle | Generator there (`generator/`) | `object_type` |
+| --- | --- | --- | --- | --- |
+| Ecojoiner core (Long/Little Johns, Final Keys, Pressers) | `lib/ecojoiner.scad` + `lib/params.scad` | `src/components/Turtle_Core_Ecojoiner_v1.scad` → `v1.0 SCADs/Turtle_Core_Ecojoiner_v1.scad` | `objects/six_fc.py` | `6fc` |
+| Rear fin, bottle-holder shafts, solar holder | `lib/rear_fin.scad` | `Turtle_Rear_Fin_v1.scad` | `objects/back_fin.py` + `back_fin_generator.py` | `fin` |
+| Ballast (core slats, bottom board, lock feet, fin) | `lib/ballast_fin.scad` | `Turtle_Bottom_Ballast_Fin_v1.scad` | `objects/ballast.py` + `bottom_ballast_fin_generator.py` | `ballast` |
+| Sail frame (bars, battens, strengtheners, C pieces, sails) | `lib/sail_frame.scad` | `Turtle_Sail_Apparatus_v1.scad` | `objects/sails.py` + `generate_sails.py` | `sails` |
+| Cap, cage, axle, mold (printed PLA) | `lib/control_*.scad`, `lib/hex_shaft.scad`, `lib/silicone_ring_mold.scad` | — | **no generator; never needs propagation** | — |
+
+Each generator carries three copies of every formula — the `lib/` module, its embedded
+SCAD body, and a Python `derive_dimensions()` that re-derives 2D outlines for SVG/DXF/PDF.
+Only the last one has no mechanical fix, which is why the rule below exists.
+
+### Propagation rule (also step 8 of the section 15 workflow)
+
+A change to **any** of the following must be carried to the matching generator in the
+same task, or explicitly logged if it cannot be:
+
+- `lib/params.scad` or `lib/util.scad` (any value — check which components consume it);
+- `lib/ecojoiner.scad`, `lib/rear_fin.scad`, `lib/ballast_fin.scad`, `lib/sail_frame.scad`;
+- a wooden component's wrapper customizer surface or `part` list in `src/components/`;
+- a minor (`+0.1.0`) or major (`+1.0.0`) bump of `VERSION.json`.
+
+To carry it: open the generator named in the map, update `DEFAULTS` / `TUNING` /
+formula / template, keep the upstream `p_*()` name cited in the comment beside each
+constant, and re-run the generator's dry run (section 14). If the task cannot include
+that, append an `open` line to `../hopeTurtles.org/generator/SYNC_LOG.md` (format is at
+the top of that file) and state it in the report. Never let a `lib/` change go
+unrecorded on the generator side.
+
+### Known drift, recorded 2026-09-08 against v1.7.1 — now fully resolved
+
+Rear fin, ballast, sails (including its SVG/DXF/PDF writers) and 6FC were all hand-fixed the
+same day (S-5, the automatic sync mechanism, was deliberately deferred — see
+`generator/SYNC_PLAN.md`). No open drift remains on the generator side.
+
+Resolved: rear fin's `shaft_hole_diameter` (6.0 → 6.4) and its fixed `shaft_hole_from_front`
+(50 → derived via TB-07, no longer a constant — section 11's "preserve the 50 mm standalone
+offset" note is superseded); ballast's defaults (15/320/35 → 12/305/31), slat-height formula
+(4.5·t → 6·t), a **missing M6 mount hole** (the standalone generator's core slat had none at
+all), and a latent bug where the shoulder-cut position read `port_length` instead of
+`bottle_diameter`/port height (the two are numerically equal only at the reference bottle's
+defaults, so a non-default taper would have silently mis-cut the shoulder); sails' bottle
+diameter and cap/collar/dome heights (the SCAD module already accepted them as parameters —
+only the Python wrapper never threaded a caller's values through) **plus** its previously
+missing SVG/DXF/PDF carpenter-sheet writers, built for all 7 part shapes and verified against
+real OpenSCAD-rendered bounding boxes; 6FC's part list (Master
+John ×1 + Little John ×5 → six Little Johns, no Master John), `cap_diameter` 32→31,
+`collar_diameter` 32→34, `port_height` 85→82, `screw_diameter` 4.5 (pilot)→6.4 (M6 clearance)
+— `objects/six_fc.py` renamed `objects/ecojoiner_6fc.py` in the same pass (internal only;
+`object_type`, job-slug prefix and every public identifier are unchanged). Full detail in
+`generator/SYNC_PLAN.md`'s "Resolved" section and `SYNC_LOG.md`.
+
+**"Lib wins" means lib owns the *rule*, not just the number.** The port-length case
+(v1.7.2) is the precedent: lib carried an evaluated constant (82) where the generators
+carried the formula (taper + 20). The formula was right and lib was fixed to derive it.
+When syncing, compare rules first; if a generator has a parametric rule that lib has
+flattened into a constant, lift the rule into `lib/params.scad` rather than hardcoding
+the generator.
+
+The assessment and ordered work items (S-1 rear fin, S-2 ballast, S-3 sails, S-4 6FC,
+S-5 the sync mechanism, S-6 hygiene) are in `../hopeTurtles.org/generator/SYNC_PLAN.md`.
+S-5 asks this repository for `build/export_params.py` → `build/params.json` (every
+`p_*()` value plus the version), regenerated by `build/build.py`, so the generators can
+load the contract and vendor the `v1.0 SCADs/` bundles instead of retyping formulas.

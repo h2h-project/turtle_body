@@ -59,7 +59,14 @@ function p_fin_board_w()     = 93;    // shared fin-system stock width
 function p_screw_side_offset() = 25;  // mounting-hole inset from a John end
 
 // ---- Ecojoiner port --------------------------------------------------
-function p_port_length()     = 82;                 // axial length of a port
+// A port must swallow the bottle's tapered top (the top dome) plus a seating
+// allowance, so its axial length is DERIVED from the bottle, not fixed. This
+// is the same rule the HopeTurtles.org generators use
+// (port_length = taper_height + port_allowance); until 2026-09-08 lib carried
+// the evaluated constant 82 instead, which silently broke the rule for any
+// bottle other than the reference one. Ballast and Ecojoiner both read it.
+function p_port_allowance()  = 20;                 // seating allowance beyond the dome
+function p_port_length()     = p_top_dome_h() + p_port_allowance();   // 62 + 20 = 82
 function p_port_height()     = p_bottle_d();       // opening height == bottle diameter (asserted)
 
 // ---- M6 hardware ---------------------------------------------------

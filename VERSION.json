@@ -1,6 +1,6 @@
 {
-  "version": "1.7.1",
-  "updated": "2026-09-07",
+  "version": "1.8.0",
+  "updated": "2026-09-08",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
     "patch": "+0.0.1  component-scoped change (one lib/<subsystem>.scad or one src/components/*.scad)",
@@ -69,7 +69,7 @@
         "Full_Turtle_v1.scad",
         "tests/expected_bounds.json"
       ],
-      "note": "M7 COMPLETE - control head cap + axle + cage now from lib/. (a) control_cap -> lib/control_cap.scad: TB-03 applied to the full assembly (roof 8->5 mm, + 2 mm boss, twin 2x2 mm grooves replace the single 13x1.1). top_disk_thickness = p_cap_roof_t(); control_assembly_z = bottle_cut_height - top_disk_thickness unchanged, so the whole control head + sail frame drop 3 mm -> full_turtle & top_sail Z-max 309.5 -> 306.5 (only axis that moved; core unchanged). Baseline updated with a note. (b) turtle_control_axle -> lib/hex_shaft.scad control_axle(): TB-04 (59 mm + \u00d83x1 magnet recess). Placed at control_assembly_z - (p_axle_hex_len()+p_axle_round_ext()) to align lib's hex-bottom origin with the cap face; geometry proven identical to the embedded axle after that shift, magnet recess is internal -> bounds unchanged. (c) cage_* build + positioned_cage_assembly -> lib/control_cage.scad: the embedded cage-native frame put bearing tips at Z=cage_bearing_tip_native_z (39.5); lib puts them at Z=0, so positioned_cage_assembly drops the '+ cage_bearing_tip_native_z' term. button_angle=cage_button_angle(0) + the 90-deg install rotate nets to 90 as before. Bounds unchanged. src/Full_Turtle.scad 4656 -> 2749 lines. Every subsystem in the full turtle now flows from lib/. TB-01/02/03/04/07 all applied to the full assembly. Remaining: physical/interface checks only (CH-2, TB-08) + external generators (TB-06) + an STL release (TB-05 residual)."
+      "note": "M7 COMPLETE - control head cap + axle + cage now from lib/. (a) control_cap -> lib/control_cap.scad: TB-03 applied to the full assembly (roof 8->5 mm, + 2 mm boss, twin 2x2 mm grooves replace the single 13x1.1). top_disk_thickness = p_cap_roof_t(); control_assembly_z = bottle_cut_height - top_disk_thickness unchanged, so the whole control head + sail frame drop 3 mm -> full_turtle & top_sail Z-max 309.5 -> 306.5 (only axis that moved; core unchanged). Baseline updated with a note. (b) turtle_control_axle -> lib/hex_shaft.scad control_axle(): TB-04 (59 mm + Ø3x1 magnet recess). Placed at control_assembly_z - (p_axle_hex_len()+p_axle_round_ext()) to align lib's hex-bottom origin with the cap face; geometry proven identical to the embedded axle after that shift, magnet recess is internal -> bounds unchanged. (c) cage_* build + positioned_cage_assembly -> lib/control_cage.scad: the embedded cage-native frame put bearing tips at Z=cage_bearing_tip_native_z (39.5); lib puts them at Z=0, so positioned_cage_assembly drops the '+ cage_bearing_tip_native_z' term. button_angle=cage_button_angle(0) + the 90-deg install rotate nets to 90 as before. Bounds unchanged. src/Full_Turtle.scad 4656 -> 2749 lines. Every subsystem in the full turtle now flows from lib/. TB-01/02/03/04/07 all applied to the full assembly. Remaining: physical/interface checks only (CH-2, TB-08) + external generators (TB-06) + an STL release (TB-05 residual)."
     },
     {
       "version": "1.5.1",
@@ -132,6 +132,36 @@
       ],
       "note": "Silicone mold: (a) part=mold is now the PRINTABLE layout - both plates laid flat and side by side (top plate flipped, working faces up) instead of the exploded face-to-face stack, so the single exported STL prints both halves in one no-support job. manifest.json marks mold export_stl (stl name Silicone_Ring_Mold); mold_bottom / mold_top kept for printing a plate at a time. mold bounds 210x101x18.5 -> 210x222x8.5. (b) An axle O-ring is now nested in the centre of EVERY flat-ring mold (was only the first), so the default 2-ring mold casts two O-rings = two chances at a good one; each gets its own half-torus split across the plates plus a fill+vent in the top plate. rings render gains the second torus; mold_bottom/mold_top/rings tris up. O-ring ID unchanged (p_axle_round_d() = 8). silicone_ring_mold re-baselined (intentional); no other subsystem touched.",
       "component_bump": true
+    },
+    {
+      "version": "1.7.2",
+      "date": "2026-09-08",
+      "files": [
+        "lib/params.scad",
+        "v1.0 SCADs/Turtle_Core_Ecojoiner_v1.scad",
+        "v1.0 SCADs/Turtle_Bottom_Ballast_Fin_v1.scad",
+        "v1.0 SCADs/Turtle_Rear_Fin_v1.scad",
+        "v1.0 SCADs/Turtle_Sail_Apparatus_v1.scad",
+        "v1.0 SCADs/Bottle_Control_Cage_v1.scad",
+        "v1.0 SCADs/Bottle_Control_Cap_v1.scad",
+        "v1.0 SCADs/Bottle_Hex_Shaft_v1.scad",
+        "v1.0 SCADs/Silicone_Ring_Mold.scad",
+        "Full_Turtle_v1.scad",
+        "CLAUDE.md",
+        "issues_to_fix.md"
+      ],
+      "note": "Ecojoiner port length is now DERIVED: p_port_length() = p_top_dome_h() + new p_port_allowance() (62 + 20 = 82). It was the evaluated constant 82, which broke the rule for any bottle whose top taper differs from the reference bottle - the HopeTurtles.org generators already derive it as taper_height + port_allowance, and lib is the source of truth for the rule. Value unchanged at defaults, so no geometry, bounds or baseline move; every bundle regenerates because params.scad is inlined in all of them. Bridge to the generators documented in CLAUDE.md section 19.",
+      "component_bump": true
+    },
+    {
+      "version": "1.8.0",
+      "date": "2026-09-08",
+      "files": [
+        "src/Full_Turtle.scad",
+        "Full_Turtle_v1.scad"
+      ],
+      "note": "Added a genuine cross-check assert for the rear-fin/Ecojoiner M6 mounting-hole alignment. The existing assert (\"Rear-fin and John mounting-hole axes must coincide\") only checked the X axis (hole_from_front) against a value DEFINED from the same terms it compares to, so it could never fail - it was not proof the shafts are actually flush against the John. Verified via rendered coordinate probes (real board geometry, not just formulas) that the current model IS already correctly aligned on the Y axis (the boards' stacking direction) - the two rear-fin shaft boards meet their target Little John boards flush, with zero gap, at Y=6 and Y=112. No placement values changed; geometry and bounds are unchanged (assert-only addition), confirmed via build/lint.py's OpenSCAD parse plus a manual numeric negative-control test showing the new assert's terms would diverge under a simulated 12mm regression.",
+      "component_bump": false
     }
   ]
 }

@@ -30,12 +30,40 @@ transmits torque but does not stop the cage/axle separating.
 
 ---
 
-## TB-06 — Connect the Python body generators  — P2, external
+## TB-06 (residual) — Build the generator sync mechanism (S-5)  — P3, external
 
-`generate_turtle_rear_fin_v2.py`, `generate_turtle_ballast.py`,
-`generate_turtle_sail_apparatus.py` live in the HopeTurtles.org repository, not
-here. When integrating, wire them to the `lib/params.scad` contract rather than
-re-deriving dimensions; keep `--force` protection and self-contained UTF-8 output.
+Every recorded drift item is fixed as of 2026-09-08 (list below, for the record). What
+remains is S-5 only: the automatic sync mechanism, deliberately deferred in favor of
+hand-fixing directly. Without it, the next turtle_body release needs this same manual
+comparison redone by hand — see the closing paragraph below.
+
+The generators live in `../hopeTurtles.org/generator/` (`objects/ecojoiner_6fc.py`,
+`objects/back_fin.py`, `objects/ballast.py`, `objects/sails.py` + their reference
+scripts). The bridge contract is `CLAUDE.md` §19 here and "Turtle Generator" in
+that repository's `CLAUDE.md`; the ordered work plan is
+`../hopeTurtles.org/generator/SYNC_PLAN.md` (S-1…S-6) and the running log is
+`generator/SYNC_LOG.md`. Recorded drift as of 2026-09-08 (lib wins):
+
+- ~~Rear fin~~ **fixed 2026-09-08**: shaft hole Ø6.0 → 6.4; hole 50 mm from front →
+  TB-07 formula (103), now derived rather than a constant.
+- ~~Ballast~~ **fixed 2026-09-08**: defaults 15/320/35 → 12/305/31; slat 4.5·t → 6·t;
+  also found and fixed a missing M6 mount hole (none existed) and a latent bug where
+  the shoulder cut read `port_length` instead of `bottle_diameter`.
+- ~~Sails~~ **fixed 2026-09-08**: bottle diameter and cap/collar/dome heights are now
+  real inputs (the SCAD already accepted them; only the Python wrapper never passed
+  them through). SVG/DXF/PDF writers were also missing entirely for all 7 part
+  shapes — added and verified against real OpenSCAD-rendered bounding boxes.
+- ~~6FC Ecojoiner~~ **fixed 2026-09-08**: Master John + 5 Little Johns → 6 Little
+  Johns; cap/collar/port height 32/32/85 → 31/34/82; screw 4.5 → Ø6.4. `objects/six_fc.py`
+  renamed `objects/ecojoiner_6fc.py` (internal only — object_type and job-slug unchanged).
+- ~~Port length~~ **fixed in v1.7.2**: lib had flattened it to a constant 82; it is
+  now `p_top_dome_h() + p_port_allowance()`, the same rule the generators use.
+
+This repository's share (S-5, the automatic sync mechanism): still open, deliberately
+deferred in favor of hand-fixing the drift directly (2026-09-08). Would add
+`build/export_params.py` writing `build/params.json` from every `p_*()`, hooked into
+`build/build.py`, so the next turtle_body release doesn't need this comparison redone
+by hand.
 
 ---
 

@@ -1630,6 +1630,50 @@ assert(rear_shaft_rear_x - rear_shaft_length + rear_shaft_hole_from_front
        + rear_shaft_hole_diameter / 2 < 0,
        "Rear mounting hole must stay forward of the green/yellow joint.");
 
+// Independent cross-check (Y axis): the assert above only checks X (the
+// hole's distance along the shaft, "hole_from_front") against a value that
+// is DEFINED FROM the same terms it is compared to, so it can never fail --
+// it does not prove the shaft is actually flush against the John it bolts
+// to. This block checks the other axis, the boards' stacking direction,
+// against an independently-derived source: the target Little John's own
+// board extent from lib/ecojoiner.scad (eco_slat_t(), eco_rectangle_y()),
+// versus each shaft's own board Z-extent pushed through the real install
+// transform. ecojoiner_and_bottles() suppresses exactly these two Little
+// John holes -- "the two Pressers on the physical 3-o'clock port ... for
+// the rear-fin green shafts" -- so these are the correct targets.
+//
+// Each shaft's board occupies local Z in [z0, z0+t]; the installed
+// transform maps local Z to world Y via world_y = 2*rear_local_bottle_axis_z
+// + rear_install_pre_y - local_z (see installed_rear_fin_on_3oclock_port()),
+// so the board's world-Y span runs from that value at local Z = z0+t (the
+// "near", touching edge) to the same value at local Z = z0 (the "far" edge).
+// Which edge is the touching one flips between the two shafts because they
+// mate to Little Johns on opposite sides of the rectangle (opposite
+// inside_sign in eco_standing_little_john) -- so this checks both edges
+// rather than assuming one.
+rear_upper_shaft_hole_y_far  =
+    2 * rear_local_bottle_axis_z + rear_install_pre_y - rear_upper_shaft_z0;
+rear_upper_shaft_hole_y_near =
+    rear_upper_shaft_hole_y_far - rear_shaft_thickness;
+rear_lower_shaft_hole_y_far  =
+    2 * rear_local_bottle_axis_z + rear_install_pre_y - rear_lower_shaft_z0;
+rear_lower_shaft_hole_y_near =
+    rear_lower_shaft_hole_y_far - rear_shaft_thickness;
+
+rear_john_target_a_y = 0 + eco_slat_t() / 2;                  // target_y=0 Little John's inner face
+rear_john_target_b_y = eco_rectangle_y() - eco_slat_t() / 2;  // target_y=eco_rectangle_y() Little John's inner face
+
+assert(
+    abs(rear_upper_shaft_hole_y_near - rear_john_target_a_y) < 0.001 ||
+    abs(rear_upper_shaft_hole_y_far  - rear_john_target_a_y) < 0.001,
+    "Rear-fin upper shaft board must sit flush against its Little John hole (Y axis)."
+);
+assert(
+    abs(rear_lower_shaft_hole_y_near - rear_john_target_b_y) < 0.001 ||
+    abs(rear_lower_shaft_hole_y_far  - rear_john_target_b_y) < 0.001,
+    "Rear-fin lower shaft board must sit flush against its Little John hole (Y axis)."
+);
+
 
 module installed_rear_fin_on_3oclock_port() {
 
