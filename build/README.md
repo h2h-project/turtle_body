@@ -10,6 +10,7 @@ Local, no network, no CI service. Python 3 standard library + OpenSCAD only.
 | `src/Full_Turtle.scad`, `src/components/*.scad` | **Editable.** Thin wrappers: customizer block + `use <../lib/...>` + a `part=` / `assembly_view` dispatch. No geometry of their own. |
 | `Full_Turtle_v1.scad`, `v1.0 SCADs/*.scad` | **Generated. Do not edit.** Self-contained bundles produced from `src/` + `lib/`. Committed so they stay downloadable and STL-ready. A banner marks them. |
 | `v1.0 STLs/*_v<version>.stl` | Fabrication exports, written on demand by `export_stl.py`. Not auto-committed. |
+| `build/params.json` | **Generated. Do not edit.** Every `lib/params.scad` `p_*()` value + the version, from `export_params.py` (run by `build.py`, checked by `lint.py`). The machine-readable contract the HopeTurtles.org generators sync against — see CLAUDE.md §19. |
 | `build/manifest.json` | Every renderable target: its `src`, its generated `out`, and the `-D` defines for each render. |
 | `tests/expected_bounds.json` | Regression baseline (bounding box + triangle count per render) that `test.py` checks. |
 | `tests/baseline/*.json` | Full per-render dump from the last `baseline.py` run (bounds, echoes, warnings, timing). |
@@ -18,9 +19,10 @@ Local, no network, no CI service. Python 3 standard library + OpenSCAD only.
 ## Scripts
 
 ```bash
-python3 build/build.py            # regenerate every bundle from src/ + lib/  (the sync step)
-python3 build/build.py --check    # fail if a committed bundle is stale
-python3 build/lint.py             # bundle freshness + git whitespace + OpenSCAD CSG parse + lib hygiene
+python3 build/build.py            # regenerate every bundle + build/params.json  (the sync step)
+python3 build/build.py --check    # fail if a committed bundle or params.json is stale
+python3 build/export_params.py    # just the p_*() -> build/params.json snapshot (build.py runs this)
+python3 build/lint.py             # bundle + params freshness + git whitespace + OpenSCAD CSG parse + lib hygiene
 python3 build/test.py             # mesh every render, compare bounds/warnings to the baseline (maintainer-run — see workflow)
 python3 build/baseline.py         # re-record the baseline (only when geometry changes are intentional; maintainer-run)
 python3 build/export_stl.py       # write the PLA-part STLs, version-stamped

@@ -1,6 +1,6 @@
 {
-  "version": "1.8.0",
-  "updated": "2026-09-08",
+  "version": "1.8.3",
+  "updated": "2026-09-09",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
     "patch": "+0.0.1  component-scoped change (one lib/<subsystem>.scad or one src/components/*.scad)",
@@ -162,6 +162,46 @@
       ],
       "note": "Added a genuine cross-check assert for the rear-fin/Ecojoiner M6 mounting-hole alignment. The existing assert (\"Rear-fin and John mounting-hole axes must coincide\") only checked the X axis (hole_from_front) against a value DEFINED from the same terms it compares to, so it could never fail - it was not proof the shafts are actually flush against the John. Verified via rendered coordinate probes (real board geometry, not just formulas) that the current model IS already correctly aligned on the Y axis (the boards' stacking direction) - the two rear-fin shaft boards meet their target Little John boards flush, with zero gap, at Y=6 and Y=112. No placement values changed; geometry and bounds are unchanged (assert-only addition), confirmed via build/lint.py's OpenSCAD parse plus a manual numeric negative-control test showing the new assert's terms would diverge under a simulated 12mm regression.",
       "component_bump": false
+    },
+    {
+      "version": "1.8.1",
+      "date": "2026-09-08",
+      "files": [
+        "lib/ecojoiner.scad",
+        "v1.0 SCADs/Turtle_Core_Ecojoiner_v1.scad",
+        "Full_Turtle_v1.scad",
+        "build/export_params.py",
+        "build/build.py",
+        "build/params.json",
+        "build/README.md",
+        "tests/expected_bounds.json",
+        "tests/baseline/ecojoiner__default.json",
+        "CLAUDE.md"
+      ],
+      "note": "Restored the Master John. One of the six Little Johns in the standalone Ecojoiner (eco_ecojoiner_only) is now the deeper-slotted piece fitted last: same outline, collar hole and M6 holes, but its two top slots are cut to eco_master_slot_depth() = min(floor(port_height/2), floor(john_height*0.6)) = 34 mm instead of the standard 29, so it can drop past the already-seated Johns of the almost-closed frame. Without the deeper slot the third rectangle cannot be assembled. The rule is lifted verbatim from the HopeTurtles.org 6FC generator (objects/ecojoiner_6fc.py::master_slot_depth), which had always carried it - this is a sanctioned upstream lift under CLAUDE.md s19 ('lib owns the rule'), reversing the 2026-09-08 v1.7.1 sync that had wrongly flattened it away. New: eco_master_slot_depth(), eco_master_john_2d(), eco_master_john(); eco_standing_little_john() gains is_master, eco_john_rectangle()/eco_centered_rectangle() gain master_first_john (appended last so the four positional callers in src/Full_Turtle.scad are untouched). Full-turtle assembly (ecojoiner_and_bottles) is byte-identical - it does not set the flag. Standalone bounds unchanged (min [0,-118,-206] / max [294,176,88], deeper slot is an internal cut); the pre-existing non-2-manifold WARNING is unchanged. build/test.py ecojoiner + build/baseline.py ecojoiner run: bounds unchanged, tri/echo baseline re-recorded (the prior baseline predated the lib/ refactor - see the tests/expected_bounds.json note). ALSO in this version (tooling, no geometry): build/export_params.py renders every lib/params.scad p_*() to build/params.json (126 values + version), hooked into build/build.py and gated by build/lint.py --check - it is the S-5 sync mechanism the HopeTurtles.org generators vendor and diff against (SYNC_PLAN.md S-5, CLAUDE.md s19).",
+      "component_bump": true
+    },
+    {
+      "version": "1.8.2",
+      "date": "2026-09-09",
+      "files": [
+        "lib/sail_frame.scad",
+        "v1.0 SCADs/Turtle_Sail_Apparatus_v1.scad",
+        "Full_Turtle_v1.scad"
+      ],
+      "note": "Sails gain straight fold-over tabs at the top and bottom rail edges, for stapling the sail membrane to the rails - previously the sail polygon stopped exactly at the two rail lines with nothing to attach to. Each tab is a rectangular extension of the trapezoid's full edge width at that end (new local sail_tab_height, placeholder 50 mm for visual inspection; will eventually equal board_width so the tab folds flat onto the rail's stock thickness). The sail stays one flat 2D shape (a 6-point simple polygon) extruded to the same 0.1 mm thickness. Deliberately cuts straight out through the rail/batten wood at this placeholder height - no clash handling added, none requested. Component-scoped to lib/sail_frame.scad (no lib/params.scad or shared-signature change), so per CLAUDE.md s15 step 5 the cross-subsystem mesh regression (build/test.py) was not run, only build/lint.py (clean) plus visual inspection: rendered part=\"sails\" and the full_turtle assembly_view=\"top_sail\" in OpenSCAD with no new ERROR/WARNING; the sails render visibly shows the added tabs. Bounding boxes for sails/top_sail/full_turtle grow (tabs extend past the rails); tests/expected_bounds.json intentionally not touched - a baseline re-record is a maintainer call (build/baseline.py) since this was flagged as inspection-only, not a release.",
+      "component_bump": true
+    },
+    {
+      "version": "1.8.3",
+      "date": "2026-09-09",
+      "files": [
+        "lib/sail_frame.scad",
+        "v1.0 SCADs/Turtle_Sail_Apparatus_v1.scad",
+        "Full_Turtle_v1.scad"
+      ],
+      "note": "Sail tab height changed from the 50 mm inspection placeholder (v1.8.2) to sail_tab_height = board_width (12 mm at reference params), so the fold-over tab no longer protrudes out the far face of the rail - it now folds flat onto the rail's stock thickness as originally intended. No other geometry change. Component-scoped to lib/sail_frame.scad; build/lint.py clean, part=\"sails\" re-rendered visually to confirm the tab now stops within the rail thickness. Bounding boxes for sails/top_sail/full_turtle shrink back toward (but not exactly to) the pre-tab v1.8.1 baseline; tests/expected_bounds.json still intentionally untouched.",
+      "component_bump": true
     }
   ]
 }

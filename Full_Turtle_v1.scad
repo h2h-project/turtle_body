@@ -1,7 +1,7 @@
 // ==========================================================================
 //  GENERATED FILE -- DO NOT EDIT.
 //  Produced by build/build.py from src/Full_Turtle.scad
-//  Turtle Body version 1.7.2
+//  Turtle Body version 1.8.3
 //  Edit lib/ and src/ instead, then run: python3 build/build.py
 // ==========================================================================
 /*
@@ -550,8 +550,11 @@ module cut_bottle(bottle_d   = p_bottle_d(),
 //  Turtle Body -- Ecojoiner core frame  (lib module)
 // --------------------------------------------------------------------------
 //  Three interlocked rectangles of Long + Little Johns, four Final Keys and
-//  up to twelve pressers with visual M6 bolts. Bottle dimensions are sizing
-//  inputs only -- this module never emits a bottle. See CLAUDE.md s13.
+//  up to twelve pressers with visual M6 bolts. One of the six Little Johns is
+//  a "Master John": identical outline, but its two top slots are cut deeper so
+//  it can be dropped in last, past the already-seated Johns of the almost-
+//  closed frame. Bottle dimensions are sizing inputs only -- this module never
+//  emits a bottle. See CLAUDE.md s13.
 //
 //  Standalone output restores all six ports' pressers. The full Turtle
 //  suppresses selected pressers where the rear fin and ballast attach; pass
@@ -624,6 +627,13 @@ function eco_john_length()   = 2 * eco_port_length() + eco_port_height()
                              + 4 * eco_slat_t();                             // 294
 function eco_slot_width()    = eco_slat_t() + p_fit_clearance();             // 12.2
 function eco_slot_depth()    = ceil(eco_john_height() / 2);                  // 29
+// The Master John is inserted last, into an almost-closed frame, so its two
+// top slots run deeper than a standard John's -- normally half the port
+// height, capped at 60% of the slat's own height so enough material stays
+// below the groove. Rule lifted from the HopeTurtles.org 6FC generator
+// (objects/ecojoiner_6fc.py :: master_slot_depth) -- see CLAUDE.md s19.
+function eco_master_slot_depth() = min(floor(eco_port_height() / 2),
+                                      floor(eco_john_height() * 0.6));      // 34
 function eco_long_end_span()   = eco_port_length();
 function eco_little_end_span()  = eco_port_length() + eco_slat_t();
 function eco_screw_y_center()  = eco_john_height() / 2;
@@ -647,6 +657,10 @@ module eco_assert_valid() {
            "Ecojoiner: port_height must equal canonical bottle_diameter.");
     assert(p_bottle_cap_d() < eco_john_height(), "Ecojoiner: cap hole too large for John height.");
     assert(p_collar_d() < eco_john_height(), "Ecojoiner: collar hole too large for John height.");
+    assert(eco_master_slot_depth() >= eco_slot_depth(),
+           "Ecojoiner: Master John slot must be at least as deep as a standard slot.");
+    assert(eco_master_slot_depth() < eco_john_height(),
+           "Ecojoiner: Master John slot would cut through the slat.");
 }
 
 // ---- 2D profiles ------------------------------------------------------
@@ -680,6 +694,16 @@ module eco_little_john_2d()
         eco_screw_holes_2d();
     }
 
+// A Little John with deeper top slots -- the last piece fitted to the frame.
+module eco_master_john_2d()
+    difference() {
+        square([eco_john_length(), eco_john_height()]);
+        eco_top_slot(eco_little_end_span() + eco_slat_t() / 2, eco_master_slot_depth());
+        eco_top_slot(eco_john_length() - eco_little_end_span() - eco_slat_t() / 2, eco_master_slot_depth());
+        eco_center_hole(p_collar_d());
+        eco_screw_holes_2d();
+    }
+
 // ---- 3D parts -------------------------------------------------------
 module eco_long_john(colored = true)
     wood_color("yellow", colored)
@@ -688,6 +712,11 @@ module eco_long_john(colored = true)
 module eco_little_john(colored = true)
     wood_color("seagreen", colored)
         linear_extrude(height = eco_slat_t()) eco_little_john_2d();
+
+// Same family as the Little John; darker tint marks the deeper-slotted one.
+module eco_master_john(colored = true)
+    wood_color([0.13, 0.42, 0.28], colored)
+        linear_extrude(height = eco_slat_t()) eco_master_john_2d();
 
 module eco_final_key(colored = true)
     wood_color([0.82, 0.78, 0.05], colored)
@@ -711,12 +740,14 @@ module eco_presser_with_m6_bolt(colored = true) {
 module eco_standing_little_john(target_y = 0, inside_sign = 1,
                                suppress_far_hole_presser = false,
                                suppress_near_hole_presser = false,
-                               colored = true) {
+                               colored = true,
+                               is_master = false) {
     multmatrix([[1, 0, 0, 0],
                 [0, 0, 1, target_y - eco_slat_t() / 2],
                 [0, 1, 0, 0],
                 [0, 0, 0, 1]])
-        eco_little_john(colored);
+        if (is_master) eco_master_john(colored);
+        else eco_little_john(colored);
 
     inner_face_y = target_y + inside_sign * eco_slat_t() / 2;
     for (hole_x = [p_screw_side_offset(), eco_john_length() - p_screw_side_offset()]) {
@@ -741,25 +772,34 @@ module eco_standing_flipped_long_john(target_x = 0, colored = true)
                 [0, 0, 0, 1]])
         eco_long_john(colored);
 
+// master_first_john turns this rectangle's first standing Little John (the one
+// at target_y = 0) into the deeper-slotted Master John. Exactly one of the
+// three rectangles in eco_ecojoiner_only() sets it.
 module eco_john_rectangle(suppress_positive_port_pressers = false,
                           suppress_negative_port_pressers = false,
-                          colored = true) {
+                          colored = true,
+                          master_first_john = false) {
     eco_standing_little_john(0, +1, suppress_positive_port_pressers,
-                             suppress_negative_port_pressers, colored);
+                             suppress_negative_port_pressers, colored,
+                             is_master = master_first_john);
     eco_standing_little_john(eco_rectangle_y(), -1, suppress_positive_port_pressers,
                              suppress_negative_port_pressers, colored);
     eco_standing_flipped_long_john(eco_little_slot_1_x(), colored);
     eco_standing_flipped_long_john(eco_little_slot_2_x(), colored);
 }
 
+// master_first_john is last so the four positional callers in src/Full_Turtle.scad
+// (rot, suppress+, suppress-, colored) are unaffected.
 module eco_centered_rectangle(rot = [0, 0, 0],
                               suppress_positive_port_pressers = false,
                               suppress_negative_port_pressers = false,
-                              colored = true) {
+                              colored = true,
+                              master_first_john = false) {
     fc = eco_frame_center();
     translate(fc) rotate(rot) translate([-fc[0], -fc[1], -fc[2]])
         eco_john_rectangle(suppress_positive_port_pressers,
-                           suppress_negative_port_pressers, colored);
+                           suppress_negative_port_pressers, colored,
+                           master_first_john = master_first_john);
 }
 
 module eco_inserted_final_key(x_offset, z_offset, colored = true) {
@@ -776,13 +816,15 @@ module eco_ecojoiner_only(colored = true) {
     eco_assert_valid();
     eco_centered_rectangle([0, 0, 0], colored = colored);
     eco_centered_rectangle([0, 90, 90], colored = colored);
-    eco_centered_rectangle([90, 0, 90], colored = colored);
+    // Third (last-seated) rectangle: its first standing John is the Master John.
+    eco_centered_rectangle([90, 0, 90], colored = colored, master_first_john = true);
     for (x = [-eco_final_key_x_offset(), eco_final_key_x_offset()])
         for (z = [-eco_final_key_z_offset(), eco_final_key_z_offset()])
             eco_inserted_final_key(x, z, colored);
 
     echo("ECOJOINER: John L/H = ", eco_john_length(), eco_john_height(),
-         " | slot w/depth = ", eco_slot_width(), eco_slot_depth());
+         " | slot depth std/master = ", eco_slot_depth(), eco_master_slot_depth(),
+         " | slot w = ", eco_slot_width());
     echo("ECOJOINER: final key L/W/T = ", eco_final_key_length(),
          eco_final_key_width(), eco_slat_t(), " | presser dia = ", eco_presser_d());
 }
@@ -1743,6 +1785,11 @@ module sail_frame(
     // SAILS
     // ============================================================
     sail_thickness = 0.1;
+    // Straight fold-over tab at each rail edge (top and bottom), for
+    // stapling the sail membrane to the rail. Height = board_width, so the
+    // tab folds flat onto the rail's stock thickness without protruding
+    // beyond the far face of the rail.
+    sail_tab_height = board_width;
 
     // ============================================================
     // MASTER REFERENCE
@@ -2598,14 +2645,19 @@ module sail_frame(
             "The sail rails leave no vertical space for the sail.");
 
         // Draw in X/Z, then extrude 0.1 mm symmetrically through Y.
+        // Straight tabs extend the trapezoid past each rail edge, square
+        // across that edge's full width, so the membrane can be folded
+        // over the rail and stapled. The sail stays one flat 2D shape.
         translate([0, sail_thickness / 2, 0])
             rotate([90, 0, 0])
                 linear_extrude(height = sail_thickness)
                     polygon(points = [
-                        [sail_inner_radius, sail_bottom_z],
+                        [sail_inner_radius, sail_bottom_z - sail_tab_height],
+                        [sail_bottom_outer_radius, sail_bottom_z - sail_tab_height],
                         [sail_bottom_outer_radius, sail_bottom_z],
                         [sail_top_outer_radius, sail_top_z],
-                        [sail_inner_radius, sail_top_z]
+                        [sail_top_outer_radius, sail_top_z + sail_tab_height],
+                        [sail_inner_radius, sail_top_z + sail_tab_height]
                     ]);
     }
 

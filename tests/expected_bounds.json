@@ -164,10 +164,11 @@
           88.0
         ]
       },
-      "tris": 24212,
+      "tris": 9512,
       "warnings": [
         "WARNING: Object may not be a valid 2-manifold and may need repair!"
-      ]
+      ],
+      "note": "v1.8.1: one of the six Little Johns is now the Master John (eco_master_john, deeper top slots via eco_master_slot_depth). The slots are internal cuts -> bounds and the pre-existing 2-manifold warning are unchanged; build/test.py ecojoiner passed against the prior baseline before this re-record. tris 24212 -> 9512 and the echo set both changed because the prior baseline was never re-recorded after the lib/ refactor (its detail file still had the pre-refactor monolithic echoes); the re-record brings it current. test.py gates on bounds/warnings/errors, not tris."
     },
     "rear_fin__assembly": {
       "bounds": {

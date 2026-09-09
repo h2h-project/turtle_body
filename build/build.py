@@ -24,6 +24,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from scad_lib import load_manifest, repo_root  # noqa: E402
 from bundle import bundle, BundleError, BANNER  # noqa: E402
+import export_params  # noqa: E402
 
 _BANNER_MARK = "// ====="
 
@@ -89,12 +90,25 @@ def main(argv=None) -> int:
         for e in errors:
             print("  " + e, file=sys.stderr)
         return 1
+
+    # build/params.json -- the machine-readable lib/params.scad snapshot the
+    # HopeTurtles.org generators sync against. Only on a full build (a partial
+    # `build.py <id>` run is not enough to trust it). export_params self-skips
+    # when OpenSCAD is unavailable.
+    params_rc = 0
+    if not args.ids:
+        print("\n== params snapshot ==")
+        params_rc = export_params.main(["--check"] if args.check else [])
+
     if args.check:
         if changed:
             print(f"\n{len(changed)} bundle(s) stale -- run: python3 build/build.py")
+        if changed or params_rc:
             return 1
         print("all bundles up to date")
         return 0
+    if params_rc:
+        return params_rc
     print(f"\n{len(changed)} bundle(s) written" if changed else "\nno changes")
     return 0
 
