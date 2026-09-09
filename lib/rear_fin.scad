@@ -16,6 +16,7 @@
 // ==========================================================================
 
 use <params.scad>
+use <util.scad>
 
 function rf_t()             = p_wood_t();
 function rf_fin_width()     = p_fin_board_w() + p_rear_fin_tab_width();          // 108
@@ -57,10 +58,12 @@ module rf_assert_valid(half_lap, solar_clear, hole_from_front, hole_d) {
 }
 
 module rear_fin(half_lap = p_fit_clearance(), solar_clear = p_fit_clearance(),
-                fn = undef) {
+                fn = undef, colored = true) {
     t = rf_t(); eps = p_eps();
     nn = fn == undef ? p_fn_wood() : fn;
-    color([1, 0.72, 0.05]) rotate([90, 0, 0])
+    // colour code: yellow fin. Neutral: p_wood_shade_fin(), shared with the
+    // ballast fin so the two large fins read as a pair.
+    wood_color([1, 0.72, 0.05], colored, p_wood_shade_fin()) rotate([90, 0, 0])
         linear_extrude(height = t, center = true, $fn = nn) difference() {
             polygon([[0, rf_diag()], [rf_diag(), 0],
                      [rf_fin_width(), 0], [rf_fin_width(), rf_fin_height()],
@@ -76,12 +79,13 @@ module rear_fin(half_lap = p_fit_clearance(), solar_clear = p_fit_clearance(),
 }
 
 module bottle_holder_shaft(z0 = 0, half_lap = p_fit_clearance(),
-                           hole_from_front = undef, hole_d = undef, fn = undef) {
+                           hole_from_front = undef, hole_d = undef, fn = undef,
+                           colored = true) {
     t = rf_t(); eps = p_eps();
     nn  = fn == undef ? p_fn_wood() : fn;
     hff = hole_from_front == undef ? p_rear_shaft_hole_from_front() : hole_from_front;
     hd  = hole_d == undef ? p_m6_clearance_d() : hole_d;
-    color([0.2, 0.38, 0.05]) difference() {
+    wood_color([0.2, 0.38, 0.05], colored, p_wood_shade_rear_fin()) difference() {
         translate([rf_shaft_front_x(), -rf_shaft_width() / 2, z0])
             cube([rf_shaft_length(), rf_shaft_width(), t]);
         translate([rf_shaft_front_x() + hff, 0, z0 - eps])
@@ -92,11 +96,13 @@ module bottle_holder_shaft(z0 = 0, half_lap = p_fit_clearance(),
     }
 }
 
-module solar_panel_holder(solar_clear = p_fit_clearance(), fn = undef) {
+module solar_panel_holder(solar_clear = p_fit_clearance(), fn = undef,
+                          colored = true) {
     t = rf_t(); eps = p_eps();
     nn = fn == undef ? p_fn_wood() : fn;
     L = rf_solar_holder_len(); H = rf_solar_holder_h(); ch = rf_solar_chamfer();
-    color("red") translate([rf_solar_notch_x0(), 0, rf_upper_shaft_z0()])
+    wood_color("red", colored, p_wood_shade_rear_fin())
+        translate([rf_solar_notch_x0(), 0, rf_upper_shaft_z0()])
         rotate([90, 0, 90]) translate([-L / 2, 0, 0])
             linear_extrude(height = t, $fn = nn) difference() {
                 square([L, H]);
@@ -108,13 +114,13 @@ module solar_panel_holder(solar_clear = p_fit_clearance(), fn = undef) {
 }
 
 module rear_fin_assembly(half_lap = p_fit_clearance(), solar_clear = p_fit_clearance(),
-                         exploded = 0, fn = undef) {
+                         exploded = 0, fn = undef, colored = true) {
     rf_assert_valid(half_lap, solar_clear,
                     p_rear_shaft_hole_from_front(), p_m6_clearance_d());
-    rear_fin(half_lap, solar_clear, fn);
-    translate([-exploded, 0,  exploded]) bottle_holder_shaft(rf_upper_shaft_z0(), half_lap, fn = fn);
-    translate([-exploded, 0, -exploded]) bottle_holder_shaft(rf_lower_shaft_z0(), half_lap, fn = fn);
-    translate([ exploded, 0,  exploded]) solar_panel_holder(solar_clear, fn);
+    rear_fin(half_lap, solar_clear, fn, colored);
+    translate([-exploded, 0,  exploded]) bottle_holder_shaft(rf_upper_shaft_z0(), half_lap, fn = fn, colored = colored);
+    translate([-exploded, 0, -exploded]) bottle_holder_shaft(rf_lower_shaft_z0(), half_lap, fn = fn, colored = colored);
+    translate([ exploded, 0,  exploded]) solar_panel_holder(solar_clear, fn, colored);
 
     echo("REAR FIN: shaft length = ", rf_shaft_length(),
          " | hole from front (TB-07) = ", p_rear_shaft_hole_from_front(),

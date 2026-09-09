@@ -107,24 +107,24 @@ module eco_master_john_2d()
 
 // ---- 3D parts -------------------------------------------------------
 module eco_long_john(colored = true)
-    wood_color("yellow", colored)
+    wood_color("yellow", colored, p_wood_shade_eco())
         linear_extrude(height = eco_slat_t()) eco_long_john_2d();
 
 module eco_little_john(colored = true)
-    wood_color("seagreen", colored)
+    wood_color("seagreen", colored, p_wood_shade_eco())
         linear_extrude(height = eco_slat_t()) eco_little_john_2d();
 
 // Same family as the Little John; darker tint marks the deeper-slotted one.
 module eco_master_john(colored = true)
-    wood_color([0.13, 0.42, 0.28], colored)
+    wood_color([0.13, 0.42, 0.28], colored, p_wood_shade_eco())
         linear_extrude(height = eco_slat_t()) eco_master_john_2d();
 
 module eco_final_key(colored = true)
-    wood_color([0.82, 0.78, 0.05], colored)
+    wood_color([0.82, 0.78, 0.05], colored, p_wood_shade_eco())
         cube([eco_final_key_length(), eco_final_key_width(), eco_slat_t()]);
 
 module eco_presser(colored = true)
-    wood_color([0.10, 0.34, 0.20], colored)
+    wood_color([0.10, 0.34, 0.20], colored, p_wood_shade_eco())
         difference() {
             cylinder(d = eco_presser_d(), h = eco_slat_t());
             translate([0, 0, -0.1])

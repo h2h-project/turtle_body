@@ -1,7 +1,7 @@
 // ==========================================================================
 //  GENERATED FILE -- DO NOT EDIT.
 //  Produced by build/build.py from components/Turtle_Sail_Apparatus_v1.scad
-//  Turtle Body version 1.8.3
+//  Turtle Body version 1.9.0
 //  Edit lib/ and src/ instead, then run: python3 build/build.py
 // ==========================================================================
 /*
@@ -246,6 +246,17 @@ function p_ballast_slat_spacing() = p_bottle_d() + p_wood_t();                  
 function p_ballast_board_len() = 3.5 * p_bottle_d();   // 287
 function p_ballast_fin_len()   = 3 * p_bottle_d();     // 246
 function p_ballast_lock_w()    = 5 * p_wood_t();       // 60
+
+// ---- neutral wood shades (used when enable_color_coding = false) -------
+// With the full colour code off, every wooden subsystem still renders in its
+// OWN shade of brown so the parts stay visually separable. All are warm browns
+// (R > G > B) spaced by lightness. The two large fins share one darker shade so
+// they read as a matched pair, distinct from the rest of their own assembly.
+function p_wood_shade_sail()     = [0.85, 0.66, 0.47]; // sail frame  (lightest)
+function p_wood_shade_rear_fin() = [0.72, 0.50, 0.33]; // rear-fin shafts + solar holder
+function p_wood_shade_eco()      = [0.62, 0.44, 0.28]; // Ecojoiner core
+function p_wood_shade_ballast()  = [0.52, 0.34, 0.22]; // ballast slats / board / locks
+function p_wood_shade_fin()      = [0.40, 0.26, 0.17]; // rear fin + ballast fin, shared (darkest)
 // [bundle] end   <params.scad>
 // [bundle] begin use <util.scad>
 // ==========================================================================
@@ -299,7 +310,7 @@ module hex_prism_af(across_flats, h, center = false) {
 // [bundle] end   <util.scad>
 
 module sf_wood(coded_color, colored = true)
-    color(colored ? coded_color : [0.94, 0.83, 0.62]) children();
+    color(colored ? coded_color : p_wood_shade_sail()) children();
 
 module sail_frame(
     bottle_diameter = p_bottle_d(),

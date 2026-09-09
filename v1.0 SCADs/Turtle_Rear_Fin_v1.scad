@@ -1,7 +1,7 @@
 // ==========================================================================
 //  GENERATED FILE -- DO NOT EDIT.
 //  Produced by build/build.py from components/Turtle_Rear_Fin_v1.scad
-//  Turtle Body version 1.8.3
+//  Turtle Body version 1.9.0
 //  Edit lib/ and src/ instead, then run: python3 build/build.py
 // ==========================================================================
 /*
@@ -25,6 +25,7 @@ exploded = 0;
 part = "assembly"; // [assembly,fin,solar_holder,shaft]
 show_solar_panel = true;   // F5 reference only, excluded from F6/STL
 show_bottle_mockup = false; // reserved
+enable_color_coding = true; // wooden parts; false = the rear fin's own shades of brown
 
 /* [Render] */
 fn = 96;
@@ -252,7 +253,68 @@ function p_ballast_slat_spacing() = p_bottle_d() + p_wood_t();                  
 function p_ballast_board_len() = 3.5 * p_bottle_d();   // 287
 function p_ballast_fin_len()   = 3 * p_bottle_d();     // 246
 function p_ballast_lock_w()    = 5 * p_wood_t();       // 60
+
+// ---- neutral wood shades (used when enable_color_coding = false) -------
+// With the full colour code off, every wooden subsystem still renders in its
+// OWN shade of brown so the parts stay visually separable. All are warm browns
+// (R > G > B) spaced by lightness. The two large fins share one darker shade so
+// they read as a matched pair, distinct from the rest of their own assembly.
+function p_wood_shade_sail()     = [0.85, 0.66, 0.47]; // sail frame  (lightest)
+function p_wood_shade_rear_fin() = [0.72, 0.50, 0.33]; // rear-fin shafts + solar holder
+function p_wood_shade_eco()      = [0.62, 0.44, 0.28]; // Ecojoiner core
+function p_wood_shade_ballast()  = [0.52, 0.34, 0.22]; // ballast slats / board / locks
+function p_wood_shade_fin()      = [0.40, 0.26, 0.17]; // rear fin + ballast fin, shared (darkest)
 // [bundle] end   <params.scad>
+// [bundle] begin use <util.scad>
+// ==========================================================================
+//  Turtle Body -- shared helper modules and functions
+// --------------------------------------------------------------------------
+//  Small pieces that were copy-pasted across the standalone files. Geometry
+//  lives in the per-subsystem lib/ modules; this file is only glue.
+//
+//  Definitions only -- no top-level geometry, no top-level assignments.
+// ==========================================================================
+
+// [bundle] begin use <params.scad>
+// [bundle] already inlined: params.scad
+// [bundle] end   <params.scad>
+
+// Colour wrapper for wooden parts. When colour coding is off, every wooden
+// component renders in one neutral wood tone; bottles, hardware, sails and
+// printed parts keep their own colours and never call this.
+module wood_color(coded_color, enabled = true, neutral = [0.94, 0.83, 0.62]) {
+    color(enabled ? coded_color : neutral) children();
+}
+
+// scalar clamp
+function clamp(v, lo, hi) = v < lo ? lo : (v > hi ? hi : v);
+
+// Visual-only M6 bolt: plain shaft + hex-less cylindrical head. No thread,
+// no torque rating -- a placeholder for fit inspection.
+//  Local Z=0 is the underside of the head; the shaft runs toward +Z from Z=0
+//  (plus an optional tip_extension), the head sits at Z=-head_t..0. Matches
+//  the standalone files.
+module m6_bolt_placeholder(grip_length, tip_extension = 1,
+                           shaft_d = undef, head_d = undef, head_t = undef,
+                           color_rgb = [0.15, 0.15, 0.15], fn = 48) {
+    sd = shaft_d == undef ? p_m6_bolt_shaft_d() : shaft_d;
+    hd = head_d  == undef ? p_m6_bolt_head_d()  : head_d;
+    ht = head_t  == undef ? p_m6_bolt_head_t()  : head_t;
+    assert(grip_length > 0, "m6_bolt_placeholder: grip_length must be positive.");
+    color(color_rgb)
+        union() {
+            cylinder(d = sd, h = grip_length + tip_extension, $fn = fn);
+            translate([0, 0, -ht])
+                cylinder(d = hd, h = ht, $fn = fn);
+        }
+}
+
+// Regular hexagonal prism specified by across-flats width (OpenSCAD's
+// cylinder($fn=6) is specified across corners, which is the usual trap).
+module hex_prism_af(across_flats, h, center = false) {
+    cylinder(d = across_flats / cos(30), h = h, $fn = 6, center = center);
+}
+// [bundle] end   <util.scad>
 
 function rf_t()             = p_wood_t();
 function rf_fin_width()     = p_fin_board_w() + p_rear_fin_tab_width();          // 108
@@ -294,10 +356,12 @@ module rf_assert_valid(half_lap, solar_clear, hole_from_front, hole_d) {
 }
 
 module rear_fin(half_lap = p_fit_clearance(), solar_clear = p_fit_clearance(),
-                fn = undef) {
+                fn = undef, colored = true) {
     t = rf_t(); eps = p_eps();
     nn = fn == undef ? p_fn_wood() : fn;
-    color([1, 0.72, 0.05]) rotate([90, 0, 0])
+    // colour code: yellow fin. Neutral: p_wood_shade_fin(), shared with the
+    // ballast fin so the two large fins read as a pair.
+    wood_color([1, 0.72, 0.05], colored, p_wood_shade_fin()) rotate([90, 0, 0])
         linear_extrude(height = t, center = true, $fn = nn) difference() {
             polygon([[0, rf_diag()], [rf_diag(), 0],
                      [rf_fin_width(), 0], [rf_fin_width(), rf_fin_height()],
@@ -313,12 +377,13 @@ module rear_fin(half_lap = p_fit_clearance(), solar_clear = p_fit_clearance(),
 }
 
 module bottle_holder_shaft(z0 = 0, half_lap = p_fit_clearance(),
-                           hole_from_front = undef, hole_d = undef, fn = undef) {
+                           hole_from_front = undef, hole_d = undef, fn = undef,
+                           colored = true) {
     t = rf_t(); eps = p_eps();
     nn  = fn == undef ? p_fn_wood() : fn;
     hff = hole_from_front == undef ? p_rear_shaft_hole_from_front() : hole_from_front;
     hd  = hole_d == undef ? p_m6_clearance_d() : hole_d;
-    color([0.2, 0.38, 0.05]) difference() {
+    wood_color([0.2, 0.38, 0.05], colored, p_wood_shade_rear_fin()) difference() {
         translate([rf_shaft_front_x(), -rf_shaft_width() / 2, z0])
             cube([rf_shaft_length(), rf_shaft_width(), t]);
         translate([rf_shaft_front_x() + hff, 0, z0 - eps])
@@ -329,11 +394,13 @@ module bottle_holder_shaft(z0 = 0, half_lap = p_fit_clearance(),
     }
 }
 
-module solar_panel_holder(solar_clear = p_fit_clearance(), fn = undef) {
+module solar_panel_holder(solar_clear = p_fit_clearance(), fn = undef,
+                          colored = true) {
     t = rf_t(); eps = p_eps();
     nn = fn == undef ? p_fn_wood() : fn;
     L = rf_solar_holder_len(); H = rf_solar_holder_h(); ch = rf_solar_chamfer();
-    color("red") translate([rf_solar_notch_x0(), 0, rf_upper_shaft_z0()])
+    wood_color("red", colored, p_wood_shade_rear_fin())
+        translate([rf_solar_notch_x0(), 0, rf_upper_shaft_z0()])
         rotate([90, 0, 90]) translate([-L / 2, 0, 0])
             linear_extrude(height = t, $fn = nn) difference() {
                 square([L, H]);
@@ -345,13 +412,13 @@ module solar_panel_holder(solar_clear = p_fit_clearance(), fn = undef) {
 }
 
 module rear_fin_assembly(half_lap = p_fit_clearance(), solar_clear = p_fit_clearance(),
-                         exploded = 0, fn = undef) {
+                         exploded = 0, fn = undef, colored = true) {
     rf_assert_valid(half_lap, solar_clear,
                     p_rear_shaft_hole_from_front(), p_m6_clearance_d());
-    rear_fin(half_lap, solar_clear, fn);
-    translate([-exploded, 0,  exploded]) bottle_holder_shaft(rf_upper_shaft_z0(), half_lap, fn = fn);
-    translate([-exploded, 0, -exploded]) bottle_holder_shaft(rf_lower_shaft_z0(), half_lap, fn = fn);
-    translate([ exploded, 0,  exploded]) solar_panel_holder(solar_clear, fn);
+    rear_fin(half_lap, solar_clear, fn, colored);
+    translate([-exploded, 0,  exploded]) bottle_holder_shaft(rf_upper_shaft_z0(), half_lap, fn = fn, colored = colored);
+    translate([-exploded, 0, -exploded]) bottle_holder_shaft(rf_lower_shaft_z0(), half_lap, fn = fn, colored = colored);
+    translate([ exploded, 0,  exploded]) solar_panel_holder(solar_clear, fn, colored);
 
     echo("REAR FIN: shaft length = ", rf_shaft_length(),
          " | hole from front (TB-07) = ", p_rear_shaft_hole_from_front(),
@@ -373,14 +440,18 @@ module _panel_reference() {
 if (part == "assembly") {
     rear_fin_assembly(half_lap = half_lap_clearance,
                       solar_clear = solar_slot_clearance,
-                      exploded = exploded, fn = fn);
+                      exploded = exploded, fn = fn,
+                      colored = enable_color_coding);
     if (show_solar_panel && exploded == 0) %_panel_reference();
 } else if (part == "fin") {
-    rear_fin(half_lap = half_lap_clearance, solar_clear = solar_slot_clearance, fn = fn);
+    rear_fin(half_lap = half_lap_clearance, solar_clear = solar_slot_clearance, fn = fn,
+             colored = enable_color_coding);
 } else if (part == "solar_holder") {
-    solar_panel_holder(solar_clear = solar_slot_clearance, fn = fn);
+    solar_panel_holder(solar_clear = solar_slot_clearance, fn = fn,
+                       colored = enable_color_coding);
 } else if (part == "shaft") {
-    bottle_holder_shaft(half_lap = half_lap_clearance, fn = fn);
+    bottle_holder_shaft(half_lap = half_lap_clearance, fn = fn,
+                        colored = enable_color_coding);
 } else {
     assert(false, str("Unknown part: ", part));
 }

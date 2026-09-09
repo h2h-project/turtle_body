@@ -20,7 +20,7 @@ use <params.scad>
 use <util.scad>
 
 module sf_wood(coded_color, colored = true)
-    color(colored ? coded_color : [0.94, 0.83, 0.62]) children();
+    color(colored ? coded_color : p_wood_shade_sail()) children();
 
 module sail_frame(
     bottle_diameter = p_bottle_d(),

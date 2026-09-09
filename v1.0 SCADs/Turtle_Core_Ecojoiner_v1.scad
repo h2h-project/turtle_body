@@ -1,7 +1,7 @@
 // ==========================================================================
 //  GENERATED FILE -- DO NOT EDIT.
 //  Produced by build/build.py from components/Turtle_Core_Ecojoiner_v1.scad
-//  Turtle Body version 1.8.3
+//  Turtle Body version 1.9.0
 //  Edit lib/ and src/ instead, then run: python3 build/build.py
 // ==========================================================================
 /*
@@ -240,6 +240,17 @@ function p_ballast_slat_spacing() = p_bottle_d() + p_wood_t();                  
 function p_ballast_board_len() = 3.5 * p_bottle_d();   // 287
 function p_ballast_fin_len()   = 3 * p_bottle_d();     // 246
 function p_ballast_lock_w()    = 5 * p_wood_t();       // 60
+
+// ---- neutral wood shades (used when enable_color_coding = false) -------
+// With the full colour code off, every wooden subsystem still renders in its
+// OWN shade of brown so the parts stay visually separable. All are warm browns
+// (R > G > B) spaced by lightness. The two large fins share one darker shade so
+// they read as a matched pair, distinct from the rest of their own assembly.
+function p_wood_shade_sail()     = [0.85, 0.66, 0.47]; // sail frame  (lightest)
+function p_wood_shade_rear_fin() = [0.72, 0.50, 0.33]; // rear-fin shafts + solar holder
+function p_wood_shade_eco()      = [0.62, 0.44, 0.28]; // Ecojoiner core
+function p_wood_shade_ballast()  = [0.52, 0.34, 0.22]; // ballast slats / board / locks
+function p_wood_shade_fin()      = [0.40, 0.26, 0.17]; // rear fin + ballast fin, shared (darkest)
 // [bundle] end   <params.scad>
 // [bundle] begin use <util.scad>
 // ==========================================================================
@@ -380,24 +391,24 @@ module eco_master_john_2d()
 
 // ---- 3D parts -------------------------------------------------------
 module eco_long_john(colored = true)
-    wood_color("yellow", colored)
+    wood_color("yellow", colored, p_wood_shade_eco())
         linear_extrude(height = eco_slat_t()) eco_long_john_2d();
 
 module eco_little_john(colored = true)
-    wood_color("seagreen", colored)
+    wood_color("seagreen", colored, p_wood_shade_eco())
         linear_extrude(height = eco_slat_t()) eco_little_john_2d();
 
 // Same family as the Little John; darker tint marks the deeper-slotted one.
 module eco_master_john(colored = true)
-    wood_color([0.13, 0.42, 0.28], colored)
+    wood_color([0.13, 0.42, 0.28], colored, p_wood_shade_eco())
         linear_extrude(height = eco_slat_t()) eco_master_john_2d();
 
 module eco_final_key(colored = true)
-    wood_color([0.82, 0.78, 0.05], colored)
+    wood_color([0.82, 0.78, 0.05], colored, p_wood_shade_eco())
         cube([eco_final_key_length(), eco_final_key_width(), eco_slat_t()]);
 
 module eco_presser(colored = true)
-    wood_color([0.10, 0.34, 0.20], colored)
+    wood_color([0.10, 0.34, 0.20], colored, p_wood_shade_eco())
         difference() {
             cylinder(d = eco_presser_d(), h = eco_slat_t());
             translate([0, 0, -0.1])

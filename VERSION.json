@@ -1,5 +1,5 @@
 {
-  "version": "1.8.3",
+  "version": "1.9.0",
   "updated": "2026-09-09",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
@@ -8,6 +8,25 @@
     "major": "+1.0.0  bottle / board / hardware interface break (existing builds no longer fit)"
   },
   "changelog": [
+    {
+      "version": "1.9.0",
+      "date": "2026-09-09",
+      "files": [
+        "lib/params.scad",
+        "lib/util.scad (unchanged API)",
+        "lib/rear_fin.scad",
+        "lib/ecojoiner.scad",
+        "lib/ballast_fin.scad",
+        "lib/sail_frame.scad",
+        "src/Full_Turtle.scad",
+        "src/components/Turtle_Rear_Fin_v1.scad",
+        "v1.0 SCADs/*.scad",
+        "Full_Turtle_v1.scad",
+        "build/params.json"
+      ],
+      "note": "Per-subsystem neutral wood shades for the enable_color_coding = false view. Previously every wooden part fell back to one shared neutral [0.94,0.83,0.62], making the full turtle hard to read. New p_wood_shade_sail/rear_fin/eco/ballast/fin() in lib/params.scad (warm browns spaced by lightness); each wood_color()/sf_wood() call now passes its subsystem's shade as the neutral. The two large fins (rear fin + ballast fin) deliberately share p_wood_shade_fin() so they read as a matched pair, distinct from the rest of their own assembly. BUG FIX: lib/rear_fin.scad's rear_fin()/bottle_holder_shaft()/solar_panel_holder() used bare color() and so kept their yellow/green/red colour-code regardless of enable_color_coding; they now route through wood_color() with a new colored arg, threaded from rear_fin_assembly(), src/Full_Turtle.scad full_rear_fin_assembly(), and the rear-fin wrapper (which gains an enable_color_coding customizer var, matching the other three wooden wrappers). ALSO: default water_transparency 0.30 -> 0.63 in src/Full_Turtle.scad. Colour-only + an F5-preview default: no mesh, no bounding box, no assert changes; build/lint.py clean; full_turtle assembly_view rendered with enable_color_coding=false to confirm the five shades are distinct and the two fins match. tests/expected_bounds.json untouched. Generators emit no colour: SYNC_LOG.md entry added, no downstream change (CLAUDE.md s19).",
+      "component_bump": false
+    },
     {
       "version": "1.0.0",
       "date": "2026-09-06",

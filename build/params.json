@@ -133,5 +133,30 @@
   "p_ballast_board_len": 287,
   "p_ballast_fin_len": 246,
   "p_ballast_lock_w": 60,
-  "version": "1.8.3"
+  "p_wood_shade_sail": [
+    0.85,
+    0.66,
+    0.47
+  ],
+  "p_wood_shade_rear_fin": [
+    0.72,
+    0.5,
+    0.33
+  ],
+  "p_wood_shade_eco": [
+    0.62,
+    0.44,
+    0.28
+  ],
+  "p_wood_shade_ballast": [
+    0.52,
+    0.34,
+    0.22
+  ],
+  "p_wood_shade_fin": [
+    0.4,
+    0.26,
+    0.17
+  ],
+  "version": "1.9.0"
 }

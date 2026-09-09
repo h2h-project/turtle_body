@@ -99,7 +99,7 @@ module bl_core_profile_2d()
              [0, bl_core_slot_z0()]]);
 
 module ballast_core_slat_part(colored = true)
-    wood_color([0.12, 0.38, 0.20], colored)
+    wood_color([0.12, 0.38, 0.20], colored, p_wood_shade_ballast())
         linear_extrude(height = bl_t()) difference() {
             bl_core_profile_2d();
             translate([bl_mount_hole_x(), bl_mount_hole_y()])
@@ -108,7 +108,7 @@ module ballast_core_slat_part(colored = true)
 
 module ballast_bottom_board_part(colored = true) {
     e = 0.01;
-    wood_color([0.90, 0.38, 0.06], colored)
+    wood_color([0.90, 0.38, 0.06], colored, p_wood_shade_ballast())
     linear_extrude(height = bl_t()) difference() {
         square([bl_board_len(), bl_board_w()]);
         translate([bl_left_slot() - bl_board_slot_w() / 2, -e])
@@ -135,7 +135,7 @@ module bl_lock_profile_2d() {
 }
 
 module ballast_lock_part(colored = true)
-    wood_color([0.70, 0.12, 0.10], colored)
+    wood_color([0.70, 0.12, 0.10], colored, p_wood_shade_ballast())
         linear_extrude(height = bl_lock_t()) bl_lock_profile_2d();
 
 module bl_fin_profile_2d() {
@@ -150,8 +150,10 @@ module bl_fin_profile_2d() {
     }
 }
 
+// Shares p_wood_shade_fin() with the rear fin so the two large fins read as a
+// matched pair, distinct from the rest of the ballast.
 module ballast_fin_part(colored = true)
-    wood_color([0.95, 0.72, 0.02], colored)
+    wood_color([0.95, 0.72, 0.02], colored, p_wood_shade_fin())
         linear_extrude(height = bl_fin_t()) bl_fin_profile_2d();
 
 // ---- local assembly ------------------------------------------------

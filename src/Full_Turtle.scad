@@ -26,7 +26,7 @@ enable_color_coding = true;
 // Units are mm: 2000 x 2000 x 2000 = 8 cubic metres.
 show_water = true;
 water_cube_size = 2000;
-water_transparency = 0.30; // 30% transparent = alpha 0.70; increase for a clearer view.
+water_transparency = 0.63; // 63% transparent = alpha 0.37; increase for a clearer view.
 
 // Top apparatus controls. Full turtle is self-contained; no companion required.
 // Rotates only the cage, axle and connected sail frame. Bottle/cap stay fixed.
@@ -1557,10 +1557,14 @@ module rear_solar_panel_screws() {
 // stay local (lib/rear_fin.scad only carries a %-reference panel).
 module full_rear_fin_assembly() {
     rear_fin(half_lap = rear_half_lap_clearance,
-             solar_clear = rear_solar_slot_clearance);
-    bottle_holder_shaft(rear_upper_shaft_z0, half_lap = rear_half_lap_clearance);
-    bottle_holder_shaft(rear_lower_shaft_z0, half_lap = rear_half_lap_clearance);
-    solar_panel_holder(solar_clear = rear_solar_slot_clearance);
+             solar_clear = rear_solar_slot_clearance,
+             colored = enable_color_coding);
+    bottle_holder_shaft(rear_upper_shaft_z0, half_lap = rear_half_lap_clearance,
+                        colored = enable_color_coding);
+    bottle_holder_shaft(rear_lower_shaft_z0, half_lap = rear_half_lap_clearance,
+                        colored = enable_color_coding);
+    solar_panel_holder(solar_clear = rear_solar_slot_clearance,
+                       colored = enable_color_coding);
     rear_solar_panel();
     rear_solar_panel_screws();
 }

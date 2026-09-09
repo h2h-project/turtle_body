@@ -19,6 +19,7 @@ exploded = 0;
 part = "assembly"; // [assembly,fin,solar_holder,shaft]
 show_solar_panel = true;   // F5 reference only, excluded from F6/STL
 show_bottle_mockup = false; // reserved
+enable_color_coding = true; // wooden parts; false = the rear fin's own shades of brown
 
 /* [Render] */
 fn = 96;
@@ -37,14 +38,18 @@ module _panel_reference() {
 if (part == "assembly") {
     rear_fin_assembly(half_lap = half_lap_clearance,
                       solar_clear = solar_slot_clearance,
-                      exploded = exploded, fn = fn);
+                      exploded = exploded, fn = fn,
+                      colored = enable_color_coding);
     if (show_solar_panel && exploded == 0) %_panel_reference();
 } else if (part == "fin") {
-    rear_fin(half_lap = half_lap_clearance, solar_clear = solar_slot_clearance, fn = fn);
+    rear_fin(half_lap = half_lap_clearance, solar_clear = solar_slot_clearance, fn = fn,
+             colored = enable_color_coding);
 } else if (part == "solar_holder") {
-    solar_panel_holder(solar_clear = solar_slot_clearance, fn = fn);
+    solar_panel_holder(solar_clear = solar_slot_clearance, fn = fn,
+                       colored = enable_color_coding);
 } else if (part == "shaft") {
-    bottle_holder_shaft(half_lap = half_lap_clearance, fn = fn);
+    bottle_holder_shaft(half_lap = half_lap_clearance, fn = fn,
+                        colored = enable_color_coding);
 } else {
     assert(false, str("Unknown part: ", part));
 }
