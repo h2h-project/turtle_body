@@ -1,14 +1,14 @@
 {
   "target": "sail_apparatus",
   "render": "assembly",
-  "source": "v1.0 SCADs/Turtle_Sail_Apparatus.scad",
+  "source": "src/components/Turtle_Sail_Apparatus_v1.scad",
   "defines": {
     "part": "assembly",
     "show_hardware": false
   },
   "returncode": 0,
   "timed_out": false,
-  "seconds": 4.0,
+  "seconds": 2.4,
   "bounds": {
     "min": [
       -288.0,
@@ -38,6 +38,6 @@
     "ECHO: \"Bottom sail bar inner-edge radius = \", 42, \" mm\"",
     "ECHO: \"Cage M3 mount heights / hole diameter = \", [22, -10], 3.2",
     "ECHO: \"Cage mount hole diameter / vertical pitch = \", 3.2, 32",
-    "ECHO: \"Cage mount centres from batten bottom = \", [150, 118]"
+    "ECHO: \"Cage mount centres from batten bottom = \", [152, 120]"
   ]
 }

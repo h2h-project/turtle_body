@@ -1,7 +1,7 @@
 // ==========================================================================
 //  GENERATED FILE -- DO NOT EDIT.
 //  Produced by build/build.py from components/Bottle_Control_Cap_v1.scad
-//  Turtle Body version 1.9.0
+//  Turtle Body version 1.10.0
 //  Edit lib/ and src/ instead, then run: python3 build/build.py
 // ==========================================================================
 /*
@@ -210,20 +210,20 @@ function p_cap_oring_gland_from_face() = 3.5; // gland centre, from the cap oute
 
 // ---- rotating control cage (CLAUDE.md s6) ------------------------
 function p_cage_wall_t()     = 6.5;   // radial wall thickness
-function p_cage_roof_t()     = 6;     // roof / surface plate thickness
+function p_cage_roof_t()     = 4;     // roof / surface plate thickness
 function p_cage_inner_d()    = p_cap_disk_d() + 2 * p_cap_cage_radial_clearance();   // 102
 function p_cage_outer_d()    = p_cage_inner_d() + 2 * p_cage_wall_t();               // 115
 function p_cage_skirt_depth()   = 44;   // roof underside to the ORIGINAL skirt rim
 function p_cage_peak_extension() = 20;  // crest extends this far past the original rim
 function p_cage_valley_wall_h()  = 10;  // minimum wall depth between mounts
-function p_cage_total_h()    = p_cage_skirt_depth() + p_cage_roof_t();              // 50 (native)
+function p_cage_total_h()    = p_cage_skirt_depth() + p_cage_roof_t();              // 48 (native)
 function p_cage_notch_count()   = 4;
 function p_cage_notch_w()    = 22.5;  // batten groove width
 function p_cage_notch_depth() = 3.7;
 function p_cage_wave_segments() = 240;
 function p_cage_hub_d()      = 29;
-function p_cage_pocket_d()   = 26;    // top clip pocket
-function p_cage_pocket_depth() = 4;
+function p_cage_pocket_d()   = 26;    // top clip pocket (control_cage top_pocket, OFF by default)
+function p_cage_pocket_depth() = 4;   //   "        "     "
 function p_cage_hex_bore_af() = 10.3; // central hex bore (0.3 mm to the Ø10.0 shaft)
 function p_cage_bearing_d()  = 9;     // hemispherical bearing bump
 function p_cage_bearing_count() = 8;
@@ -234,8 +234,9 @@ function p_cage_mount_pitch()  = 32;  // vertical pitch of the pair
 function p_cage_lower_hole_from_tip() = 10;
 // 45-deg outward chamfer on the roof-top outer edge (0 = sharp). The cage
 // prints roof-face-down, so this bevel flares OUT from the bed and stays
-// printable; it is masked away around each batten groove. See lib/control_cage.scad.
-function p_cage_roof_bevel() = 4;
+// printable; it runs the full perimeter, batten grooves included. See
+// lib/control_cage.scad.
+function p_cage_roof_bevel() = 3;
 
 // ---- sail apparatus (CLAUDE.md s10) ---------------------------
 function p_side_batten_h()   = 205;

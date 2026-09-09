@@ -1,7 +1,7 @@
 // ==========================================================================
 //  GENERATED FILE -- DO NOT EDIT.
 //  Produced by build/build.py from components/Bottle_Control_Cage_v1.scad
-//  Turtle Body version 1.9.0
+//  Turtle Body version 1.10.0
 //  Edit lib/ and src/ instead, then run: python3 build/build.py
 // ==========================================================================
 /*
@@ -15,7 +15,8 @@
  must stay self-supporting in that pose: bevels flare OUTWARD from the bed
  (<= 45 deg), no undercut, no downward-facing pocket/lip/overhang. Flag any
  change that would need support material instead of making it silently.
- The clip pocket + horizontal M3 bores already bridge in the slicer.
+ Horizontal M3 bores bridge in the slicer. The recessed clip pocket around
+ the axle is OFF by default (top_pocket) while prototyping without a clip.
  Prototype: not load-tested. Test fit, torsion, bending, layer adhesion.
 
  SOURCE FILE — geometry lives in lib/control_cage.scad + lib/params.scad.
@@ -29,7 +30,7 @@ wave_segments  = 240;  // [120:24:480]
 
 /* [Cage body] */
 cage_wall   = 6.5;
-cage_roof   = 6;
+cage_roof   = 4;
 skirt_height = 44;      // roof underside -> ORIGINAL skirt rim
 notch_width = 22.5;
 notch_depth = 3.7;
@@ -37,7 +38,7 @@ m3_hole_diameter = 3.2;
 roof_ring_height = 10;  // minimum skirt depth between mounts
 mount_extension  = 20;  // crest past the original rim
 lower_hole_from_tip = 10;
-roof_bevel = 4;         // 45-deg outward chamfer on the roof-top edge (0 = sharp); prints face-down
+roof_bevel = 3;         // 45-deg outward chamfer on the roof-top edge (0 = sharp); prints face-down
 
 /* [Bearings and button] */
 bump_d = 9;
@@ -48,8 +49,9 @@ button_angle = 90; // [0:0.5:359.5]
 /* [Shaft hub and clip pocket] */
 cage_hex_af = 10.3;
 cage_hub_d = 29;
-clip_pocket_depth = 4;
-pocket_d = 26;
+top_pocket = false;      // recessed clip pocket around the axle (off while prototyping)
+clip_pocket_depth = 4;   // used only when top_pocket = true
+pocket_d = 26;           //   "    "    "     "      "
 
 // [bundle] begin use <../../lib/control_cage.scad>
 // ==========================================================================
@@ -75,8 +77,9 @@ pocket_d = 26;
 //    * do NOT add a downward-facing pocket, lip or overhang to the roof top,
 //      and do NOT make the bevel an undercut (radius growing then shrinking).
 //  A change that would need support material in the roof-down pose must be
-//  flagged to the user, not silently made. The clip pocket + the horizontal
-//  M3 bores already bridge in the slicer; keep them inspectable.
+//  flagged to the user, not silently made. The horizontal M3 bores bridge in
+//  the slicer; keep them inspectable. The recessed clip pocket around the axle
+//  is behind `top_pocket` (OFF by default -- no shaft clip while prototyping).
 //
 //  Definitions only. Geometry is emitted by control_cage(); the wrapper /
 //  full assembly applies the print-pose or installed transform.
@@ -222,20 +225,20 @@ function p_cap_oring_gland_from_face() = 3.5; // gland centre, from the cap oute
 
 // ---- rotating control cage (CLAUDE.md s6) ------------------------
 function p_cage_wall_t()     = 6.5;   // radial wall thickness
-function p_cage_roof_t()     = 6;     // roof / surface plate thickness
+function p_cage_roof_t()     = 4;     // roof / surface plate thickness
 function p_cage_inner_d()    = p_cap_disk_d() + 2 * p_cap_cage_radial_clearance();   // 102
 function p_cage_outer_d()    = p_cage_inner_d() + 2 * p_cage_wall_t();               // 115
 function p_cage_skirt_depth()   = 44;   // roof underside to the ORIGINAL skirt rim
 function p_cage_peak_extension() = 20;  // crest extends this far past the original rim
 function p_cage_valley_wall_h()  = 10;  // minimum wall depth between mounts
-function p_cage_total_h()    = p_cage_skirt_depth() + p_cage_roof_t();              // 50 (native)
+function p_cage_total_h()    = p_cage_skirt_depth() + p_cage_roof_t();              // 48 (native)
 function p_cage_notch_count()   = 4;
 function p_cage_notch_w()    = 22.5;  // batten groove width
 function p_cage_notch_depth() = 3.7;
 function p_cage_wave_segments() = 240;
 function p_cage_hub_d()      = 29;
-function p_cage_pocket_d()   = 26;    // top clip pocket
-function p_cage_pocket_depth() = 4;
+function p_cage_pocket_d()   = 26;    // top clip pocket (control_cage top_pocket, OFF by default)
+function p_cage_pocket_depth() = 4;   //   "        "     "
 function p_cage_hex_bore_af() = 10.3; // central hex bore (0.3 mm to the Ø10.0 shaft)
 function p_cage_bearing_d()  = 9;     // hemispherical bearing bump
 function p_cage_bearing_count() = 8;
@@ -246,8 +249,9 @@ function p_cage_mount_pitch()  = 32;  // vertical pitch of the pair
 function p_cage_lower_hole_from_tip() = 10;
 // 45-deg outward chamfer on the roof-top outer edge (0 = sharp). The cage
 // prints roof-face-down, so this bevel flares OUT from the bed and stays
-// printable; it is masked away around each batten groove. See lib/control_cage.scad.
-function p_cage_roof_bevel() = 4;
+// printable; it runs the full perimeter, batten grooves included. See
+// lib/control_cage.scad.
+function p_cage_roof_bevel() = 3;
 
 // ---- sail apparatus (CLAUDE.md s10) ---------------------------
 function p_side_batten_h()   = 205;
@@ -327,6 +331,7 @@ module control_cage(inner_d       = p_cage_inner_d(),
                     hex_bore_af   = p_cage_hex_bore_af(),
                     pocket_d      = p_cage_pocket_d(),
                     pocket_depth  = p_cage_pocket_depth(),
+                    top_pocket    = false,  // recessed clip pocket around the axle; off for prototyping
                     button_d      = p_cage_top_hole_d(),
                     button_r      = p_button_radius(),
                     button_angle  = 90,
@@ -361,16 +366,23 @@ module control_cage(inner_d       = p_cage_inner_d(),
     assert(inner_d > 0 && p_cap_cage_radial_clearance() > 0);
     assert(p_cage_wall_t() > notch_depth && notch_depth > 0 && notch_w > 0);
     assert(m3_d > 0 && m3_d < notch_w);
-    assert(roof_t > pocket_depth && pocket_depth > 0);
     assert(valley_wall_h > 0 && valley_wall_h < skirt);
     assert(extension >= 0);
     assert(lower_hole_from_tip > m3_d / 2 + 2
            && lower_hole_from_tip < max_wall_h - m3_d / 2);
     assert(bump_d > 0 && bump_pcd / 2 + bump_d / 2 < ri);
-    assert(hex_bore_af > 10 && hex_bore_af / cos(30) < pocket_d);
-    assert(hub_d > pocket_d && pocket_d > 25 && pocket_floor > cage_hub_bottom);
-    assert(pocket_floor <= 6.5 && cage_top > 10.2,
-           "control_cage: keep the shaft / clip axial clearances.");
+    assert(hex_bore_af > 10, "control_cage: hex bore across-flats too small.");
+    assert(roof_t >= 2 && cage_top > cage_hub_bottom + 2,
+           "control_cage: roof too thin over the shaft hub.");
+    if (top_pocket) {
+        // recessed clip pocket around the axle -- kept behind a flag while
+        // prototyping without a shaft clip. See CLAUDE.md s6.
+        assert(roof_t > pocket_depth && pocket_depth > 0);
+        assert(hex_bore_af / cos(30) < pocket_d);
+        assert(hub_d > pocket_d && pocket_d > 25 && pocket_floor > cage_hub_bottom);
+        assert(pocket_floor <= 6.5 && cage_top > 10.2,
+               "control_cage: keep the shaft / clip axial clearances.");
+    }
     assert(button_r - button_d / 2 > hub_d / 2 && button_r + button_d / 2 < ri);
     assert(button_r + button_d / 2 < bump_pcd / 2 - bump_d / 2,
            "control_cage: button must clear the bearings at every angle.");
@@ -391,24 +403,15 @@ module control_cage(inner_d       = p_cage_inner_d(),
     module outer_profile()
         difference() { circle(r = ro, $fn = nn); groove_cuts_2d(); }
 
-    // 45-deg OUTWARD chamfer on the roof-top outer edge, masked away within
-    // (notch_w/2 + roof_bevel) of each batten groove so the groove walls stay
-    // square. Printable roof-down: radius only grows from the bed upward.
-    module roof_bevel_cutter() {
-        difference() {
-            rotate_extrude($fn = nn)
-                polygon([[ro - roof_bevel, cage_top + eps],
-                         [ro + 1,          cage_top + eps],
-                         [ro + 1,          cage_top - roof_bevel]]);
-            translate([0, 0, cage_top - roof_bevel - 2 * eps])
-                linear_extrude(height = roof_bevel + 4 * eps)
-                    for (a = [0 : 360 / notch_count : 359]) rotate(a)
-                        translate([ro - roof_bevel - eps,
-                                   -(notch_w / 2 + roof_bevel)])
-                            square([roof_bevel + notch_depth + 1 + 2 * eps,
-                                    notch_w + 2 * roof_bevel]);
-        }
-    }
+    // 45-deg OUTWARD chamfer on the roof-top outer edge, run around the full
+    // perimeter -- the batten grooves are chamfered along with everything
+    // else, not masked out, so no groove wall stands proud of the bevel.
+    // Printable roof-down: radius only grows from the bed upward.
+    module roof_bevel_cutter()
+        rotate_extrude($fn = nn)
+            polygon([[ro - roof_bevel, cage_top + eps],
+                     [ro + 1,          cage_top + eps],
+                     [ro + 1,          cage_top - roof_bevel]]);
 
     module wave_ring() {
         pts = [for (i = [0 : wave_n - 1]) each let(a = i * 360 / wave_n,
@@ -455,8 +458,9 @@ module control_cage(inner_d       = p_cage_inner_d(),
         translate([0, 0, cage_hub_bottom - eps])
             cylinder(d = hex_bore_af / cos(30),
                      h = cage_top - cage_hub_bottom + 2 * eps, $fn = 6);
-        translate([0, 0, pocket_floor])
-            cylinder(d = pocket_d, h = pocket_depth + eps);
+        if (top_pocket)
+            translate([0, 0, pocket_floor])
+                cylinder(d = pocket_d, h = pocket_depth + eps);
         rotate([0, 0, button_angle]) translate([button_r, 0, cage_under - eps])
             cylinder(d = button_d, h = roof_t + 2 * eps);
         for (a = [0 : 90 : 270]) rotate([0, 0, a])
@@ -491,6 +495,7 @@ module _cage()
                  hex_bore_af = cage_hex_af,
                  pocket_d = pocket_d,
                  pocket_depth = clip_pocket_depth,
+                 top_pocket = top_pocket,
                  button_d = button_diameter,
                  button_r = button_r,
                  button_angle = button_angle,

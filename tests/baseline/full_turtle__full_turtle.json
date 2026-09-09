@@ -1,13 +1,13 @@
 {
   "target": "full_turtle",
   "render": "full_turtle",
-  "source": "Full_Turtle_v1.scad",
+  "source": "src/Full_Turtle.scad",
   "defines": {
     "assembly_view": "full_turtle"
   },
   "returncode": 0,
   "timed_out": false,
-  "seconds": 281.5,
+  "seconds": 256.7,
   "bounds": {
     "min": [
       -206.0,
@@ -17,14 +17,14 @@
     "max": [
       524.0,
       382.0,
-      306.5
+      304.5
     ],
     "size": [
       730.0,
       706.0,
-      778.5
+      776.5
     ],
-    "tris": 158470
+    "tris": 157722
   },
   "warnings": [
     "WARNING: Object may not be a valid 2-manifold and may need repair!"
@@ -120,16 +120,16 @@
     "ECHO: \"CAP: axle O-ring gland -- bore \", 8.6, \" -> groove OD \", 11.5, \" x \", 2.6, \" wide, centred \", 3.5, \" mm below the outer face. Seals a \", 2, \" mm-CS O-ring (ID \", 8, \") on the axle round section.\"",
     "ECHO: \"AXLE: total / round / hex length = \", 59, 36, 23",
     "ECHO: \"AXLE: round dia / hex across flats / hex corners = \", 8, 10, 11.547",
-    "ECHO: \"CAGE: OD / ID / roof-to-tip = \", 115, 102, 70",
+    "ECHO: \"CAGE: OD / ID / roof-to-tip = \", 115, 102, 68",
     "ECHO: \"CAGE: groove w / d = \", 22.5, 3.7, \" | M3 dia / pitch = \", 3.2, 32",
-    "ECHO: \"CAGE: prints ROOF-FACE-DOWN (flat top on the bed). roof_bevel = \", 4, \" mm, a 45-deg OUTWARD chamfer (printable). Any new \", \"roof-top feature must be self-supporting in that pose -- no undercut, \", \"no downward pocket, no >45-deg overhang.\"",
+    "ECHO: \"CAGE: prints ROOF-FACE-DOWN (flat top on the bed). roof_bevel = \", 3, \" mm, a 45-deg OUTWARD chamfer (printable). Any new \", \"roof-top feature must be self-supporting in that pose -- no undercut, \", \"no downward pocket, no >45-deg overhang.\"",
     "ECHO: \"Side batten to bottle clearance = \", 12.8, \" mm\"",
     "ECHO: \"Bottom sail bar to bottle clearance = \", 1, \" mm\"",
     "ECHO: \"Bottom sail bar inward protrusion = \", 11.8, \" mm\"",
     "ECHO: \"Bottom sail bar inner-edge radius = \", 42, \" mm\"",
     "ECHO: \"Cage M3 mount heights / hole diameter = \", [22, -10], 3.2",
     "ECHO: \"Cage mount hole diameter / vertical pitch = \", 3.2, 32",
-    "ECHO: \"Cage mount centres from batten bottom = \", [150, 118]",
+    "ECHO: \"Cage mount centres from batten bottom = \", [152, 120]",
     "ECHO: \"BALLAST: slat w/len/t = \", 58, 360, 12, \" | inner-face gap = \", 82, \" | M6 from slat top = \", 69",
     "ECHO: \"SHARED board thickness = \", 12, \" mm\"",
     "ECHO: \"Integrated sail board thickness = \", 12, \" mm\"",

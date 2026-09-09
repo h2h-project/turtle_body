@@ -340,7 +340,7 @@ module sail_frame(
     // TURTLE CONTROL CAGE
     // ============================================================
 
-    cage_surface_thickness = 6;
+    cage_surface_thickness = p_cage_roof_t();
     cage_side_wall_thickness = 6.5;
 
     // Preserve 1 mm radial running clearance around the top disk.
@@ -368,8 +368,10 @@ module sail_frame(
         - cage_bearing_diameter
         + 2 * cage_bearing_contact_edge_overhang;
 
-    cage_total_height = 50; // 44 mm original skirt + 6 mm roof
+    cage_total_height = p_cage_total_h(); // skirt depth + roof thickness (48 at defaults)
     cage_hub_diameter = 29;
+    // Clip pocket around the axle: removed for prototyping
+    // (lib/control_cage.scad top_pocket = false). Kept for the day it returns.
     cage_clip_pocket_diameter = 26;
     cage_clip_pocket_depth = 4;
 
@@ -461,9 +463,9 @@ module sail_frame(
            > cage_mount_hole_diameter / 2
            && max(cage_mount_z_positions) - side_batten_bottom_native_z
            < side_batten_height - cage_mount_hole_diameter / 2);
-    assert(cage_surface_thickness > cage_clip_pocket_depth
-           && cage_hub_diameter > cage_clip_pocket_diameter
-           && cage_clip_pocket_diameter > cage_centre_hex_corner_diameter);
+    // (clip-pocket dimension assert removed with the pocket -- top_pocket = false)
+    assert(cage_hub_diameter > cage_centre_hex_corner_diameter,
+           "Shaft hub must clear the hex bore corners.");
     assert(cage_top_hole_radial_position - cage_top_hole_diameter/2
            > cage_hub_diameter/2);
     assert(cage_top_hole_radial_position + cage_top_hole_diameter/2

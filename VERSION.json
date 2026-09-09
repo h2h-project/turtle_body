@@ -1,5 +1,5 @@
 {
-  "version": "1.9.0",
+  "version": "1.10.0",
   "updated": "2026-09-09",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
@@ -8,6 +8,38 @@
     "major": "+1.0.0  bottle / board / hardware interface break (existing builds no longer fit)"
   },
   "changelog": [
+    {
+      "version": "1.10.0",
+      "date": "2026-09-09",
+      "files": [
+        "lib/params.scad",
+        "lib/control_cage.scad",
+        "lib/sail_frame.scad",
+        "src/components/Bottle_Control_Cage_v1.scad",
+        "src/Full_Turtle.scad",
+        "v1.0 SCADs/*.scad",
+        "Full_Turtle_v1.scad",
+        "tests/expected_bounds.json",
+        "v1.0 STLs/*_v1.10.0.stl",
+        "CLAUDE.md"
+      ],
+      "note": "Cage roof-top cleanup. (a) p_cage_roof_t() 6 -> 4 mm. The roof underside is fixed at the bearing radius, so the roof TOP drops 2 mm: standalone cage roof-to-tip 70 -> 68, native roof top Z 10.5 -> 8.5. lib/sail_frame.scad and src/Full_Turtle.scad's embedded cage-datum block now DERIVE cage_surface_thickness = p_cage_roof_t() and cage_total_height = p_cage_total_h() instead of carrying literal 6 / 50, so the sail frame's top-bar seat and batten geometry track the roof (no drift). cage_surface_under_z stays 44 (skirt datum unchanged), so the batten<->crest M6 mount-hole alignment is unchanged; the top sail bar + sail top + batten extent follow the 2 mm drop. (b) Recessed clip pocket around the axle removed by default: new control_cage(top_pocket=false) arg gates the pocket cut and its dimension asserts; wrapper gains a top_pocket checkbox; p_cage_pocket_d()/p_cage_pocket_depth() kept for re-enabling. Removing it also retired the old 'cage_top > 10.2' shaft/clip-clearance assert that a 4 mm roof would have tripped. (c) Control axle NOT changed - the thinner roof only loosens the 'axle must reach through roof + sail bar' assert; the axle now stands ~2 mm prouder of the roof. build/build.py + build/lint.py clean. MESH REGRESSION RUN (maintainer-authorised full re-render): python3 build/test.py -> 22/30 passed, 8 moved exactly as intended: control_cage__print/__upright Z-max 70 -> 68; full_turtle__full_turtle/__top_sail Z-max 306.5 -> 304.5; sail_apparatus__bottom_bars/__strengtheners/__c_end_pieces -2 mm in the native frame; sail_apparatus__sails -2 mm plus the v1.8.2/v1.8.3 fold-over stapling-tab growth that had been left un-baselined (span now -115..60). full_turtle__core and sail_apparatus__assembly unchanged (re-zeroed / roof not the Z extreme). No new warnings or errors. python3 build/baseline.py --from-src control_cage sail_apparatus full_turtle re-recorded those three targets; tests/expected_bounds.json diff reviewed and per-entry notes added (this also clears the stale v1.9.1 cage-bevel note - bevel 4->3 + full-perimeter chamfer was tris-only, XY unchanged). (d) STLs re-exported at v1.10.0 via build/export_stl.py (cap, cage[print], hex shaft, silicone mold + mold_bottom/top). Older v1.7.0/v1.7.1 STLs left in place - stale, safe to delete. Cage is PLA-only: no HopeTurtles.org generator propagation (CLAUDE.md s19).",
+      "component_bump": false
+    },
+    {
+      "version": "1.9.1",
+      "date": "2026-09-09",
+      "files": [
+        "lib/params.scad",
+        "lib/control_cage.scad",
+        "src/components/Bottle_Control_Cage_v1.scad",
+        "v1.0 SCADs/*.scad",
+        "Full_Turtle_v1.scad",
+        "CLAUDE.md"
+      ],
+      "note": "Cage roof-top bevel cleanup. (a) p_cage_roof_bevel() 4 -> 3 mm - the 45-deg outward chamfer was heavier than wanted (the v1.5.1 note called it 5 mm loosely; the committed value was 4). (b) roof_bevel_cutter() no longer masks a (notch_w/2 + bevel) box around each batten groove - the chamfer now runs the full roof-top perimeter, so the four groove side/back walls are chamfered along with the rest instead of standing square and proud of the bevel. Still printable roof-face-down: the cutter is a single rotate_extrude whose radius only grows from the bed upward, no undercut. Bounding box unchanged on every render (still inside the Oe115 x 70 envelope; only tris move) - control_cap/cage change confined to one subsystem and fully visible in one OpenSCAD view, so per CLAUDE.md s15 step 5 build/test.py was neither run nor recommended; build/lint.py clean. PLA-only part - no HopeTurtles.org generator propagation (CLAUDE.md s19). CLAUDE.md s6 updated.",
+      "component_bump": true
+    },
     {
       "version": "1.9.0",
       "date": "2026-09-09",

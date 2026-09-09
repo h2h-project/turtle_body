@@ -76,13 +76,13 @@
   "p_cap_oring_gland_w": 2.6,
   "p_cap_oring_gland_from_face": 3.5,
   "p_cage_wall_t": 6.5,
-  "p_cage_roof_t": 6,
+  "p_cage_roof_t": 4,
   "p_cage_inner_d": 102,
   "p_cage_outer_d": 115,
   "p_cage_skirt_depth": 44,
   "p_cage_peak_extension": 20,
   "p_cage_valley_wall_h": 10,
-  "p_cage_total_h": 50,
+  "p_cage_total_h": 48,
   "p_cage_notch_count": 4,
   "p_cage_notch_w": 22.5,
   "p_cage_notch_depth": 3.7,
@@ -98,7 +98,7 @@
   "p_cage_mount_hole_d": 3.2,
   "p_cage_mount_pitch": 32,
   "p_cage_lower_hole_from_tip": 10,
-  "p_cage_roof_bevel": 4,
+  "p_cage_roof_bevel": 3,
   "p_side_batten_h": 205,
   "p_side_batten_w": 20,
   "p_side_batten_radial_t": 10,
@@ -158,5 +158,5 @@
     0.26,
     0.17
   ],
-  "version": "1.9.0"
+  "version": "1.10.0"
 }

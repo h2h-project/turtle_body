@@ -9,7 +9,8 @@
  must stay self-supporting in that pose: bevels flare OUTWARD from the bed
  (<= 45 deg), no undercut, no downward-facing pocket/lip/overhang. Flag any
  change that would need support material instead of making it silently.
- The clip pocket + horizontal M3 bores already bridge in the slicer.
+ Horizontal M3 bores bridge in the slicer. The recessed clip pocket around
+ the axle is OFF by default (top_pocket) while prototyping without a clip.
  Prototype: not load-tested. Test fit, torsion, bending, layer adhesion.
 
  SOURCE FILE — geometry lives in lib/control_cage.scad + lib/params.scad.
@@ -23,7 +24,7 @@ wave_segments  = 240;  // [120:24:480]
 
 /* [Cage body] */
 cage_wall   = 6.5;
-cage_roof   = 6;
+cage_roof   = 4;
 skirt_height = 44;      // roof underside -> ORIGINAL skirt rim
 notch_width = 22.5;
 notch_depth = 3.7;
@@ -31,7 +32,7 @@ m3_hole_diameter = 3.2;
 roof_ring_height = 10;  // minimum skirt depth between mounts
 mount_extension  = 20;  // crest past the original rim
 lower_hole_from_tip = 10;
-roof_bevel = 4;         // 45-deg outward chamfer on the roof-top edge (0 = sharp); prints face-down
+roof_bevel = 3;         // 45-deg outward chamfer on the roof-top edge (0 = sharp); prints face-down
 
 /* [Bearings and button] */
 bump_d = 9;
@@ -42,8 +43,9 @@ button_angle = 90; // [0:0.5:359.5]
 /* [Shaft hub and clip pocket] */
 cage_hex_af = 10.3;
 cage_hub_d = 29;
-clip_pocket_depth = 4;
-pocket_d = 26;
+top_pocket = false;      // recessed clip pocket around the axle (off while prototyping)
+clip_pocket_depth = 4;   // used only when top_pocket = true
+pocket_d = 26;           //   "    "    "     "      "
 
 use <../../lib/control_cage.scad>
 
@@ -62,6 +64,7 @@ module _cage()
                  hex_bore_af = cage_hex_af,
                  pocket_d = pocket_d,
                  pocket_depth = clip_pocket_depth,
+                 top_pocket = top_pocket,
                  button_d = button_diameter,
                  button_r = button_r,
                  button_angle = button_angle,

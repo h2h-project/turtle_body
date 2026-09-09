@@ -80,7 +80,7 @@ Paths below were verified in the inspected GitHub tree.
 | `build/` | `scad_lib.py` (helpers), `bundle.py` (inline `use`/`include`), `build.py` (regenerate all bundles = the sync step), `lint.py`, `test.py`, `baseline.py`, `export_stl.py`, `manifest.json`, `README.md`. Python 3 stdlib only. |
 | `tests/expected_bounds.json` | Regression baseline (per-render bounding box + tris + known warnings) checked by `build/test.py`. `tests/baseline/` holds the full per-render dumps. |
 | `VERSION.json` | Single set-level version + bump rules + changelog. STL exports carry this version in their filename. |
-| `v1.0 STLs/` | Fabrication exports, written on demand by `build/export_stl.py` as `<name>_v<version>.stl`. The pre-refactor un-versioned STLs were deleted at v1.6.0. Current printable set: cap, cage, hex shaft, and the two mold plates (`Silicone_Ring_Mold_bottom` / `Silicone_Ring_Mold_top`). F6-verified, not physically validated. |
+| `v1.0 STLs/` | Fabrication exports, written on demand by `build/export_stl.py` as `<name>_v<version>.stl`. The pre-refactor un-versioned STLs were deleted at v1.6.0; the v1.7.0/v1.7.1 set was cleared at v1.10.0 so only the current version's files remain. Current printable set (all `_v1.10.0`): cap, cage, hex shaft, the combined mold layout (`Silicone_Ring_Mold`) and its two plates (`Silicone_Ring_Mold_bottom` / `_top`). F6-verified, not physically validated. |
 | `README.md` | Project overview and generator intent |
 | `LICENSE` | CERN Open Hardware Licence v2, Strongly Reciprocal |
 
@@ -150,10 +150,14 @@ An earlier standalone cage used a 94.5 mm cap and 96.5 mm cavity. That is a diff
 > they rise from the bed (≤ 45° from vertical), never undercut; do not add a
 > downward-facing pocket, lip or overhang to the roof top. A change that would
 > need support material in the roof-down pose must be **flagged to the user**,
-> not silently made. The clip pocket and the horizontal M3 bores already
-> bridge in the slicer. `p_cage_roof_bevel()` (default 4 mm) is a true 45°
-> outward chamfer on the roof-top outer edge, masked away around each batten
-> groove so the groove walls stay square — printable as-is.
+> not silently made. The horizontal M3 bores bridge in the slicer. The
+> recessed clip pocket around the axle is OFF by default since v1.10.0
+> (`control_cage(top_pocket = false)`) — no shaft clip at this prototype
+> stage. `p_cage_roof_bevel()` (default 3 mm) is a true 45°
+> outward chamfer that runs the full roof-top outer edge — the four batten
+> grooves are chamfered along with everything else, not masked out, so no
+> groove wall stands proud of the bevel. Printable as-is (single
+> `rotate_extrude` cutter, radius only grows from the bed upward).
 
 The cage is an inverted, open-bottom rotating cup. The circular roof is supported above the fixed cap by eight downward-facing hemispherical bumps. Those bumps were initially misread from the drawing as holes in a bottom plate. **There is no bottom plate and those eight features are solid hemispheres.**
 
@@ -163,12 +167,12 @@ The design evolved from a continuous cylindrical skirt with four grooves to a co
 | --- | ---: |
 | Inner / outer diameter | 102 / 115 |
 | Radial wall thickness | 6.5 |
-| Roof thickness | 6 |
+| Roof thickness | 4 (was 6 through v1.9.1; roof underside fixed, top dropped 2 mm) |
 | Original skirt depth | 44 |
 | Extra peak extension | 20 |
 | Maximum wall depth below roof | 64 |
 | Minimum wall depth between mounts | 10 |
-| Roof-to-tip overall height | 70 |
+| Roof-to-tip overall height | 68 (was 70) |
 | Groove count / width / depth | 4 / 22.5 / 3.7 |
 | Mount holes | Two Ø3.2 holes per groove, eight total |
 | Mount-hole vertical pitch | 32 |
@@ -176,13 +180,15 @@ The design evolved from a continuous cylindrical skirt with four grooves to a co
 | Bearing bumps | Eight Ø9 hemispheres |
 | Bearing pitch-circle diameter | 91.5 |
 | Hex opening across flats | 10.3 |
-| Centre hub / top pocket diameter | 29 / 26 |
-| Pocket depth | 4 |
+| Centre hub / top pocket diameter | 29 / 26 (top pocket OFF by default since v1.10.0 — `control_cage(top_pocket=false)`) |
+| Pocket depth | 4 (only when `top_pocket=true`) |
 | Button opening / centre radius | 18 / 24 |
 
 The wave uses `cos(4*a)`: maxima in wall depth align with 0°, 90°, 180° and 270°; minimum wall depth is halfway between. Cosine is simply the chosen phase of the sinusoidal profile.
 
-The standalone cage uses an installed reference where bearing tips touch cap Z=0. Roof underside Z=4.5, roof top Z=10.5, longest wall tip Z=-59.5. Hole centres are Z=-17.5 and -49.5. The print view flips the model so the roof faces the bed. Its other view raises the longest wall tips to Z=0.
+The standalone cage uses an installed reference where bearing tips touch cap Z=0. Roof underside Z=4.5, roof top Z=8.5 (was 10.5 before the 4 mm roof), longest wall tip Z=-59.5. Hole centres are Z=-17.5 and -49.5. The print view flips the model so the roof faces the bed. Its other view raises the longest wall tips to Z=0.
+
+The recessed clip pocket that used to sit around the axle in the roof top is gone by default — `control_cage(top_pocket = false)`. It was there for a shaft retaining clip that this prototype stage does not use; `p_cage_pocket_d()` / `p_cage_pocket_depth()` and the wrapper's `top_pocket` checkbox bring it back. Removing it also let the roof drop to 4 mm without tripping the old "shaft / clip axial clearance" assert.
 
 The full assembly and sail frame use different native translations. Compare physical interfaces after transforms, not raw Z values from different files. The cage's standalone button angle is 90°; the full model may apply a 90° installation rotation to a local 0° opening.
 
@@ -309,7 +315,7 @@ hex_corner_diameter = hex_across_flats / cos(30);
 
 A 10 mm-AF hex is about 11.55 mm across corners, fitting the Ø12 sail-bar opening. The cage hex is 10.3 mm AF. Preserve angular phase as well as size when combining standalone and embedded parts.
 
-The 23 mm hex was lengthened from 20 mm when the cage roof increased from 3 to 6 mm. The stack check includes a 4.5 mm bearing height, 6 mm cage roof and 12 mm sail bar. The existing hub pocket is not proof of a complete axial retention or clip mechanism; do not claim the assembly locks together without inspecting the actual retaining components.
+The 23 mm hex was lengthened from 20 mm when the cage roof increased from 3 to 6 mm. The stack check includes a 4.5 mm bearing height, the cage roof (4 mm since v1.10.0, was 6) and a 12 mm sail bar; the thinner roof only adds clearance to the "axle must reach through" assert, so the axle was not re-cut — it now protrudes ~2 mm further above the roof. The centre hub is not proof of a complete axial retention or clip mechanism (the roof clip pocket is off by default); do not claim the assembly locks together without inspecting the actual retaining components.
 
 ## 10. Sail apparatus and mounting-hole rules
 

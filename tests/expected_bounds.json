@@ -307,64 +307,68 @@
         "min": [
           -288.0,
           -11.0,
-          -113.0
+          -115.0
         ],
         "max": [
           288.0,
           11.0,
-          -101.0
+          -103.0
         ]
       },
       "tris": 56,
-      "warnings": []
+      "warnings": [],
+      "note": "v1.10.0: p_cage_roof_t() 6 -> 4 mm. Rendered in the native frame (not re-zeroed), so this part shifts down 2 mm with cage_total_height 50 -> 48 (= p_cage_total_h()). sail_apparatus__assembly is unaffected (its Z=0 re-zero cancels the shift)."
     },
     "sail_apparatus__strengtheners": {
       "bounds": {
         "min": [
           -75.8,
           -12.0,
-          -128.0
+          -130.0
         ],
         "max": [
           75.8,
           12.0,
-          -77.0
+          -79.0
         ]
       },
       "tris": 640,
-      "warnings": []
+      "warnings": [],
+      "note": "v1.10.0: p_cage_roof_t() 6 -> 4 mm -> native-frame part shifts down 2 mm (cage_total_height 50 -> 48). sail_apparatus__assembly unaffected (re-zeroed)."
     },
     "sail_apparatus__c_end_pieces": {
       "bounds": {
         "min": [
           -11.0,
           -78.8,
-          -113.0
+          -115.0
         ],
         "max": [
           11.0,
           78.8,
-          -101.0
+          -103.0
         ]
       },
       "tris": 56,
-      "warnings": []
+      "warnings": [],
+      "note": "v1.10.0: p_cage_roof_t() 6 -> 4 mm -> native-frame part shifts down 2 mm (cage_total_height 50 -> 48). sail_apparatus__assembly unaffected (re-zeroed)."
     },
     "sail_apparatus__sails": {
       "bounds": {
         "min": [
           -288.0,
           -0.05,
-          -101.0
+          -115.0
         ],
         "max": [
           288.0,
           0.05,
-          50.0
+          60.0
         ]
       },
-      "tris": 24,
-      "warnings": []
+      "tris": 40,
+      "warnings": [],
+      "note": "v1.10.0 + baseline catch-up. -2 mm from p_cage_roof_t() 6 -> 4 (cage_total_height 50 -> 48); the rest is the v1.8.2/v1.8.3 fold-over stapling tabs (sail_tab_height = board_width = 12 mm at top and bottom rails) whose bounds growth was intentionally left un-baselined then. New Z span -115..60 = bottom-rail bottom face to cage_total_height + tab."
     },
     "control_cage__print": {
       "bounds": {
@@ -376,12 +380,12 @@
         "max": [
           56.3837,
           56.3837,
-          70.0
+          68.0
         ]
       },
-      "tris": 68324,
+      "tris": 67620,
       "warnings": [],
-      "note": "p_cage_roof_bevel()=4: 45-deg outward roof-top chamfer (masked at the batten grooves), printable roof-down. Internal to the Oe115 x 70 envelope so the bounding box is unchanged; only tris moved."
+      "note": "v1.10.0: p_cage_roof_t() 6 -> 4 mm (roof underside fixed at the bearing radius, so the roof TOP drops 2 mm) -> Z-max 70 -> 68. Also folds in v1.9.1: p_cage_roof_bevel() 4 -> 3 mm and the chamfer now runs the full roof-top perimeter (batten grooves included, no longer masked) -- XY unchanged at 56.3837, so that was tris-only. Top clip pocket removed (control_cage top_pocket=false), internal to the roof, no bounds effect."
     },
     "control_cage__upright": {
       "bounds": {
@@ -393,12 +397,12 @@
         "max": [
           56.3837,
           56.3837,
-          70.0
+          68.0
         ]
       },
-      "tris": 68324,
+      "tris": 67604,
       "warnings": [],
-      "note": "p_cage_roof_bevel()=4: 45-deg outward roof-top chamfer (masked at the batten grooves), printable roof-down. Internal to the Oe115 x 70 envelope so the bounding box is unchanged; only tris moved."
+      "note": "v1.10.0: p_cage_roof_t() 6 -> 4 mm (roof underside fixed at the bearing radius, so the roof TOP drops 2 mm) -> Z-max 70 -> 68. Also folds in v1.9.1: p_cage_roof_bevel() 4 -> 3 mm and the chamfer now runs the full roof-top perimeter (batten grooves included, no longer masked) -- XY unchanged at 56.3837, so that was tris-only. Top clip pocket removed (control_cage top_pocket=false), internal to the roof, no bounds effect."
     },
     "full_turtle__full_turtle": {
       "bounds": {
@@ -410,14 +414,14 @@
         "max": [
           524.0,
           382.0,
-          306.5
+          304.5
         ]
       },
-      "tris": 158470,
+      "tris": 157722,
       "warnings": [
         "WARNING: Object may not be a valid 2-manifold and may need repair!"
       ],
-      "note": "TB-03: full-assembly cap roof 8 -> 5 mm (now lib/control_cap.scad, + 2 mm boss + twin 2x2 grooves). control_assembly_z = bottle_cut_height - p_cap_roof_t() shifts the whole control head + sail frame, so the assembly top drops exactly 3 mm (Z-max 309.5 -> 306.5). No other axis moved."
+      "note": "v1.10.0: p_cage_roof_t() 6 -> 4 mm. The sail frame's top-bar seat + batten geometry now derive from p_cage_total_h(), so the sail head follows the 2 mm roof drop: Z-max 306.5 -> 304.5. cage_surface_under_z is unchanged (skirt datum), so the batten<->crest M6 mount holes still align; core is unaffected. Prior TB-03 (v1.5.0): full-assembly cap roof 8 -> 5 mm via control_assembly_z had already dropped this 309.5 -> 306.5."
     },
     "full_turtle__top_sail": {
       "bounds": {
@@ -429,14 +433,14 @@
         "max": [
           225.8,
           317.0,
-          306.5
+          304.5
         ]
       },
-      "tris": 95988,
+      "tris": 95240,
       "warnings": [
         "WARNING: Object may not be a valid 2-manifold and may need repair!"
       ],
-      "note": "TB-03: full-assembly cap roof 8 -> 5 mm (now lib/control_cap.scad, + 2 mm boss + twin 2x2 grooves). control_assembly_z = bottle_cut_height - p_cap_roof_t() shifts the whole control head + sail frame, so the assembly top drops exactly 3 mm (Z-max 309.5 -> 306.5). No other axis moved."
+      "note": "v1.10.0: p_cage_roof_t() 6 -> 4 mm. The sail frame's top-bar seat + batten geometry now derive from p_cage_total_h(), so the sail head follows the 2 mm roof drop: Z-max 306.5 -> 304.5. cage_surface_under_z is unchanged (skirt datum), so the batten<->crest M6 mount holes still align; core is unaffected. Prior TB-03 (v1.5.0): full-assembly cap roof 8 -> 5 mm via control_assembly_z had already dropped this 309.5 -> 306.5."
     },
     "full_turtle__core": {
       "bounds": {
