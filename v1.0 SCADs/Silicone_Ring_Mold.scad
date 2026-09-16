@@ -1,7 +1,7 @@
 // ==========================================================================
 //  GENERATED FILE -- DO NOT EDIT.
 //  Produced by build/build.py from components/Silicone_Ring_Mold.scad
-//  Turtle Body version 1.10.0
+//  Turtle Body version 2.3.1
 //  Edit lib/ and src/ instead, then run: python3 build/build.py
 // ==========================================================================
 /*
@@ -36,6 +36,18 @@ curve_segments = 240; // [120:24:480]
 /* [Mold body] */
 mold_floor_thickness = 3;
 mold_spacing = 8; // gap between flat mold bodies
+
+/* [Flat seal ring -- the LARGE ring, for the cap insert grooves]
+   Tweak these to re-size the flat ring's mold cavity for a one-off STL
+   export without touching lib/params.scad (which also feeds the cap
+   groove geometry). Defaults below are the as-cast values that match the
+   current lib/params.scad groove spec: inner Ø59.25 / outer Ø79.25 x 2.6
+   thick, derived from a 79 mm groove root shrunk 25% for stretch-fit
+   tension plus a 10 mm radial width. The nested axle O-ring (small ring,
+   ID/OD 8/12) is not affected by these three values. */
+flat_ring_inner_d  = 59.25; // mm, as-cast inner diameter
+flat_ring_outer_d  = 79.25; // mm, as-cast outer diameter
+flat_ring_axial_t  = 2.6;   // mm, cast thickness
 
 // [bundle] begin use <../../lib/silicone_ring_mold.scad>
 // ==========================================================================
@@ -100,7 +112,7 @@ function p_fn_wood()      = 96;     // cut wooden parts
 function p_fn_curve()     = 180;    // fine profile curves (bottle, sails)
 
 // ---- bottle (the foundation reference) ---------------------------------
-function p_bottle_d()        = 82;    // outside diameter
+function p_bottle_d()        = 86;    // outside diameter (was 82; other bottle dims held)
 function p_bottle_h()        = 305;   // total height incl. ordinary screw cap
 function p_bottle_wall_t()   = 0.5;   // modelling assumption, not a measurement
 function p_bottle_cap_d()    = 31;    // ordinary screw cap (NOT the control-cap disk)
@@ -153,32 +165,41 @@ function p_m6_bolt_head_t()  = 4;
 //  the axle (below) is derived to this datum.
 function p_cap_disk_d()      = 100;   // control-cap disk (independent of p_bottle_cap_d)
 function p_cap_roof_t()      = 5;     // disk / roof thickness
-function p_cap_boss_depth()  = 2;     // extra projection of the centre boss into the hollow cap
+function p_cap_boss_depth()  = 1.5;   // extra projection of the centre boss into the hollow cap
+                                       // (was 2; lowered 0.5 mm -> 6.5 mm axle bearing length)
 function p_cap_boss_d()      = 18;
 function p_cap_insert_len()  = 35;    // straight insert shaft length
 function p_cap_insert_wall_t() = 4;
 function p_cap_entry_chamfer_h()     = 1;
 function p_cap_entry_chamfer_delta() = 1;
-function p_cap_axle_bore_d() = 8.6;   // 0.3 mm radial clearance to the Ø8 shaft
+function p_cap_axle_bore_d() = 8.7;   // 0.35 mm radial clearance to the Ø8 shaft (was 8.6 / 0.3 mm)
 function p_cap_cage_radial_clearance() = 1;   // cap disk -> cage inner wall (radial)
 function p_cap_total_h()     = p_cap_roof_t() + p_cap_insert_len();           // 40
-function p_cap_bearing_len() = p_cap_roof_t() + p_cap_boss_depth();           // 7
+function p_cap_bearing_len() = p_cap_roof_t() + p_cap_boss_depth();           // 6.5 (was 7)
 
 // buttons (through both cap and cage)
 function p_button_upper_d()  = 17;    // clearance hole in the cap
 function p_button_axis()     = "y";   // "x" or "y"
-function p_button_radius()   = 24;    // radial position of the two button centres (48 mm apart)
+function p_button_radius()   = 25;    // radial position of the two button centres (50 mm apart;
+                                       // was 24 / 48 mm -- shared with the cage's matching bore)
 
 // ---- silicone seal grooves + rings (CLAUDE.md s8) ------------------
 function p_seal_groove_count()      = 2;
-function p_seal_groove_axial_h()    = 2;   // groove height
+function p_seal_groove_axial_h()    = 2.7; // groove height (was 3.5; retuned to just clear
+                                            // the 2.6 mm ring axial thickness below, 0.1 mm margin)
 function p_seal_groove_radial_depth() = 2; // groove depth
 function p_seal_groove1_from_shoulder() = 12;  // groove centre, measured from the insert SHOULDER
 function p_seal_groove2_from_shoulder() = 25;
-function p_seal_ring_axial_t()      = 1.5;  // cast ring thickness
-function p_seal_ring_radial_w()     = 5;    // NOT validated; 3.5 was a suggested milder prototype
+function p_seal_ring_axial_t()      = 2.6;  // cast ring thickness (was 3)
+function p_seal_ring_radial_w()     = 10;   // cast ring radial width (was 5; doubled). NOT validated.
+function p_seal_ring_elasticity_reduction() = 0.25;
+    // Cast the ring's inner diameter this fraction SMALLER than the groove
+    // root it mates to, so real (stretchy) silicone is under tension --
+    // and therefore actually grips -- once stretched onto the cap, instead
+    // of sitting at a 1:1 as-cast fit. Tweak this here as real silicone
+    // behaviour is characterized; NOT validated (see lib/silicone_ring_mold.scad).
 function p_seal_groove_root_d() = p_insert_shaft_d()
-                                - 2 * p_seal_groove_radial_depth();            // 75
+                                - 2 * p_seal_groove_radial_depth();            // 79 at the 86 mm bottle
 
 // ---- round / hex centre axle (CLAUDE.md s9) -----------------------
 //  Derived to the 5/2 cap datum (TB-03/TB-04). round_inside_cap is measured
@@ -290,10 +311,18 @@ function p_wood_shade_fin()      = [0.40, 0.26, 0.17]; // rear fin + ballast fin
 // [bundle] end   <params.scad>
 
 // ---- cast shapes ------------------------------------------------------
+// The ring is cast SMALLER than the groove it mates to (see
+// p_seal_ring_elasticity_reduction()) so the stretchy silicone is under
+// radial tension -- and therefore actually grips -- once stretched onto
+// the cap, rather than sitting at a 1:1 as-cast fit.
+function _srm_cast_inner_d(mate_d = p_seal_groove_root_d(),
+                           reduction = p_seal_ring_elasticity_reduction()) =
+    mate_d * (1 - reduction);
+
 // one flat cast ring / flat-channel cutter
 module ring_shape(height,
-                  inner_d = p_seal_groove_root_d(),       // 75
-                  outer_d = p_seal_groove_root_d() + 2 * p_seal_ring_radial_w(),  // 85
+                  inner_d = _srm_cast_inner_d(),          // 59.25 (79 mating x 0.75)
+                  outer_d = _srm_cast_inner_d() + 2 * p_seal_ring_radial_w(),  // 79.25
                   fn = 240) {
     difference() {
         cylinder(d = outer_d, h = height, $fn = fn);
@@ -310,37 +339,56 @@ module oring_torus(mean_r = p_axle_oring_mean_r(),
 }
 
 // ---- the two-part pressed mold -------------------------------------
-function _srm_flat_od() = p_seal_groove_root_d() + 2 * p_seal_ring_radial_w();  // 85
+function _srm_flat_od() = _srm_cast_inner_d() + 2 * p_seal_ring_radial_w();  // 79.25 at reference params
+// NOTE: outer_d is a parameter (not always _srm_flat_od()) so a caller can
+// override the flat ring's outer diameter -- the rim/peg layout must follow
+// whatever ring size is actually being cast.
+function _srm_flat_mold_d(outer_d = _srm_flat_od()) = outer_d + 2 * _srm_press_wall();  // 101 at reference params
 function _srm_press_wall() = 8;                                                 // rim for the pegs
-function _srm_flat_mold_d() = _srm_flat_od() + 2 * _srm_press_wall();           // 101
 function _srm_top_floor() = 3;                                                  // top-plate floor over the half-torus
-function _srm_centres(n, spacing) =
+function _srm_centres(n, spacing, outer_d = _srm_flat_od()) =
     [for (i = [0 : n - 1])
-        [_srm_flat_mold_d() / 2 + i * (_srm_flat_mold_d() + spacing),
-         _srm_flat_mold_d() / 2]];
+        [_srm_flat_mold_d(outer_d) / 2 + i * (_srm_flat_mold_d(outer_d) + spacing),
+         _srm_flat_mold_d(outer_d) / 2]];
 
 // bottom plate: flat-ring channels (full depth), a lower half-torus in the
 // centre of EVERY flat mold, three male pegs on the parting face.
+//
+// PEG ANGLES ARE MIRRORED (-90/-210/-330, i.e. 270/150/30) RELATIVE TO THE
+// TOP PLATE'S HOLE ANGLES (90/210/330) ON PURPOSE. srm_top_plate is modelled
+// parting-face-down (its natural "as used" pose); to print it without
+// support it is Z-mirrored into a face-up pose (see "mold_top" below), and
+// the user then has to physically turn that printed part back over to seat
+// it on the bottom plate. A physical 180 deg turn is a rotation about an
+// in-plane (X or Y) axis, not a pure Z-mirror -- it also negates Y, which a
+// software mirror(0,0,1) does not. So the top plate's holes land at
+// (-90,-210,-330) once the printed part is actually turned over. The bottom
+// plate's pegs are placed at that same mirrored set of angles so the two
+// physically line up; using the *unmirrored* angles (matching the raw SCAD
+// coordinates of both modules) looks right on screen but the printed pegs
+// and holes end up diametrically misaligned.
 module srm_bottom_plate(ring_count = 2, floor_t = 3, spacing = 8,
                         ring_axial_t = p_seal_ring_axial_t(),
+                        ring_inner_d = _srm_cast_inner_d(),
+                        ring_outer_d = _srm_flat_od(),
                         tube_r = p_axle_oring_cs() / 2,
                         peg_d = 4, peg_h = 4, fn = 240) {
-    cs      = _srm_centres(ring_count, spacing);
-    fmd     = _srm_flat_mold_d();
+    cs      = _srm_centres(ring_count, spacing, ring_outer_d);
+    fmd     = _srm_flat_mold_d(ring_outer_d);
     part_z  = floor_t + ring_axial_t;                 // parting face
-    align_r = _srm_flat_od() / 2 + peg_d / 2 + 2;     // pegs sit in the rim
+    align_r = ring_outer_d / 2 + peg_d / 2 + 2;       // pegs sit in the rim
 
     difference() {
         union() {
             hull() for (c = cs) translate(c) cylinder(d = fmd, h = part_z, $fn = fn);
-            for (a = [90, 210, 330])
+            for (a = [-90, -210, -330])
                 translate(cs[0] + align_r * [cos(a), sin(a), 0])
                     translate([0, 0, part_z - p_eps()])
                         cylinder(d = peg_d, h = peg_h + p_eps(), $fn = 32);
         }
         // flat-ring channels
         for (c = cs) translate([c[0], c[1], floor_t])
-            ring_shape(ring_axial_t + p_eps(), fn = fn);
+            ring_shape(ring_axial_t + p_eps(), ring_inner_d, ring_outer_d, fn);
         // lower half of the O-ring torus, centre of every flat mold
         for (c = cs) translate([c[0], c[1], part_z])
             oring_torus(tube_r = tube_r, fn = fn);
@@ -350,16 +398,19 @@ module srm_bottom_plate(ring_count = 2, floor_t = 3, spacing = 8,
 // top plate: an upper half-torus in the centre of every flat mold, three
 // female holes, one fill + vent per O-ring cavity.
 // built parting-face-DOWN (Z = 0); "mold_top" flips it for printing.
+// Hole angles (90/210/330) are the "as modelled" pose -- see the long note
+// on srm_bottom_plate for why the bottom plate's pegs use the mirrored set.
 module srm_top_plate(ring_count = 2, top_floor = _srm_top_floor(), spacing = 8,
                      tube_r = p_axle_oring_cs() / 2,
                      mean_r = p_axle_oring_mean_r(),
                      ring_axial_t = p_seal_ring_axial_t(),
+                     ring_outer_d = _srm_flat_od(),
                      peg_d = 4, peg_h = 4, peg_fit = 0.35,
                      fill_d = 2, fn = 240) {
-    cs      = _srm_centres(ring_count, spacing);
-    fmd     = _srm_flat_mold_d();
+    cs      = _srm_centres(ring_count, spacing, ring_outer_d);
+    fmd     = _srm_flat_mold_d(ring_outer_d);
     plate_t = top_floor + tube_r;
-    align_r = _srm_flat_od() / 2 + peg_d / 2 + 2;
+    align_r = ring_outer_d / 2 + peg_d / 2 + 2;
 
     difference() {
         hull() for (c = cs) translate(c) cylinder(d = fmd, h = plate_t, $fn = fn);
@@ -381,47 +432,60 @@ module srm_top_plate(ring_count = 2, top_floor = _srm_top_floor(), spacing = 8,
 }
 
 // ---- dispatch --------------------------------------------------------
+// ring_inner_d / ring_outer_d / ring_axial_t override the FLAT insert-seal
+// ring's cast dimensions (default: derived from lib/params.scad's groove +
+// elasticity-reduction formula). The axle O-ring nested inside each flat
+// mold is not affected -- it stays tied to p_axle_oring_*().
 module silicone_ring_molds(part = "mold", ring_count = 2,
                            floor_t = 3, outer_wall = 3, spacing = 8,
-                           fn = 240) {
-    ring_axial_t = p_seal_ring_axial_t();
-    inner_d = p_seal_groove_root_d();
-    outer_d = _srm_flat_od();
+                           fn = 240,
+                           ring_inner_d = _srm_cast_inner_d(),
+                           ring_outer_d = _srm_flat_od(),
+                           ring_axial_t = p_seal_ring_axial_t()) {
     tube_r  = p_axle_oring_cs() / 2;
     part_z  = floor_t + ring_axial_t;
     y_gap   = 20;   // bed gap between the two plates in the "mold" print layout
+    ring_radial_w = (ring_outer_d - ring_inner_d) / 2;
 
     assert(ring_count >= 1 && ring_count == floor(ring_count),
            "silicone_ring_molds: ring_count must be a positive integer.");
     assert(ring_axial_t > 0 && ring_axial_t <= p_seal_groove_axial_h(),
            "Cast ring must not be taller than the groove it seats in.");
-    assert(p_seal_ring_radial_w() > p_seal_groove_radial_depth(),
+    assert(ring_outer_d > ring_inner_d,
+           "silicone_ring_molds: ring_outer_d must exceed ring_inner_d.");
+    assert(ring_radial_w > p_seal_groove_radial_depth(),
            "Ring must project past the groove root to grip.");
     assert(floor_t > 0 && spacing > 0);
     assert(p_axle_oring_id() > 0 && p_axle_oring_cs() > 0);
-    assert(p_axle_oring_od() < inner_d,
+    assert(p_axle_oring_od() < ring_inner_d,
            "silicone_ring_molds: O-ring must fit inside the flat-ring bore.");
 
-    cs = _srm_centres(ring_count, spacing);
+    cs = _srm_centres(ring_count, spacing, ring_outer_d);
 
     if (part == "mold") {
         // PRINTABLE layout: both plates flat on the bed, working faces UP,
         // side by side -- one STL, one print job, no support.
-        srm_bottom_plate(ring_count, floor_t, spacing, fn = fn);
-        translate([0, _srm_flat_mold_d() + y_gap, 0])
+        srm_bottom_plate(ring_count, floor_t, spacing, ring_axial_t,
+                         ring_inner_d, ring_outer_d, fn = fn);
+        translate([0, _srm_flat_mold_d(ring_outer_d) + y_gap, 0])
             translate([0, 0, _srm_top_floor() + tube_r]) mirror([0, 0, 1])
-                srm_top_plate(ring_count, spacing = spacing, fn = fn);
+                srm_top_plate(ring_count, spacing = spacing,
+                             ring_axial_t = ring_axial_t,
+                             ring_outer_d = ring_outer_d, fn = fn);
     }
     else if (part == "mold_bottom")
-        srm_bottom_plate(ring_count, floor_t, spacing, fn = fn);
+        srm_bottom_plate(ring_count, floor_t, spacing, ring_axial_t,
+                         ring_inner_d, ring_outer_d, fn = fn);
     else if (part == "mold_top")
         // flip about Z so the channel + holes face up for printing; Y stays positive
         translate([0, 0, _srm_top_floor() + tube_r]) mirror([0, 0, 1])
-            srm_top_plate(ring_count, spacing = spacing, fn = fn);
+            srm_top_plate(ring_count, spacing = spacing,
+                         ring_axial_t = ring_axial_t,
+                         ring_outer_d = ring_outer_d, fn = fn);
     else if (part == "rings") {
         for (c = cs) {
             translate([c[0], c[1], 0])
-                ring_shape(ring_axial_t, inner_d, outer_d, fn);
+                ring_shape(ring_axial_t, ring_inner_d, ring_outer_d, fn);
             translate([c[0], c[1], tube_r]) oring_torus(fn = fn);
         }
     }
@@ -430,8 +494,10 @@ module silicone_ring_molds(part = "mold", ring_count = 2,
     else
         assert(false, str("silicone_ring_molds: unknown part '", part, "'"));
 
-    echo("MOLD: two-part pressed, plates printed side by side. Flat ring ID/OD/axial = ",
-         inner_d, outer_d, ring_axial_t, " x ", ring_count,
+    echo("MOLD: two-part pressed, plates printed side by side. Flat ring AS-CAST ID/OD/axial = ",
+         ring_inner_d, ring_outer_d, ring_axial_t, " x ", ring_count,
+         "; mates to groove root dia ", p_seal_groove_root_d(),
+         " (elasticity_reduction ", p_seal_ring_elasticity_reduction(), ")",
          "; one centre O-ring per ring (x ", ring_count,
          "), ID/OD/CS = ", p_axle_oring_id(), p_axle_oring_od(),
          p_axle_oring_cs(), " (ID tied to axle round dia ", p_axle_round_d(),
@@ -442,4 +508,7 @@ module silicone_ring_molds(part = "mold", ring_count = 2,
 silicone_ring_molds(part = part, ring_count = ring_count,
                     floor_t = mold_floor_thickness,
                     spacing = mold_spacing,
-                    fn = curve_segments);
+                    fn = curve_segments,
+                    ring_inner_d = flat_ring_inner_d,
+                    ring_outer_d = flat_ring_outer_d,
+                    ring_axial_t = flat_ring_axial_t);

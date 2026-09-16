@@ -1,6 +1,6 @@
 {
-  "version": "1.10.0",
-  "updated": "2026-09-09",
+  "version": "2.3.1",
+  "updated": "2026-09-16",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
     "patch": "+0.0.1  component-scoped change (one lib/<subsystem>.scad or one src/components/*.scad)",
@@ -8,6 +8,73 @@
     "major": "+1.0.0  bottle / board / hardware interface break (existing builds no longer fit)"
   },
   "changelog": [
+    {
+      "version": "2.3.1",
+      "date": "2026-09-16",
+      "files": [
+        "lib/silicone_ring_mold.scad",
+        "src/components/Silicone_Ring_Mold.scad",
+        "v1.0 SCADs/Silicone_Ring_Mold.scad"
+      ],
+      "note": "Fixed a real assembly bug: the bottom plate's 3 alignment pegs and top plate's 3 alignment holes were both placed at the same angles (90/210/330) in each module's own as-modelled coordinates, but srm_top_plate is modelled parting-face-DOWN and only reaches its 'as used' orientation via a PHYSICAL 180-deg turn after printing (the print-time mold_top pose is a pure Z-mirror, which a real part cannot do -- turning it over is a rotation about an in-plane axis, which also negates Y). So the printed holes land at the mirrored angles (-90/-210/-330) once actually turned over to seat on the bottom plate, and the old matching-angle pegs missed them entirely -- the two halves could not register. Fixed by moving the BOTTOM plate's peg angles to -90/-210/-330 (holes stay at 90/210/330) as requested. Verified numerically (a standalone OpenSCAD echo of both peg positions and the top plate's post-flip hole positions) that all three pairs now coincide exactly: [0,-43.625], [-37.78,21.81], [37.78,21.81]. Also exposed the FLAT insert-seal ring's (the large ring, not the small nested axle O-ring) as-cast inner diameter, outer diameter and axial thickness as three literal customizer variables at the top of src/components/Silicone_Ring_Mold.scad (flat_ring_inner_d/outer_d/axial_t, defaulting to the current lib/params.scad-derived values 59.25/79.25/2.6), threaded through as new ring_inner_d/ring_outer_d/ring_axial_t args on lib/silicone_ring_mold.scad's silicone_ring_molds() (and down into srm_bottom_plate/srm_top_plate/ring_shape and their asserts) -- so the mold's cavity size can be tweaked per-export for a one-off STL without touching lib/params.scad (which also feeds the cap groove). The rim/peg/hole layout now follows ring_outer_d rather than a hardcoded function call, so an override also resizes the mold body and peg placement consistently. Verified: build/build.py + build/lint.py clean (0 problem groups); rendered part=mold_bottom with flat_ring_outer_d overridden to 90 mm in OpenSCAD -- meshed cleanly, echo confirmed the override took effect (79.25 -> 90) with no new ERROR/WARNING. Component-scoped to lib/silicone_ring_mold.scad + its wrapper (no lib/params.scad or shared-signature change) -- per CLAUDE.md s15 step 5, build/test.py was neither run nor recommended; visual/numeric inspection was sufficient. PLA/mold-only -- no HopeTurtles.org generator propagation needed (CLAUDE.md s19).",
+      "component_bump": true
+    },
+    {
+      "version": "2.3.0",
+      "date": "2026-09-15",
+      "files": [
+        "lib/params.scad",
+        "lib/control_cap.scad",
+        "src/components/Bottle_Control_Cap_v1.scad",
+        "v1.0 SCADs/Bottle_Control_Cap_v1.scad",
+        "v1.0 SCADs/Bottle_Control_Cage_v1.scad",
+        "Full_Turtle_v1.scad",
+        "build/params.json"
+      ],
+      "note": "Three control-cap changes. (1) p_button_radius() 24 -> 25 mm (button centres now 50 mm apart, was 48) -- a shared value consumed by both control_cap and control_cage, so the cage's matching button bore moves with it; the cap wrapper's hole_spacing_cc literal was updated to match. (2) New tab_wire_hole feature (tab_wire_hole/tab_wire_hole_d/tab_wire_hole_exit_from_lip on control_cap(), wire_hole/wire_hole_d/wire_hole_exit_from_lip on cap_side_tabs()): a 5 mm-diameter capsule-shaped channel drilled down each side tab, from its exposed free tip (open air above the cap) down to a point inside the cap body, angled inward so it breaks through the tab's inner face into the hollow cavity -- for routing button wires. Modelled as a hull of two spheres between the entry point (tip, centred in the tip's radial thickness) and the exit point (default 15 mm below the lip, one full hole-diameter past the tab's inner face at that height, guaranteeing a clear breakthrough rather than a tangent graze). Wrapper turns it on (tab_wire_hole_enable = true) alongside the existing side tabs. (3) p_cap_boss_depth() 2 -> 1.5 mm (the centre boss 'lowered' 0.5 mm), so p_cap_bearing_len() (roof + boss) is now 6.5 mm (was 7); the wrapper's centre_boss_depth literal was updated to match. All three verified: build/lint.py clean; part=\"cap\" rendered and meshed in OpenSCAD with no ERROR/WARNING (Simple: yes, echo confirms roof/boss/bearing = 5/1.5/6.5, button-hole assert passed at radius 25, wire-hole echo present); hand-checked the wire-hole geometry numerically against the default tab dimensions (entry r=35.5 at the tip, exit r=30.5 at 25 mm height, comfortably inside the tab's radial envelope at the tip and inside the cavity's own r_inner=35.5 at the exit). p_button_radius and p_cap_boss_depth both move mating interfaces (cage button alignment; axle bearing length), so this is a minor (+0.1.0) bump. Cross-subsystem mesh regression (build/test.py) was not run -- recommended to the maintainer per CLAUDE.md s15 step 5, not run automatically.",
+      "component_bump": false
+    },
+    {
+      "version": "2.2.0",
+      "date": "2026-09-15",
+      "files": [
+        "lib/params.scad",
+        "lib/control_cap.scad",
+        "src/components/Bottle_Control_Cap_v1.scad",
+        "v1.0 SCADs/Bottle_Control_Cap_v1.scad",
+        "Full_Turtle_v1.scad",
+        "build/params.json"
+      ],
+      "note": "Migrated the Bottle_Control_Cap_v1XX.scad hand-built test variant into the master control cap. Two additions: (1) optional internal SIDE TABS (cap_side_tabs()) -- two ribs rooted at the insert cavity floor on the button axis, running the full cavity height then continuing 28 mm past the top lip as a free post with a gradual inward taper (6 mm total lean starting 10 mm below the lip), the pair rotated -12 deg off the button axis; new control_cap() params side_tabs/tab_width_p/tab_depth_p/tab_overhang_p/tab_fillet_p/tab_taper_gain_p/tab_taper_start_p/tab_rotate_p (side_tabs defaults false in the lib module, wrapper turns it on); (2) p_cap_axle_bore_d() 8.6 -> 8.7 mm (0.3 -> 0.35 mm radial clearance to the Ø8 axle). Both were explicitly flagged in the v1XX header as unvalidated fit/registration experiments; the user chose to adopt both as the new default per an explicit prompt during this task. Also fixed the wrapper's stale band_channel_w (2 -> 2.7) to match the already-current p_seal_groove_axial_h() default. The v1XX bottle-diameter override (86 mm) needed no action -- p_bottle_d() was already 86 in this working tree from prior uncommitted work. build/lint.py clean; part=\"cap\" rendered and meshed cleanly in OpenSCAD (Simple: yes) with the expected echo values (disk/insert/height 100/83/40, bore 8.7, side-tab echo present). p_cap_axle_bore_d moves a mating interface (axle round-section fit), so this is a minor (+0.1.0) bump; cross-subsystem mesh regression (build/test.py) was not run -- recommended to the maintainer, not run automatically per CLAUDE.md s15 step 5.",
+      "component_bump": false
+    },
+    {
+      "version": "2.1.0",
+      "date": "2026-09-13",
+      "files": [
+        "lib/params.scad",
+        "v1.0 SCADs/*.scad",
+        "Full_Turtle_v1.scad",
+        "build/params.json",
+        "v1.0 SCADs/Bottle_Control_Cap_v1XX.scad (hand-built test variant, not a generated bundle)",
+        "VERSION.json"
+      ],
+      "note": "Retuned the seal ring/groove fit from the 2.0.0 pass. p_seal_ring_axial_t() 3 -> 2.6 mm; p_seal_groove_axial_h() 3.5 -> 2.7 mm (0.1 mm ring-vs-groove margin, down from 0.5 -- a deliberately tighter fit per this request). p_seal_ring_radial_w() (10), elasticity_reduction (0.25) and all bottle/insert-diameter cascades from 2.0.0 unchanged. At current (86 mm bottle) reference params the flat ring is now AS-CAST ID/OD/axial = 59.25 / 79.25 / 2.6 mm, mating (installed) ID = 79 mm. Also updated the hand-built lib/-independent test variant v1.0 SCADs/Bottle_Control_Cap_v1XX.scad's own band_channel_w 2 -> 2.7 to match (that file carries its own inlined snapshot and does not track lib/params.scad automatically). build/build.py + build/lint.py clean; full mesh render of Silicone_Ring_Mold part=\"mold\", Bottle_Control_Cap_v1 and Bottle_Control_Cap_v1XX all Simple: yes, no new ERROR/WARNING, no failed asserts (2.6 <= 2.7 clears the mold's ring-vs-groove sanity check). Shared-contract change per CLAUDE.md s15 step 5: build/test.py not run by the agent, recommended to the maintainer along with build/baseline.py if these bounds moves should be re-recorded. PLA/mold-only -- no HopeTurtles.org generator propagation needed (CLAUDE.md s19)."
+    },
+    {
+      "version": "2.0.0",
+      "date": "2026-09-13",
+      "files": [
+        "lib/params.scad",
+        "lib/silicone_ring_mold.scad",
+        "src/Full_Turtle.scad",
+        "v1.0 SCADs/*.scad",
+        "Full_Turtle_v1.scad",
+        "build/params.json",
+        "VERSION.json"
+      ],
+      "note": "(a) BOTTLE INTERFACE BREAK: p_bottle_d() 82 -> 86 mm, every other bottle dimension (height, dome heights, cap/collar diameters, wall thickness) held. Cascades: p_insert_shaft_d() 79->83, p_seal_groove_root_d() 75->79, p_port_height() (== bottle dia, asserted) 82->86, Ecojoiner john_height/john_length/rectangle_y, top_crossbar_len 492->516, bottom_rail_len 246->258, ballast_core_w/slat_gap/slat_spacing/board_len/fin_len all grow accordingly. FOUND AND FIXED IN THE SAME PASS: src/Full_Turtle.scad's top-level `bottle_diameter` was a hardcoded 82 literal, NOT derived from p_bottle_d() despite the file's own comment calling that block 'SINGLE SOURCE OF TRUTH' -- it silently matched by coincidence until this change, at which point the rear-fin/Little-John Y-axis cross-check assert (added in 1.8.0) correctly caught the resulting drift between the full assembly's own Ecojoiner-rectangle copy (stuck on the old 82-based value) and lib-derived values (now 86-based). Now `bottle_diameter = p_bottle_d()`; assert passes, build/lint.py clean. (b) Silicone mold retune for real (stretchy) silicone: new p_seal_ring_elasticity_reduction() = 0.25 -- the cast ring's inner diameter is now 25% SMALLER than the groove root it mates to (lib/silicone_ring_mold.scad _srm_cast_inner_d()), so the ring is under radial tension once stretched onto the cap instead of a slack 1:1 as-cast fit. p_seal_ring_axial_t() 1.5->3 mm and p_seal_ring_radial_w() 5->10 mm (both doubled, per request). CONSEQUENTIAL CHANGE beyond the literal ask, flagged rather than silently skipped or silently bypassing the safety assert: doubling the ring's axial thickness to 3 mm exceeds the existing 2 mm p_seal_groove_axial_h(), which the mold's own 'cast ring must not be taller than the groove it seats in' assert correctly caught -- so p_seal_groove_axial_h() was deepened 2 -> 3.5 mm (lib/control_cap.scad's groove cut) to keep the same 0.5 mm ring-vs-groove clearance margin the reference design had. At the new 86 mm-bottle reference params the flat ring is now: AS-CAST ID/OD/axial = 59.25 / 79.25 / 3 mm, mating (installed, stretched) ID = 79 mm (the groove root). Nominal, no shrinkage compensation; the stretch-fit tension level (25%) and the retuned groove depth are NOT physically validated -- flagged in lib/silicone_ring_mold.scad and CLAUDE.md s8 as before. build/build.py + build/lint.py clean (OpenSCAD parse of every lib/src/bundle file, including a full mesh render of Silicone_Ring_Mold part=\"mold\" and Bottle_Control_Cap_v1 -- both Simple: yes, no new ERROR/WARNING). SHARED-CONTRACT CHANGE per CLAUDE.md s15 step 5: build/test.py (full cross-subsystem mesh regression) was NOT run by the agent -- recommended to the maintainer, along with build/baseline.py for the intentional bounds moves (bottle-diameter cascade + groove/ring redimension), but not run automatically. HopeTurtles.org generator propagation (CLAUDE.md s19) also NOT done in this pass -- lib/params.scad, lib/control_cap.scad (groove) and the wooden-part formulas that scale with p_bottle_d() all need the sync/check steps in ../hopeTurtles.org/generator/; flagged as an open item pending maintainer action (silicone mold + cap/groove are PLA/mold-only and need no generator propagation, per s19's PLA-only exemption -- only the bottle-diameter cascade into the wooden-part generators is open)."
+    },
     {
       "version": "1.10.0",
       "date": "2026-09-09",

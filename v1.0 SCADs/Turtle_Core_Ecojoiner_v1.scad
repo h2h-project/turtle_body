@@ -1,7 +1,7 @@
 // ==========================================================================
 //  GENERATED FILE -- DO NOT EDIT.
 //  Produced by build/build.py from components/Turtle_Core_Ecojoiner_v1.scad
-//  Turtle Body version 1.10.0
+//  Turtle Body version 2.3.1
 //  Edit lib/ and src/ instead, then run: python3 build/build.py
 // ==========================================================================
 /*
@@ -65,7 +65,7 @@ function p_fn_wood()      = 96;     // cut wooden parts
 function p_fn_curve()     = 180;    // fine profile curves (bottle, sails)
 
 // ---- bottle (the foundation reference) ---------------------------------
-function p_bottle_d()        = 82;    // outside diameter
+function p_bottle_d()        = 86;    // outside diameter (was 82; other bottle dims held)
 function p_bottle_h()        = 305;   // total height incl. ordinary screw cap
 function p_bottle_wall_t()   = 0.5;   // modelling assumption, not a measurement
 function p_bottle_cap_d()    = 31;    // ordinary screw cap (NOT the control-cap disk)
@@ -118,32 +118,41 @@ function p_m6_bolt_head_t()  = 4;
 //  the axle (below) is derived to this datum.
 function p_cap_disk_d()      = 100;   // control-cap disk (independent of p_bottle_cap_d)
 function p_cap_roof_t()      = 5;     // disk / roof thickness
-function p_cap_boss_depth()  = 2;     // extra projection of the centre boss into the hollow cap
+function p_cap_boss_depth()  = 1.5;   // extra projection of the centre boss into the hollow cap
+                                       // (was 2; lowered 0.5 mm -> 6.5 mm axle bearing length)
 function p_cap_boss_d()      = 18;
 function p_cap_insert_len()  = 35;    // straight insert shaft length
 function p_cap_insert_wall_t() = 4;
 function p_cap_entry_chamfer_h()     = 1;
 function p_cap_entry_chamfer_delta() = 1;
-function p_cap_axle_bore_d() = 8.6;   // 0.3 mm radial clearance to the Ø8 shaft
+function p_cap_axle_bore_d() = 8.7;   // 0.35 mm radial clearance to the Ø8 shaft (was 8.6 / 0.3 mm)
 function p_cap_cage_radial_clearance() = 1;   // cap disk -> cage inner wall (radial)
 function p_cap_total_h()     = p_cap_roof_t() + p_cap_insert_len();           // 40
-function p_cap_bearing_len() = p_cap_roof_t() + p_cap_boss_depth();           // 7
+function p_cap_bearing_len() = p_cap_roof_t() + p_cap_boss_depth();           // 6.5 (was 7)
 
 // buttons (through both cap and cage)
 function p_button_upper_d()  = 17;    // clearance hole in the cap
 function p_button_axis()     = "y";   // "x" or "y"
-function p_button_radius()   = 24;    // radial position of the two button centres (48 mm apart)
+function p_button_radius()   = 25;    // radial position of the two button centres (50 mm apart;
+                                       // was 24 / 48 mm -- shared with the cage's matching bore)
 
 // ---- silicone seal grooves + rings (CLAUDE.md s8) ------------------
 function p_seal_groove_count()      = 2;
-function p_seal_groove_axial_h()    = 2;   // groove height
+function p_seal_groove_axial_h()    = 2.7; // groove height (was 3.5; retuned to just clear
+                                            // the 2.6 mm ring axial thickness below, 0.1 mm margin)
 function p_seal_groove_radial_depth() = 2; // groove depth
 function p_seal_groove1_from_shoulder() = 12;  // groove centre, measured from the insert SHOULDER
 function p_seal_groove2_from_shoulder() = 25;
-function p_seal_ring_axial_t()      = 1.5;  // cast ring thickness
-function p_seal_ring_radial_w()     = 5;    // NOT validated; 3.5 was a suggested milder prototype
+function p_seal_ring_axial_t()      = 2.6;  // cast ring thickness (was 3)
+function p_seal_ring_radial_w()     = 10;   // cast ring radial width (was 5; doubled). NOT validated.
+function p_seal_ring_elasticity_reduction() = 0.25;
+    // Cast the ring's inner diameter this fraction SMALLER than the groove
+    // root it mates to, so real (stretchy) silicone is under tension --
+    // and therefore actually grips -- once stretched onto the cap, instead
+    // of sitting at a 1:1 as-cast fit. Tweak this here as real silicone
+    // behaviour is characterized; NOT validated (see lib/silicone_ring_mold.scad).
 function p_seal_groove_root_d() = p_insert_shaft_d()
-                                - 2 * p_seal_groove_radial_depth();            // 75
+                                - 2 * p_seal_groove_radial_depth();            // 79 at the 86 mm bottle
 
 // ---- round / hex centre axle (CLAUDE.md s9) -----------------------
 //  Derived to the 5/2 cap datum (TB-03/TB-04). round_inside_cap is measured

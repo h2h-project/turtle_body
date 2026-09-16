@@ -1,4 +1,37 @@
 // ==========================================================================
+//  TEST VARIANT — hand-built, NOT produced by build/build.py.
+//  Forked from v1.0 SCADs/Bottle_Hex_Shaft_v1.scad (Turtle Body v1.10.0).
+//  Do not treat this as a source-of-truth bundle: it is a one-off experiment
+//  and is not wired into lib/, src/, build/build.py, build/lint.py,
+//  build/test.py or VERSION.json. If this redesign is adopted for real, port
+//  it into lib/params.scad + lib/hex_shaft.scad through the normal workflow
+//  (CLAUDE.md section 15) instead of hand-editing this file further.
+//
+//  DELIBERATE REDESIGN, latest cut: the hex-top piece is dropped entirely --
+//  this file now emits ONLY the round shaft, a single straight Ø8 mm
+//  cylinder (no 7 mm neck, no taper). Overall length is 20 mm longer than
+//  the previous 48 mm two-part shaft length, i.e. 68 mm. The magnet recess
+//  opens at one end, deepened to 3.5 mm (was 3) with a wider +0.3 mm
+//  diametral fit margin (was +0.1) for easier insertion.
+//
+//  Units: mm. License: CERN-OHL-S-2.0 (same as the rest of this repository).
+// ==========================================================================
+
+/* [Round shaft -- straight, constant diameter, no taper] */
+shaft_d   = 8;    // full diameter, constant along the whole length
+shaft_len = 68;   // previous two-part length (48) + 20 mm
+
+/* [Magnet recess -- blind hole at one end] */
+magnet_recess_enabled = true;
+magnet_diameter    = 4;    // nominal magnet size
+magnet_fit_margin  = 0.3;  // diametral allowance added on top, for insertion (was 0.1)
+magnet_depth       = 3.5;  // was 3
+
+/* [Render] */
+fn = 120; // [48:8:240]
+
+// [bundle] begin use <params.scad>
+// ==========================================================================
 //  Turtle Body -- shared dimension contract
 // --------------------------------------------------------------------------
 //  The single source of truth for every dimension that more than one
@@ -27,7 +60,7 @@ function p_fn_wood()      = 96;     // cut wooden parts
 function p_fn_curve()     = 180;    // fine profile curves (bottle, sails)
 
 // ---- bottle (the foundation reference) ---------------------------------
-function p_bottle_d()        = 86;    // outside diameter (was 82; other bottle dims held)
+function p_bottle_d()        = 82;    // outside diameter
 function p_bottle_h()        = 305;   // total height incl. ordinary screw cap
 function p_bottle_wall_t()   = 0.5;   // modelling assumption, not a measurement
 function p_bottle_cap_d()    = 31;    // ordinary screw cap (NOT the control-cap disk)
@@ -80,41 +113,32 @@ function p_m6_bolt_head_t()  = 4;
 //  the axle (below) is derived to this datum.
 function p_cap_disk_d()      = 100;   // control-cap disk (independent of p_bottle_cap_d)
 function p_cap_roof_t()      = 5;     // disk / roof thickness
-function p_cap_boss_depth()  = 1.5;   // extra projection of the centre boss into the hollow cap
-                                       // (was 2; lowered 0.5 mm -> 6.5 mm axle bearing length)
+function p_cap_boss_depth()  = 2;     // extra projection of the centre boss into the hollow cap
 function p_cap_boss_d()      = 18;
 function p_cap_insert_len()  = 35;    // straight insert shaft length
 function p_cap_insert_wall_t() = 4;
 function p_cap_entry_chamfer_h()     = 1;
 function p_cap_entry_chamfer_delta() = 1;
-function p_cap_axle_bore_d() = 8.7;   // 0.35 mm radial clearance to the Ø8 shaft (was 8.6 / 0.3 mm)
+function p_cap_axle_bore_d() = 8.6;   // 0.3 mm radial clearance to the Ø8 shaft
 function p_cap_cage_radial_clearance() = 1;   // cap disk -> cage inner wall (radial)
 function p_cap_total_h()     = p_cap_roof_t() + p_cap_insert_len();           // 40
-function p_cap_bearing_len() = p_cap_roof_t() + p_cap_boss_depth();           // 6.5 (was 7)
+function p_cap_bearing_len() = p_cap_roof_t() + p_cap_boss_depth();           // 7
 
 // buttons (through both cap and cage)
 function p_button_upper_d()  = 17;    // clearance hole in the cap
 function p_button_axis()     = "y";   // "x" or "y"
-function p_button_radius()   = 25;    // radial position of the two button centres (50 mm apart;
-                                       // was 24 / 48 mm -- shared with the cage's matching bore)
+function p_button_radius()   = 24;    // radial position of the two button centres (48 mm apart)
 
 // ---- silicone seal grooves + rings (CLAUDE.md s8) ------------------
 function p_seal_groove_count()      = 2;
-function p_seal_groove_axial_h()    = 2.7; // groove height (was 3.5; retuned to just clear
-                                            // the 2.6 mm ring axial thickness below, 0.1 mm margin)
+function p_seal_groove_axial_h()    = 2;   // groove height
 function p_seal_groove_radial_depth() = 2; // groove depth
 function p_seal_groove1_from_shoulder() = 12;  // groove centre, measured from the insert SHOULDER
 function p_seal_groove2_from_shoulder() = 25;
-function p_seal_ring_axial_t()      = 2.6;  // cast ring thickness (was 3)
-function p_seal_ring_radial_w()     = 10;   // cast ring radial width (was 5; doubled). NOT validated.
-function p_seal_ring_elasticity_reduction() = 0.25;
-    // Cast the ring's inner diameter this fraction SMALLER than the groove
-    // root it mates to, so real (stretchy) silicone is under tension --
-    // and therefore actually grips -- once stretched onto the cap, instead
-    // of sitting at a 1:1 as-cast fit. Tweak this here as real silicone
-    // behaviour is characterized; NOT validated (see lib/silicone_ring_mold.scad).
+function p_seal_ring_axial_t()      = 1.5;  // cast ring thickness
+function p_seal_ring_radial_w()     = 5;    // NOT validated; 3.5 was a suggested milder prototype
 function p_seal_groove_root_d() = p_insert_shaft_d()
-                                - 2 * p_seal_groove_radial_depth();            // 79 at the 86 mm bottle
+                                - 2 * p_seal_groove_radial_depth();            // 75
 
 // ---- round / hex centre axle (CLAUDE.md s9) -----------------------
 //  Derived to the 5/2 cap datum (TB-03/TB-04). round_inside_cap is measured
@@ -223,3 +247,45 @@ function p_wood_shade_rear_fin() = [0.72, 0.50, 0.33]; // rear-fin shafts + sola
 function p_wood_shade_eco()      = [0.62, 0.44, 0.28]; // Ecojoiner core
 function p_wood_shade_ballast()  = [0.52, 0.34, 0.22]; // ballast slats / board / locks
 function p_wood_shade_fin()      = [0.40, 0.26, 0.17]; // rear fin + ballast fin, shared (darkest)
+// [bundle] end   <params.scad>
+
+// Round shaft -- a single straight Ø8 mm cylinder, no neck, no taper, no
+// separate hex-top piece. The magnet recess (a blind hole, not through)
+// opens at one end for the sensing magnet.
+module shaft_round_part(d            = 8,
+                        len          = 68,
+                        magnet       = true,
+                        magnet_d     = 4,
+                        magnet_fit_margin = 0.3,
+                        magnet_depth = 3.5,
+                        fn           = undef) {
+    nn = fn == undef ? p_fn_plastic() : fn;
+    magnet_hole_d = magnet_d + magnet_fit_margin;
+
+    assert(d > 0 && len > 0, "shaft_round_part: diameter and length must be positive.");
+    assert(!magnet || (magnet_fit_margin >= 0 && magnet_hole_d > 0 && magnet_hole_d < d
+           && magnet_depth > 0 && magnet_depth < len),
+           "shaft_round_part: magnet recess (incl. fit margin) must fit inside the shaft.");
+
+    $fn = nn;
+    difference() {
+        cylinder(d = d, h = len);
+        if (magnet)
+            translate([0, 0, len - magnet_depth])
+                cylinder(d = magnet_hole_d, h = magnet_depth + p_eps());
+    }
+
+    echo("SHAFT: diameter / length = ", d, len);
+    if (magnet)
+        echo("SHAFT: magnet nominal / fit margin / hole dia / depth = ",
+             magnet_d, magnet_fit_margin, magnet_hole_d, magnet_depth);
+}
+
+color([0.74, 0.77, 0.79])
+    shaft_round_part(d            = shaft_d,
+                     len          = shaft_len,
+                     magnet       = magnet_recess_enabled,
+                     magnet_d     = magnet_diameter,
+                     magnet_fit_margin = magnet_fit_margin,
+                     magnet_depth = magnet_depth,
+                     fn           = fn);

@@ -82,7 +82,12 @@ cage_button_angle = 0; // Local angle; installation adds 90 degrees
 // These values drive every bottle, the Ecojoiner, ballast, rear fin and sails.
 // Do not redefine them elsewhere in this file.
 
-bottle_diameter      = 82;
+bottle_diameter      = p_bottle_d();  // was a hardcoded 82 literal, disconnected from
+                                       // lib/params.scad -- drift surfaced when p_bottle_d()
+                                       // moved to 86 (rear-fin/John Y-axis assert failed
+                                       // because this file's own Ecojoiner-rectangle copy
+                                       // stayed on the old literal while lib-derived values
+                                       // picked up 86). Now genuinely single-sourced.
 bottle_height        = 305;
 
 cap_diameter         = 31;

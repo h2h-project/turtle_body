@@ -31,9 +31,24 @@ curve_segments = 240; // [120:24:480]
 mold_floor_thickness = 3;
 mold_spacing = 8; // gap between flat mold bodies
 
+/* [Flat seal ring -- the LARGE ring, for the cap insert grooves]
+   Tweak these to re-size the flat ring's mold cavity for a one-off STL
+   export without touching lib/params.scad (which also feeds the cap
+   groove geometry). Defaults below are the as-cast values that match the
+   current lib/params.scad groove spec: inner Ø59.25 / outer Ø79.25 x 2.6
+   thick, derived from a 79 mm groove root shrunk 25% for stretch-fit
+   tension plus a 10 mm radial width. The nested axle O-ring (small ring,
+   ID/OD 8/12) is not affected by these three values. */
+flat_ring_inner_d  = 59.25; // mm, as-cast inner diameter
+flat_ring_outer_d  = 79.25; // mm, as-cast outer diameter
+flat_ring_axial_t  = 2.6;   // mm, cast thickness
+
 use <../../lib/silicone_ring_mold.scad>
 
 silicone_ring_molds(part = part, ring_count = ring_count,
                     floor_t = mold_floor_thickness,
                     spacing = mold_spacing,
-                    fn = curve_segments);
+                    fn = curve_segments,
+                    ring_inner_d = flat_ring_inner_d,
+                    ring_outer_d = flat_ring_outer_d,
+                    ring_axial_t = flat_ring_axial_t);
