@@ -1,7 +1,7 @@
 {
   "target": "silicone_ring_mold",
   "render": "oring_pair",
-  "source": "v1.0 SCADs/Silicone_Ring_Mold.scad",
+  "source": "scads_v1/Silicone_Ring_Mold.scad",
   "defines": {
     "part": "oring_pair"
   },

@@ -3,7 +3,7 @@
 
 For every manifest target that has an existing `src`, bundle.py inlines its
 lib references and the result is written to the target's `out` path
-(Full_Turtle_v1.scad or a v1.0 SCADs/*.scad). Targets without a src yet
+(Full_Turtle_v1.scad or a scads_v1/*.scad). Targets without a src yet
 (before the M1-M7 refactor lands) are skipped and reported.
 
 This is the sync step: editing lib/ or src/ on either the master or a

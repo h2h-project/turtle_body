@@ -1,7 +1,7 @@
 {
   "target": "sail_apparatus",
   "render": "sail_batten",
-  "source": "src/components/Turtle_Sail_Apparatus_v1.scad",
+  "source": "src/components/Turtle_Sail_Apparatus.scad",
   "defines": {
     "part": "sail_batten"
   },

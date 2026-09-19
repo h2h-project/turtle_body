@@ -13,7 +13,7 @@ See `issues_to_fix.md` for the accompanying prioritized repair and verification 
 > **2026-09-07 — build system + shared-library refactor COMPLETE (M0–M8).**
 > Editable geometry lives in `lib/` (parametric modules + `params.scad`, the
 > shared dimension contract) and `src/` (thin wrappers). `Full_Turtle_v1.scad`
-> and `v1.0 SCADs/*.scad` are **generated bundles** — never hand-edit them; run
+> and `scads_v1/*.scad` are **generated bundles** — never hand-edit them; run
 > `python3 build/build.py`. See **section 15** for the workflow and
 > `build/README.md`.
 >
@@ -76,11 +76,11 @@ Paths below were verified in the inspected GitHub tree.
 | `src/components/*.scad` | **Editable.** Thin wrappers: customizer block + `use <../../lib/...>` + a `part=` dispatch → one lib call. |
 | `src/Full_Turtle.scad` | **Editable.** The full-assembly source (git-renamed from `Full_Turtle_v1.scad`). M7 pending: still holds embedded geometry, not yet `use`-ing lib. |
 | `Full_Turtle_v1.scad` | **GENERATED** by `build/build.py` from `src/Full_Turtle.scad`. Self-contained, committed, downloadable. Do not hand-edit (a banner says so). |
-| `v1.0 SCADs/*.scad` | **GENERATED** bundles from `src/components/*.scad` + `lib/`. Same eight filenames as before; still self-contained single-file downloads. |
+| `scads_v1/*.scad` | **GENERATED** bundles from `src/components/*.scad` + `lib/`. Eight files named after their `src/components/` wrapper (no `_v1` suffix — the folder carries it); each is a self-contained single-file download. |
 | `build/` | `scad_lib.py` (helpers), `bundle.py` (inline `use`/`include`), `build.py` (regenerate all bundles = the sync step), `lint.py`, `test.py`, `baseline.py`, `export_stl.py`, `manifest.json`, `README.md`. Python 3 stdlib only. |
 | `tests/expected_bounds.json` | Regression baseline (per-render bounding box + tris + known warnings) checked by `build/test.py`. `tests/baseline/` holds the full per-render dumps. |
 | `VERSION.json` | Single set-level version + bump rules + changelog. STL exports carry this version in their filename. |
-| `v1.0 STLs/` | Fabrication exports, written on demand by `build/export_stl.py` as `<name>_v<version>.stl`. The pre-refactor un-versioned STLs were deleted at v1.6.0; the v1.7.0/v1.7.1 set was cleared at v1.10.0 so only the current version's files remain. Current printable set (all `_v1.10.0`): cap, cage, hex shaft, the combined mold layout (`Silicone_Ring_Mold`) and its two plates (`Silicone_Ring_Mold_bottom` / `_top`). F6-verified, not physically validated. |
+| `stls_v1/` | Fabrication exports, written on demand by `build/export_stl.py` as `<name>_v<version>.stl`. The pre-refactor un-versioned STLs were deleted at v1.6.0; the v1.7.0/v1.7.1 set was cleared at v1.10.0 so only the current version's files remain. Current printable set (all `_v1.10.0`): cap, cage, hex shaft, the combined mold layout (`Silicone_Ring_Mold`) and its two plates (`Silicone_Ring_Mold_bottom` / `_top`). F6-verified, not physically validated. |
 | `README.md` | Project overview and generator intent |
 | `LICENSE` | CERN Open Hardware Licence v2, Strongly Reciprocal |
 
@@ -429,7 +429,7 @@ The sail generator currently uses targeted first-occurrence replacements for a f
 ## 15. Editing and verification workflow
 
 **Geometry lives in `lib/` and `src/` only. Never hand-edit a generated bundle**
-(`Full_Turtle_v1.scad`, `v1.0 SCADs/*.scad`) — a banner in each says so, and
+(`Full_Turtle_v1.scad`, `scads_v1/*.scad`) — a banner in each says so, and
 `build/lint.py` fails if one is stale. Editing the full turtle and editing a
 component are the same operation: change the shared source, then rebuild
 regenerates every dependent bundle. There is no hand-porting between copies.
@@ -455,7 +455,7 @@ On **any** geometry change:
 2. **Edit the source layer only.** Keep derived relationships explicit; keep the
    in-SCAD `assert()`s meaningful.
 3. `python3 build/build.py` — regenerates `Full_Turtle_v1.scad` and every
-   `v1.0 SCADs/*.scad` from `lib/` + `src/`. This is the sync step.
+   `scads_v1/*.scad` from `lib/` + `src/`. This is the sync step.
 4. `python3 build/lint.py` — bundle freshness, `git diff --check`, `lib/`
    hygiene (no top-level side effects), and an OpenSCAD CSG parse of every
    `lib/`, `src/` and bundle file (catches undefined vars, failed asserts,
@@ -494,7 +494,7 @@ On **any** geometry change:
    either that no cross-subsystem regression was needed, or that you have
    recommended the maintainer run `build/test.py` (with the result if they ran
    it). STLs are **not** auto-exported — run `python3 build/export_stl.py`
-   (writes `v1.0 STLs/<name>_v<version>.stl`) only when new fabrication files
+   (writes `stls_v1/<name>_v<version>.stl`) only when new fabrication files
    are actually needed.
 
 8. **Propagate to the HopeTurtles.org generators (section 19).** If the change
@@ -520,7 +520,7 @@ python3 build/lint.py                  # parse + freshness (incl. params.json), 
 python3 build/test.py                  # cross-subsystem mesh regression — maintainer-run; shared-contract or pre-commit only. accepts target ids: build/test.py control_cap ecojoiner ...
 python3 build/baseline.py <target>     # re-record baseline (intentional changes only; maintainer-run)
 python3 build/export_stl.py            # versioned PLA-part STLs
-openscad -D 'part="non_sail_batten"' -o /tmp/x.stl 'v1.0 SCADs/Turtle_Sail_Apparatus_v1.scad'
+openscad -D 'part="non_sail_batten"' -o /tmp/x.stl 'scads_v1/Turtle_Sail_Apparatus.scad'
 git diff --stat && git diff --check
 ```
 
@@ -670,10 +670,10 @@ rule" precedent, applied in the generator→lib direction.
 
 | Component | Source here | Wrapper / bundle | Generator there (`generator/`) | `object_type` |
 | --- | --- | --- | --- | --- |
-| Ecojoiner core (Long/Little/Master Johns, Final Keys, Pressers) | `lib/ecojoiner.scad` + `lib/params.scad` | `src/components/Turtle_Core_Ecojoiner_v1.scad` → `v1.0 SCADs/Turtle_Core_Ecojoiner_v1.scad` | `objects/ecojoiner_6fc.py` | `6fc` |
-| Rear fin, bottle-holder shafts, solar holder | `lib/rear_fin.scad` | `Turtle_Rear_Fin_v1.scad` | `objects/back_fin.py` + `back_fin_generator.py` | `fin` |
-| Ballast (core slats, bottom board, lock feet, fin) | `lib/ballast_fin.scad` | `Turtle_Bottom_Ballast_Fin_v1.scad` | `objects/ballast.py` + `bottom_ballast_fin_generator.py` | `ballast` |
-| Sail frame (bars, battens, strengtheners, C pieces, sails) | `lib/sail_frame.scad` | `Turtle_Sail_Apparatus_v1.scad` | `objects/sails.py` + `generate_sails.py` | `sails` |
+| Ecojoiner core (Long/Little/Master Johns, Final Keys, Pressers) | `lib/ecojoiner.scad` + `lib/params.scad` | `src/components/Turtle_Core_Ecojoiner.scad` → `scads_v1/Turtle_Core_Ecojoiner.scad` | `objects/ecojoiner_6fc.py` | `6fc` |
+| Rear fin, bottle-holder shafts, solar holder | `lib/rear_fin.scad` | `Turtle_Rear_Fin.scad` | `objects/back_fin.py` + `back_fin_generator.py` | `fin` |
+| Ballast (core slats, bottom board, lock feet, fin) | `lib/ballast_fin.scad` | `Turtle_Bottom_Ballast_Fin.scad` | `objects/ballast.py` + `bottom_ballast_fin_generator.py` | `ballast` |
+| Sail frame (bars, battens, strengtheners, C pieces, sails) | `lib/sail_frame.scad` | `Turtle_Sail_Apparatus.scad` | `objects/sails.py` + `generate_sails.py` | `sails` |
 | Cap, cage, axle, mold (printed PLA) | `lib/control_*.scad`, `lib/hex_shaft.scad`, `lib/silicone_ring_mold.scad` | — | **no generator; never needs propagation** | — |
 
 Each generator carries three copies of every formula — the `lib/` module, its embedded
@@ -739,7 +739,7 @@ S-5 the sync mechanism, S-6 hygiene) are in `../hopeTurtles.org/generator/SYNC_P
 **S-1…S-5 are done (2026-09-08).** This repo's part of S-5: `build/export_params.py`
 renders every `p_*()` and writes `build/params.json` (values + version); `build/build.py`
 regenerates it with the bundles and `build/lint.py` fails on a stale one. The generator
-side vendors that file plus the four `v1.0 SCADs/` bundles into
+side vendors that file plus the four `scads_v1/` bundles into
 `../hopeTurtles.org/generator/turtle_body/` (`sync_from_turtle_body.py`) and
 `check_params_sync.py` asserts every generator's shared-input default against it in
 `npm run lint`. So a release here is propagated by: `python3 build/build.py`, then in

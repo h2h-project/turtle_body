@@ -8,8 +8,8 @@ Local, no network, no CI service. Python 3 standard library + OpenSCAD only.
 | --- | --- |
 | `lib/*.scad` | **Editable.** One parametric module per subsystem, plus `params.scad` (the shared dimension contract, exposed as `function p_*()`), plus `util.scad`. Definitions only — no top-level geometry, no top-level variable assignments. |
 | `src/Full_Turtle.scad`, `src/components/*.scad` | **Editable.** Thin wrappers: customizer block + `use <../lib/...>` + a `part=` / `assembly_view` dispatch. No geometry of their own. |
-| `Full_Turtle_v1.scad`, `v1.0 SCADs/*.scad` | **Generated. Do not edit.** Self-contained bundles produced from `src/` + `lib/`. Committed so they stay downloadable and STL-ready. A banner marks them. |
-| `v1.0 STLs/*_v<version>.stl` | Fabrication exports, written on demand by `export_stl.py`. Not auto-committed. |
+| `Full_Turtle_v1.scad`, `scads_v1/*.scad` | **Generated. Do not edit.** Self-contained bundles produced from `src/` + `lib/`. Committed so they stay downloadable and STL-ready. A banner marks them. |
+| `stls_v1/*_v<version>.stl` | Fabrication exports, written on demand by `export_stl.py`. Not auto-committed. |
 | `build/params.json` | **Generated. Do not edit.** Every `lib/params.scad` `p_*()` value + the version, from `export_params.py` (run by `build.py`, checked by `lint.py`). The machine-readable contract the HopeTurtles.org generators sync against — see CLAUDE.md §19. |
 | `build/manifest.json` | Every renderable target: its `src`, its generated `out`, and the `-D` defines for each render. |
 | `tests/expected_bounds.json` | Regression baseline (bounding box + triangle count per render) that `test.py` checks. |
@@ -34,7 +34,7 @@ python3 build/bundle.py SRC.scad  # inline use/include for one file (build.py us
 ## Change workflow
 
 1. Edit **only** `lib/` and/or `src/`. Never edit a generated bundle.
-2. `python3 build/build.py` — propagates to `Full_Turtle_v1.scad` and every `v1.0 SCADs/*.scad`.
+2. `python3 build/build.py` — propagates to `Full_Turtle_v1.scad` and every `scads_v1/*.scad`.
 3. `python3 build/lint.py`
 4. Visually inspect the change in OpenSCAD. `build/test.py` is **not** run automatically
    (it is slow, and it only detects change vs. baseline in renders you did not open) — run it,

@@ -84,7 +84,7 @@ openings are separate interfaces.
 
 ## TB-05 (residual) — Release STLs from current sources  — P1 before a fabrication release
 
-`v1.0 STLs/` still holds the original four exports. Before publishing a matched
+`stls_v1/` still holds the original four exports. Before publishing a matched
 set, regenerate with `python3 build/export_stl.py` (writes
 `<name>_v<version>.stl`) and keep the `VERSION.json` version + `source_commit`
 current so each STL's provenance is recorded.

@@ -1,7 +1,7 @@
 {
   "target": "rear_fin",
   "render": "shaft",
-  "source": "v1.0 SCADs/Turtle_Rear_Fin_v2.scad",
+  "source": "scads_v1/Turtle_Rear_Fin.scad",
   "defines": {
     "part": "shaft"
   },

@@ -232,7 +232,7 @@ __marimo__/
 
 # OpenSCAD / render scratch
 *.stl
-!/v1.0 STLs/**
+!/stls_v1/**
 /tests/_scratch/
 *.deps
 

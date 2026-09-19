@@ -1,7 +1,7 @@
 {
   "target": "control_cage",
   "render": "print",
-  "source": "src/components/Bottle_Control_Cage_v1.scad",
+  "source": "src/components/Bottle_Control_Cage.scad",
   "defines": {
     "part": "print"
   },

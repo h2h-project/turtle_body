@@ -3,7 +3,7 @@
 
 The Turtle Body editable sources live in lib/ (parametric modules + the
 parameter contract) and src/ (thin wrappers). The committed, downloadable,
-STL-ready files (Full_Turtle_v1.scad, v1.0 SCADs/*.scad) are produced from
+STL-ready files (Full_Turtle_v1.scad, scads_v1/*.scad) are produced from
 those by pasting every referenced lib file in place.
 
 This is safe because lib/ files contain only `function` and `module`
@@ -104,7 +104,7 @@ def _inline(path: Path, seen: set, stack: list, deps: list) -> list[str]:
 def bundle(src: Path) -> str:
     src = Path(src)
     body = _inline(src, seen=set(), stack=[], deps=[])
-    root = src.resolve().parent.parent  # repo root, assuming src/ or v1.0 SCADs/
+    root = src.resolve().parent.parent  # repo root, assuming src/ or scads_v1/
     try:
         rel = src.resolve().relative_to(src.resolve().parents[1])
     except (ValueError, IndexError):

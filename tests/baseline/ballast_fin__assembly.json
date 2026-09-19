@@ -1,7 +1,7 @@
 {
   "target": "ballast_fin",
   "render": "assembly",
-  "source": "v1.0 SCADs/Turtle_Bottom_Ballast_Fin_v1.scad",
+  "source": "scads_v1/Turtle_Bottom_Ballast_Fin.scad",
   "defines": {
     "part": "assembly"
   },

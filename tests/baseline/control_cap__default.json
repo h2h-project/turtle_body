@@ -1,7 +1,7 @@
 {
   "target": "control_cap",
   "render": "default",
-  "source": "v1.0 SCADs/Bottle_Control_Cap_v1.scad",
+  "source": "scads_v1/Bottle_Control_Cap.scad",
   "defines": {},
   "returncode": 0,
   "timed_out": false,

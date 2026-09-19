@@ -1,7 +1,7 @@
 {
   "target": "ecojoiner",
   "render": "default",
-  "source": "v1.0 SCADs/Turtle_Core_Ecojoiner_v1.scad",
+  "source": "scads_v1/Turtle_Core_Ecojoiner.scad",
   "defines": {},
   "returncode": 0,
   "timed_out": false,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export fabrication STLs, version-stamped, into v1.0 STLs/.
+"""Export fabrication STLs, version-stamped, into stls_v1/.
 
 By default only the parts historically exported as PLA prints are written
 (control cap, control cage, hex shaft, silicone-ring mold -- the renders
@@ -35,7 +35,7 @@ def main(argv=None) -> int:
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--ascii", action="store_true", help="ASCII STL (default: binary)")
     ap.add_argument("--dry-run", action="store_true")
-    ap.add_argument("--out-dir", default="v1.0 STLs")
+    ap.add_argument("--out-dir", default="stls_v1")
     args = ap.parse_args(argv)
 
     root = repo_root()

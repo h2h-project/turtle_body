@@ -1,7 +1,7 @@
 {
   "target": "sail_apparatus",
   "render": "top_bar",
-  "source": "src/components/Turtle_Sail_Apparatus_v1.scad",
+  "source": "src/components/Turtle_Sail_Apparatus.scad",
   "defines": {
     "part": "top_bar"
   },

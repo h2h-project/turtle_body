@@ -1,35 +1,35 @@
 {
-  "_comment": "Renderable targets for the Turtle Body build system. 'src' is the editable source (lib/ + src/); 'out' is the generated, committed, self-contained bundle. Until the src/ layer exists for a target, build.py skips it and lint/test/baseline operate on 'out'. Each render lists the -D defines to pass; 'export_stl' marks the PLA parts that build/export_stl.py writes by default (matches the historical v1.0 STLs/ set).",
+  "_comment": "Renderable targets for the Turtle Body build system. 'src' is the editable source (lib/ + src/); 'out' is the generated, committed, self-contained bundle. Until the src/ layer exists for a target, build.py skips it and lint/test/baseline operate on 'out'. Each render lists the -D defines to pass; 'export_stl' marks the PLA parts that build/export_stl.py writes by default (matches the historical stls_v1/ set).",
   "targets": [
     {
       "id": "control_cap",
-      "src": "src/components/Bottle_Control_Cap_v1.scad",
-      "out": "v1.0 SCADs/Bottle_Control_Cap_v1.scad",
+      "src": "src/components/Bottle_Control_Cap.scad",
+      "out": "scads_v1/Bottle_Control_Cap.scad",
       "renders": [
-        { "name": "default", "defines": {}, "export_stl": true, "stl": "Bottle_Control_Cap_v1" }
+        { "name": "default", "defines": {}, "export_stl": true, "stl": "Bottle_Control_Cap" }
       ]
     },
     {
       "id": "control_cage",
-      "src": "src/components/Bottle_Control_Cage_v1.scad",
-      "out": "v1.0 SCADs/Bottle_Control_Cage_v1.scad",
+      "src": "src/components/Bottle_Control_Cage.scad",
+      "out": "scads_v1/Bottle_Control_Cage.scad",
       "renders": [
-        { "name": "print", "defines": { "part": "print" }, "export_stl": true, "stl": "Bottle_Control_Cage_v1" },
+        { "name": "print", "defines": { "part": "print" }, "export_stl": true, "stl": "Bottle_Control_Cage" },
         { "name": "upright", "defines": { "part": "upright" } }
       ]
     },
     {
       "id": "hex_shaft",
-      "src": "src/components/Bottle_Hex_Shaft_v1.scad",
-      "out": "v1.0 SCADs/Bottle_Hex_Shaft_v1.scad",
+      "src": "src/components/Bottle_Hex_Shaft.scad",
+      "out": "scads_v1/Bottle_Hex_Shaft.scad",
       "renders": [
-        { "name": "default", "defines": {}, "export_stl": true, "stl": "Bottle_Hex_Shaft_v1" }
+        { "name": "default", "defines": {}, "export_stl": true, "stl": "Bottle_Hex_Shaft" }
       ]
     },
     {
       "id": "silicone_ring_mold",
       "src": "src/components/Silicone_Ring_Mold.scad",
-      "out": "v1.0 SCADs/Silicone_Ring_Mold.scad",
+      "out": "scads_v1/Silicone_Ring_Mold.scad",
       "renders": [
         { "name": "mold", "defines": { "part": "mold" }, "export_stl": true, "stl": "Silicone_Ring_Mold" },
         { "name": "mold_bottom", "defines": { "part": "mold_bottom" }, "export_stl": true, "stl": "Silicone_Ring_Mold_bottom" },
@@ -40,8 +40,8 @@
     },
     {
       "id": "ballast_fin",
-      "src": "src/components/Turtle_Bottom_Ballast_Fin_v1.scad",
-      "out": "v1.0 SCADs/Turtle_Bottom_Ballast_Fin_v1.scad",
+      "src": "src/components/Turtle_Bottom_Ballast_Fin.scad",
+      "out": "scads_v1/Turtle_Bottom_Ballast_Fin.scad",
       "renders": [
         { "name": "assembly", "defines": { "part": "assembly" } },
         { "name": "core_slat", "defines": { "part": "core_slat" } },
@@ -52,16 +52,16 @@
     },
     {
       "id": "ecojoiner",
-      "src": "src/components/Turtle_Core_Ecojoiner_v1.scad",
-      "out": "v1.0 SCADs/Turtle_Core_Ecojoiner_v1.scad",
+      "src": "src/components/Turtle_Core_Ecojoiner.scad",
+      "out": "scads_v1/Turtle_Core_Ecojoiner.scad",
       "renders": [
         { "name": "default", "defines": {} }
       ]
     },
     {
       "id": "rear_fin",
-      "src": "src/components/Turtle_Rear_Fin_v1.scad",
-      "out": "v1.0 SCADs/Turtle_Rear_Fin_v1.scad",
+      "src": "src/components/Turtle_Rear_Fin.scad",
+      "out": "scads_v1/Turtle_Rear_Fin.scad",
       "renders": [
         { "name": "assembly", "defines": { "part": "assembly", "show_solar_panel": false, "show_bottle_mockup": false } },
         { "name": "fin", "defines": { "part": "fin" } },
@@ -71,8 +71,8 @@
     },
     {
       "id": "sail_apparatus",
-      "src": "src/components/Turtle_Sail_Apparatus_v1.scad",
-      "out": "v1.0 SCADs/Turtle_Sail_Apparatus_v1.scad",
+      "src": "src/components/Turtle_Sail_Apparatus.scad",
+      "out": "scads_v1/Turtle_Sail_Apparatus.scad",
       "renders": [
         { "name": "assembly", "defines": { "part": "assembly", "show_hardware": false } },
         { "name": "top_bar", "defines": { "part": "top_bar" } },
