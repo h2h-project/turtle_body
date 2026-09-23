@@ -64,7 +64,11 @@ function bl_fin_slot_h()   = bl_t();
 function bl_fin_slot_depth()   = p_bottle_d() / 2;
 function bl_fin_upper_cut_depth() = p_bottle_d() + bl_t();   // +1 stock thickness so the bottle clears
 function bl_fin_upper_cut_z0()    = bl_fin_lower_protrusion() + bl_fin_slot_h() + 1.5 * bl_t();
-function bl_fin_front_chamfer()   = 1.5 * bl_t();
+// One full board thickness of solid material between the chamfer and the
+// slot above it (bl_fin_lower_protrusion() - bl_fin_front_chamfer() ==
+// bl_t()): was 1.5*bl_t(), leaving only 0.5*bl_t() there -- a thin sliver
+// right at the corner between two cuts, weaker than it needs to be.
+function bl_fin_front_chamfer()   = bl_fin_lower_protrusion() - bl_t();   // = bl_t()
 
 module bl_assert_valid() {
     t = bl_t();

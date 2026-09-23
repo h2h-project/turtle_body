@@ -1,31 +1,31 @@
 {
   "target": "sail_apparatus",
   "render": "assembly",
-  "source": "src/components/Turtle_Sail_Apparatus.scad",
+  "source": "scads_v1/Turtle_Sail_Apparatus.scad",
   "defines": {
     "part": "assembly",
     "show_hardware": false
   },
   "returncode": 0,
   "timed_out": false,
-  "seconds": 2.4,
+  "seconds": 2.3,
   "bounds": {
     "min": [
-      -288.0,
-      -78.8,
+      -295.0,
+      -79.8,
       0.0
     ],
     "max": [
-      288.0,
-      78.8,
+      295.0,
+      79.8,
       205.0
     ],
     "size": [
-      576.0,
-      157.6,
+      590.0,
+      159.6,
       205.0
     ],
-    "tris": 4416
+    "tris": 4404
   },
   "warnings": [
     "WARNING: Object may not be a valid 2-manifold and may need repair!"
@@ -35,7 +35,7 @@
     "ECHO: \"Side batten to bottle clearance = \", 12.8, \" mm\"",
     "ECHO: \"Bottom sail bar to bottle clearance = \", 1, \" mm\"",
     "ECHO: \"Bottom sail bar inward protrusion = \", 11.8, \" mm\"",
-    "ECHO: \"Bottom sail bar inner-edge radius = \", 42, \" mm\"",
+    "ECHO: \"Bottom sail bar inner-edge radius = \", 43, \" mm\"",
     "ECHO: \"Cage M3 mount heights / hole diameter = \", [22, -10], 3.2",
     "ECHO: \"Cage mount hole diameter / vertical pitch = \", 3.2, 32",
     "ECHO: \"Cage mount centres from batten bottom = \", [152, 120]"

@@ -7,7 +7,7 @@
   },
   "returncode": 0,
   "timed_out": false,
-  "seconds": 91.5,
+  "seconds": 75.4,
   "bounds": {
     "min": [
       0.0,
@@ -15,20 +15,20 @@
       0.0
     ],
     "max": [
-      210.0,
-      222.0,
-      8.5
+      195.5,
+      207.5,
+      9.6
     ],
     "size": [
-      210.0,
-      222.0,
-      8.5
+      195.5,
+      207.5,
+      9.6
     ],
     "tris": 65276
   },
   "warnings": [],
   "errors": [],
   "echoes": [
-    "ECHO: \"MOLD: two-part pressed, plates printed side by side. Flat ring ID/OD/axial = \", 75, 85, 1.5, \" x \", 2, \"; one centre O-ring per ring (x \", 2, \"), ID/OD/CS = \", 8, 12, 2, \" (ID tied to axle round dia \", 8, \"). 3 pegs (bottom) + 3 holes (top) align the halves.\""
+    "ECHO: \"MOLD: two-part pressed, plates printed side by side. Flat ring AS-CAST ID/OD/axial = \", 57.75, 77.75, 2.6, \" x \", 2, \"; mates to groove root dia \", 77, \" (elasticity_reduction \", 0.25, \")\", \"; one centre O-ring per ring (x \", 2, \"), ID/OD/CS = \", 8, 12, 2, \" (ID tied to axle round dia \", 8, \"). 3 pegs (bottom) + 3 holes (top) align the halves.\""
   ]
 }

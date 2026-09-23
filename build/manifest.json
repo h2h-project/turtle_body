@@ -19,11 +19,11 @@
       ]
     },
     {
-      "id": "hex_shaft",
-      "src": "src/components/Bottle_Hex_Shaft.scad",
-      "out": "scads_v1/Bottle_Hex_Shaft.scad",
+      "id": "sail_shaft",
+      "src": "src/components/Bottle_Sail_Shaft.scad",
+      "out": "scads_v1/Bottle_Sail_Shaft.scad",
       "renders": [
-        { "name": "default", "defines": {}, "export_stl": true, "stl": "Bottle_Hex_Shaft" }
+        { "name": "default", "defines": {}, "export_stl": true, "stl": "Bottle_Sail_Shaft" }
       ]
     },
     {

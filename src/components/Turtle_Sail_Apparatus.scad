@@ -1,7 +1,9 @@
 /*
  Hope Turtle — standalone sail apparatus. Units: mm. License: CERN-OHL-S-2.0.
  Wooden frame only: top crossbar, four battens, joint strengtheners, orange
- C ends, sails. No bottle/cap/cage/axle. Assembly is an inspection view.
+ C ends, sails. No cap/cage/axle. Assembly is an inspection view. Optionally
+ shows the control bottle alone (no cap/cage) for reference via
+ show_control_bottle.
  Both Ø3.2 cage-mount holes kept in every batten; no C-piece M6 bore; no
  non-sail-batten lower bore (TB-01). Bottom rails brown (TB-02).
 
@@ -14,6 +16,7 @@ wood_thickness = 12;
 side_batten_height = 205;
 cage_mount_hole_diameter = 3.2;
 show_hardware = true;
+show_control_bottle = false; // reference-only bottle, no cap/cage
 enable_color_coding = true;
 
 use <../../lib/sail_frame.scad>
@@ -23,4 +26,5 @@ sail_frame(part = part,
            side_batten_height = side_batten_height,
            cage_mount_hole_diameter = cage_mount_hole_diameter,
            show_hardware = show_hardware,
+           show_control_bottle = show_control_bottle,
            colored = enable_color_coding);

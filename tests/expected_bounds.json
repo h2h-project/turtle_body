@@ -13,28 +13,12 @@
         "max": [
           50.0,
           50.0,
-          40.0
+          68.0
         ]
       },
-      "tris": 7448,
-      "warnings": []
-    },
-    "hex_shaft__default": {
-      "bounds": {
-        "min": [
-          -5.7735,
-          -5.0,
-          0.0
-        ],
-        "max": [
-          5.7735,
-          5.0,
-          59.0
-        ]
-      },
-      "tris": 980,
+      "tris": 9232,
       "warnings": [],
-      "note": "TB-04: overall length 58->59 mm; round section re-derived to the resolved 5 mm cap roof (TB-03). Magnet-to-cap-face projection unchanged at 1 mm."
+      "note": "Long-overdue re-baseline, unrelated to the v4.0.0 bottle change: v2.2.0 (2026-09-15) turned side_tabs on by default in the wrapper -- two posts running the full cavity height then 28 mm past the top lip -- which should have moved Z-max 40 -> 68 at that time but was never re-baselined until now."
     },
     "silicone_ring_mold__mold": {
       "bounds": {
@@ -44,14 +28,14 @@
           0.0
         ],
         "max": [
-          210.0,
-          222.0,
-          8.5
+          195.5,
+          207.5,
+          9.6
         ]
       },
       "tris": 65276,
       "warnings": [],
-      "note": "v1.7.1: part=mold is now the PRINTABLE side-by-side layout (both plates flat, faces up) instead of the exploded face-to-face stack -> Y 101->222, Z 18.5->8.5. tris also up here + on rings/mold_bottom/mold_top because a second centre O-ring was added (one per flat-ring mold)."
+      "note": "v1.7.1: part=mold is now the PRINTABLE side-by-side layout (both plates flat, faces up) instead of the exploded face-to-face stack -> Y 101->222, Z 18.5->8.5. tris also up here + on rings/mold_bottom/mold_top because a second centre O-ring was added (one per flat-ring mold). v4.0.0: p_bottle_d() 86->84mm shrinks the groove root the flat ring mates to; ALSO the wrapper's flat_ring_inner_d/outer_d customizer literals (59.25/79.25, hardcoded at the 86mm bottle) were stale and are now corrected to 57.75/77.75 to match -- both effects combined move X/Y."
     },
     "silicone_ring_mold__rings": {
       "bounds": {
@@ -61,23 +45,24 @@
           0.0
         ],
         "max": [
-          202.0,
-          93.0,
-          2.0
+          187.5,
+          85.75,
+          2.6
         ]
       },
       "tris": 61440,
-      "warnings": []
+      "warnings": [],
+      "note": "v4.0.0: follows silicone_ring_mold__mold's bottle-diameter + wrapper-literal fix above."
     },
     "ballast_fin__assembly": {
       "bounds": {
         "min": [
           0.0,
-          -164.0,
+          -168.0,
           0.0
         ],
         "max": [
-          287.0,
+          294.0,
           93.0,
           360.0
         ]
@@ -85,7 +70,8 @@
       "tris": 696,
       "warnings": [
         "WARNING: Object may not be a valid 2-manifold and may need repair!"
-      ]
+      ],
+      "note": "v4.0.0: p_bottle_d() 86->84mm master-bottle change cascades into the core-slat width/M6-hole formulas, the board length (3.5x bottle_d) and yellow-fin length (3x bottle_d)."
     },
     "ballast_fin__core_slat": {
       "bounds": {
@@ -95,13 +81,14 @@
           0.0
         ],
         "max": [
-          58.0,
+          60.0,
           360.0,
           12.0
         ]
       },
       "tris": 240,
-      "warnings": []
+      "warnings": [],
+      "note": "v4.0.0: p_bottle_d() 86->84mm -- slat_width = bottle_d - 2*wood_t."
     },
     "ballast_fin__bottom_board": {
       "bounds": {
@@ -111,13 +98,14 @@
           0.0
         ],
         "max": [
-          287.0,
+          294.0,
           93.0,
           12.0
         ]
       },
       "tris": 92,
-      "warnings": []
+      "warnings": [],
+      "note": "v4.0.0: p_bottle_d() 86->84mm -- board length = 3.5x bottle_d."
     },
     "ballast_fin__lock_foot": {
       "bounds": {
@@ -143,24 +131,25 @@
           0.0
         ],
         "max": [
-          246.0,
+          252.0,
           93.0,
           12.0
         ]
       },
       "tris": 40,
-      "warnings": []
+      "warnings": [],
+      "note": "v4.0.0: p_bottle_d() 86->84mm -- fin length = 3x bottle_d."
     },
     "ecojoiner__default": {
       "bounds": {
         "min": [
           0.0,
           -118.0,
-          -206.0
+          -208.0
         ],
         "max": [
-          294.0,
-          176.0,
+          296.0,
+          178.0,
           88.0
         ]
       },
@@ -168,7 +157,7 @@
       "warnings": [
         "WARNING: Object may not be a valid 2-manifold and may need repair!"
       ],
-      "note": "v1.8.1: one of the six Little Johns is now the Master John (eco_master_john, deeper top slots via eco_master_slot_depth). The slots are internal cuts -> bounds and the pre-existing 2-manifold warning are unchanged; build/test.py ecojoiner passed against the prior baseline before this re-record. tris 24212 -> 9512 and the echo set both changed because the prior baseline was never re-recorded after the lib/ refactor (its detail file still had the pre-refactor monolithic echoes); the re-record brings it current. test.py gates on bounds/warnings/errors, not tris."
+      "note": "v1.8.1: one of the six Little Johns is now the Master John (eco_master_john, deeper top slots via eco_master_slot_depth). The slots are internal cuts -> bounds and the pre-existing 2-manifold warning are unchanged; build/test.py ecojoiner passed against the prior baseline before this re-record. tris 24212 -> 9512 and the echo set both changed because the prior baseline was never re-recorded after the lib/ refactor (its detail file still had the pre-refactor monolithic echoes); the re-record brings it current. test.py gates on bounds/warnings/errors, not tris. v4.0.0: p_bottle_d() 86->84mm -- port_height (== bottle_d) and the john/rectangle sizing that follows it both shrink 2mm."
     },
     "rear_fin__assembly": {
       "bounds": {
@@ -180,12 +169,12 @@
         "max": [
           108.0,
           74.0,
-          246.0
+          252.0
         ]
       },
       "tris": 942,
       "warnings": [],
-      "note": "TB-07: green-slat mounting hole unified to 103 mm from the shaft front (was 50 mm), derived from the mating Ecojoiner John. Internal hole -> bounding box unchanged."
+      "note": "TB-07: green-slat mounting hole unified to 103 mm from the shaft front (was 50 mm), derived from the mating Ecojoiner John. Internal hole -> bounding box unchanged. v4.0.0: p_bottle_d() 86->84mm -- shaft_length = bottle_height + (2/3)*(fin_board_width-2*wood_t) - cap_height is unaffected by bottle_d, but the fin/holder Z extent tracks it via the shared bottle-height/diameter chain."
     },
     "rear_fin__fin": {
       "bounds": {
@@ -197,27 +186,29 @@
         "max": [
           108.0,
           6.0,
-          246.0
+          252.0
         ]
       },
       "tris": 64,
-      "warnings": []
+      "warnings": [],
+      "note": "v4.0.0: p_bottle_d() 86->84mm cascade (see rear_fin__assembly)."
     },
     "rear_fin__solar_holder": {
       "bounds": {
         "min": [
           84.0,
           -74.0,
-          210.0
+          216.0
         ],
         "max": [
           96.0,
           74.0,
-          246.0
+          252.0
         ]
       },
       "tris": 36,
-      "warnings": []
+      "warnings": [],
+      "note": "v4.0.0: p_bottle_d() 86->84mm cascade (see rear_fin__assembly)."
     },
     "rear_fin__shaft": {
       "bounds": {
@@ -239,36 +230,38 @@
     "sail_apparatus__assembly": {
       "bounds": {
         "min": [
-          -288.0,
-          -78.8,
+          -295.0,
+          -79.8,
           0.0
         ],
         "max": [
-          288.0,
-          78.8,
+          295.0,
+          79.8,
           205.0
         ]
       },
-      "tris": 4416,
+      "tris": 4404,
       "warnings": [
         "WARNING: Object may not be a valid 2-manifold and may need repair!"
-      ]
+      ],
+      "note": "v4.0.0: p_bottle_d() 86->84mm -- top_sail_bar_length = 6x bottle_d and bottom_sail_bar_length = 3x bottle_d both shrink; X/Y move, Z (batten height, unaffected by bottle_d) does not."
     },
     "sail_apparatus__top_bar": {
       "bounds": {
         "min": [
-          -246.0,
+          -252.0,
           -11.0,
           0.0
         ],
         "max": [
-          246.0,
+          252.0,
           11.0,
           12.0
         ]
       },
       "tris": 768,
-      "warnings": []
+      "warnings": [],
+      "note": "v4.0.0: p_bottle_d() 86->84mm -- top_sail_bar_length = 6x bottle_d."
     },
     "sail_apparatus__sail_batten": {
       "bounds": {
@@ -305,70 +298,70 @@
     "sail_apparatus__bottom_bars": {
       "bounds": {
         "min": [
-          -288.0,
+          -295.0,
           -11.0,
           -115.0
         ],
         "max": [
-          288.0,
+          295.0,
           11.0,
           -103.0
         ]
       },
       "tris": 56,
       "warnings": [],
-      "note": "v1.10.0: p_cage_roof_t() 6 -> 4 mm. Rendered in the native frame (not re-zeroed), so this part shifts down 2 mm with cage_total_height 50 -> 48 (= p_cage_total_h()). sail_apparatus__assembly is unaffected (its Z=0 re-zero cancels the shift)."
+      "note": "v1.10.0: p_cage_roof_t() 6 -> 4 mm. Rendered in the native frame (not re-zeroed), so this part shifts down 2 mm with cage_total_height 50 -> 48 (= p_cage_total_h()). sail_apparatus__assembly is unaffected (its Z=0 re-zero cancels the shift). v4.0.0: p_bottle_d() 86->84mm -- bottom_sail_bar_length = 3x bottle_d (X/Y)."
     },
     "sail_apparatus__strengtheners": {
       "bounds": {
         "min": [
-          -75.8,
+          -76.8,
           -12.0,
-          -130.0
+          -103.0
         ],
         "max": [
-          75.8,
+          76.8,
           12.0,
           -79.0
         ]
       },
-      "tris": 640,
+      "tris": 608,
       "warnings": [],
-      "note": "v1.10.0: p_cage_roof_t() 6 -> 4 mm -> native-frame part shifts down 2 mm (cage_total_height 50 -> 48). sail_apparatus__assembly unaffected (re-zeroed)."
+      "note": "v2.3.5: removed the below-rail remnant + notch (joint_strengthener_below_bar/slot_*) -- the strengthener is now just the above-rail block, resting flush on the rail's own top surface instead of extending 27 mm further down into a mortise. Z-min -130.0 -> -103.0 is this, not the bottle change. v4.0.0: p_bottle_d() 86->84mm shifts X by 1mm via the shared cage-notch-root-radius chain."
     },
     "sail_apparatus__c_end_pieces": {
       "bounds": {
         "min": [
           -11.0,
-          -78.8,
+          -79.8,
           -115.0
         ],
         "max": [
           11.0,
-          78.8,
+          79.8,
           -103.0
         ]
       },
       "tris": 56,
       "warnings": [],
-      "note": "v1.10.0: p_cage_roof_t() 6 -> 4 mm -> native-frame part shifts down 2 mm (cage_total_height 50 -> 48). sail_apparatus__assembly unaffected (re-zeroed)."
+      "note": "v1.10.0: p_cage_roof_t() 6 -> 4 mm -> native-frame part shifts down 2 mm (cage_total_height 50 -> 48). sail_apparatus__assembly unaffected (re-zeroed). v4.0.0: p_bottle_d() 86->84mm shifts Y by 1mm via the shared cage-notch-root-radius chain."
     },
     "sail_apparatus__sails": {
       "bounds": {
         "min": [
-          -288.0,
+          -295.0,
           -0.05,
           -115.0
         ],
         "max": [
-          288.0,
+          295.0,
           0.05,
           60.0
         ]
       },
       "tris": 40,
       "warnings": [],
-      "note": "v1.10.0 + baseline catch-up. -2 mm from p_cage_roof_t() 6 -> 4 (cage_total_height 50 -> 48); the rest is the v1.8.2/v1.8.3 fold-over stapling tabs (sail_tab_height = board_width = 12 mm at top and bottom rails) whose bounds growth was intentionally left un-baselined then. New Z span -115..60 = bottom-rail bottom face to cage_total_height + tab."
+      "note": "v1.10.0 + baseline catch-up. -2 mm from p_cage_roof_t() 6 -> 4 (cage_total_height 50 -> 48); the rest is the v1.8.2/v1.8.3 fold-over stapling tabs (sail_tab_height = board_width = 12 mm at top and bottom rails) whose bounds growth was intentionally left un-baselined then. New Z span -115..60 = bottom-rail bottom face to cage_total_height + tab. v4.0.0: p_bottle_d() 86->84mm -- sail_bottom_outer_radius follows bottom_sail_bar_length = 3x bottle_d (X)."
     },
     "control_cage__print": {
       "bounds": {
@@ -383,7 +376,7 @@
           68.0
         ]
       },
-      "tris": 67620,
+      "tris": 68254,
       "warnings": [],
       "note": "v1.10.0: p_cage_roof_t() 6 -> 4 mm (roof underside fixed at the bearing radius, so the roof TOP drops 2 mm) -> Z-max 70 -> 68. Also folds in v1.9.1: p_cage_roof_bevel() 4 -> 3 mm and the chamfer now runs the full roof-top perimeter (batten grooves included, no longer masked) -- XY unchanged at 56.3837, so that was tris-only. Top clip pocket removed (control_cage top_pocket=false), internal to the roof, no bounds effect."
     },
@@ -400,54 +393,54 @@
           68.0
         ]
       },
-      "tris": 67604,
+      "tris": 68238,
       "warnings": [],
       "note": "v1.10.0: p_cage_roof_t() 6 -> 4 mm (roof underside fixed at the bearing radius, so the roof TOP drops 2 mm) -> Z-max 70 -> 68. Also folds in v1.9.1: p_cage_roof_bevel() 4 -> 3 mm and the chamfer now runs the full roof-top perimeter (batten grooves included, no longer masked) -- XY unchanged at 56.3837, so that was tris-only. Top clip pocket removed (control_cage top_pocket=false), internal to the roof, no bounds effect."
     },
     "full_turtle__full_turtle": {
       "bounds": {
         "min": [
-          -206.0,
-          -324.0,
-          -472.0
+          -204.0,
+          -322.0,
+          -474.0
         ],
         "max": [
           524.0,
           382.0,
-          304.5
+          302.5
         ]
       },
-      "tris": 157722,
+      "tris": 156920,
       "warnings": [
         "WARNING: Object may not be a valid 2-manifold and may need repair!"
       ],
-      "note": "v1.10.0: p_cage_roof_t() 6 -> 4 mm. The sail frame's top-bar seat + batten geometry now derive from p_cage_total_h(), so the sail head follows the 2 mm roof drop: Z-max 306.5 -> 304.5. cage_surface_under_z is unchanged (skirt datum), so the batten<->crest M6 mount holes still align; core is unaffected. Prior TB-03 (v1.5.0): full-assembly cap roof 8 -> 5 mm via control_assembly_z had already dropped this 309.5 -> 306.5."
+      "note": "v1.10.0: p_cage_roof_t() 6 -> 4 mm. The sail frame's top-bar seat + batten geometry now derive from p_cage_total_h(), so the sail head follows the 2 mm roof drop: Z-max 306.5 -> 304.5. cage_surface_under_z is unchanged (skirt datum), so the batten<->crest M6 mount holes still align; core is unaffected. Prior TB-03 (v1.5.0): full-assembly cap roof 8 -> 5 mm via control_assembly_z had already dropped this 309.5 -> 306.5. v4.0.0: p_bottle_d() 86->84mm cascades through the ballast/ecojoiner/rear-fin/sail-apparatus radial and length formulas that key off it (see each subsystem's own note above); X/Y/Z-max all move a few mm."
     },
     "full_turtle__top_sail": {
       "bounds": {
         "min": [
           68.2,
-          -259.0,
-          -11.0
+          -265.0,
+          -13.0
         ],
         "max": [
-          225.8,
-          317.0,
-          304.5
+          227.8,
+          325.0,
+          302.5
         ]
       },
-      "tris": 95240,
+      "tris": 94134,
       "warnings": [
         "WARNING: Object may not be a valid 2-manifold and may need repair!"
       ],
-      "note": "v1.10.0: p_cage_roof_t() 6 -> 4 mm. The sail frame's top-bar seat + batten geometry now derive from p_cage_total_h(), so the sail head follows the 2 mm roof drop: Z-max 306.5 -> 304.5. cage_surface_under_z is unchanged (skirt datum), so the batten<->crest M6 mount holes still align; core is unaffected. Prior TB-03 (v1.5.0): full-assembly cap roof 8 -> 5 mm via control_assembly_z had already dropped this 309.5 -> 306.5."
+      "note": "v1.10.0: p_cage_roof_t() 6 -> 4 mm. The sail frame's top-bar seat + batten geometry now derive from p_cage_total_h(), so the sail head follows the 2 mm roof drop: Z-max 306.5 -> 304.5. cage_surface_under_z is unchanged (skirt datum), so the batten<->crest M6 mount holes still align; core is unaffected. Prior TB-03 (v1.5.0): full-assembly cap roof 8 -> 5 mm via control_assembly_z had already dropped this 309.5 -> 306.5. v4.0.0: p_bottle_d() 86->84mm cascade (see full_turtle__full_turtle)."
     },
     "full_turtle__core": {
       "bounds": {
         "min": [
-          -206.0,
-          -324.0,
-          -472.0
+          -204.0,
+          -322.0,
+          -474.0
         ],
         "max": [
           524.0,
@@ -455,10 +448,11 @@
           88.0
         ]
       },
-      "tris": 61834,
+      "tris": 62086,
       "warnings": [
         "WARNING: Object may not be a valid 2-manifold and may need repair!"
-      ]
+      ],
+      "note": "v4.0.0: p_bottle_d() 86->84mm cascade (see full_turtle__full_turtle)."
     },
     "silicone_ring_mold__oring": {
       "warnings": [],
@@ -485,12 +479,13 @@
           0.0
         ],
         "max": [
-          210.0,
-          101.0,
-          8.5
+          195.5,
+          93.75,
+          9.6
         ]
       },
-      "tris": 34948
+      "tris": 34948,
+      "note": "v4.0.0: follows silicone_ring_mold__mold's bottle-diameter + wrapper-literal fix."
     },
     "silicone_ring_mold__mold_top": {
       "warnings": [],
@@ -501,12 +496,30 @@
           0.0
         ],
         "max": [
-          210.0,
-          101.0,
+          195.5,
+          93.75,
           4.0
         ]
       },
-      "tris": 30328
+      "tris": 30328,
+      "note": "v4.0.0: follows silicone_ring_mold__mold's bottle-diameter + wrapper-literal fix."
+    },
+    "sail_shaft__default": {
+      "warnings": [],
+      "bounds": {
+        "min": [
+          -4.0,
+          -4.0,
+          0.0
+        ],
+        "max": [
+          4.0,
+          4.0,
+          59.0
+        ]
+      },
+      "tris": 956,
+      "note": "TB-08: new target name (renamed from hex_shaft, see the deleted hex_shaft__default entry's git history). Shaft is now a uniform round Ø8 bar, no hex cross-section -- unchanged total length 59 mm."
     }
   }
 }

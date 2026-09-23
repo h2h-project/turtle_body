@@ -214,7 +214,7 @@ use <../lib/ecojoiner.scad>
 use <../lib/ballast_fin.scad>
 use <../lib/rear_fin.scad>      // wooden parts; the visible solar panel + screws stay embedded below
 use <../lib/control_cap.scad>   // TB-03: 5 mm roof + 2 mm boss + twin 2x2 grooves
-use <../lib/hex_shaft.scad>     // TB-04: 59 mm axle + magnet recess
+use <../lib/sail_shaft.scad>    // TB-04/TB-08: 59 mm uniform round shaft + magnet recess
 use <../lib/control_cage.scad>
 use <../lib/sail_frame.scad>   // wooden sail frame (TB-01/TB-02)
 
@@ -1812,7 +1812,8 @@ module hope_turtle_sail_apparatus(
 
     top_sail_bar_slot_depth = 11;
     top_sail_bar_slot_width = 10;
-    top_sail_bar_axle_hole_diameter = 12;
+    // TB-08: round shaft + running clearance (was Ø12 for the hex corners).
+    top_sail_bar_axle_hole_diameter = p_sail_bar_axle_hole_d();
 
     // ============================================================
     // SIDE BATTENS
@@ -1938,19 +1939,12 @@ module hope_turtle_sail_apparatus(
     shaft_hole_d        = 8.6;
 
     // ============================================================
-    // CONTROL AXLE
+    // SAIL SHAFT (TB-08: uniform round, no hex)
     // ============================================================
     round_shaft_diameter   = 8.0;
     round_shaft_length     = 30.0;  // length inside the cap cavity
     round_shaft_extension_above_cap = 1.0;
-    // Ø12 mm bar hole fit: 10 mm AF = 11.55 mm across corners.
-    hex_shaft_across_flats = 10.0;
-    hex_shaft_length       = 23.0; // Adds 3 mm for the thicker sine-cage roof
-    joining_overlap        = 0.2;
-
-    // OpenSCAD measures a six-sided cylinder across its corners.
-    hex_corner_diameter =
-        hex_shaft_across_flats / cos(30);
+    shaft_upper_length     = 23.0; // continues up through the cage hub + sail bar (was hex_shaft_length)
 
     // ============================================================
     // DERIVED
@@ -2056,18 +2050,19 @@ module hope_turtle_sail_apparatus(
     }
 
     // ============================================================
-    // CONTROL AXLE
+    // SAIL SHAFT (TB-08: uniform round, no hex)
     // ============================================================
     //
     // Installed orientation:
-    // - Ø8 mm round section extends 30 mm into the cup cavity
-    // - round section passes through the 8 mm cap roof
-    // - round section projects 1 mm beyond the cap's outer face
-    // - 10 mm AF hex section begins after the round extension
+    // - Ø8 mm round shaft extends 30 mm into the cup cavity
+    // - shaft passes through the 8 mm cap roof
+    // - shaft projects 1 mm beyond the cap's outer face
+    // - same Ø8 shaft continues on up through the cage hub + sail bar,
+    //   locked to the cage by a radial M3 set screw
     //
-// [M7] module turtle_control_axle() -> lib/hex_shaft.scad control_axle()
+// [M7] module turtle_control_axle() -> lib/sail_shaft.scad sail_shaft()
 
-// [M7] module printable_turtle_control_axle() -> lib/hex_shaft.scad control_axle()
+// [M7] module printable_turtle_control_axle() -> lib/sail_shaft.scad sail_shaft()
 
     // ============================================================
     // CONTROL CAP
@@ -2091,9 +2086,8 @@ module hope_turtle_sail_apparatus(
         cage_inner_cavity_diameter
         + 2 * cage_side_wall_thickness;
 
-    cage_centre_hex_across_flats = 10.3;
-    cage_centre_hex_wall_height = 3.5;
-    cage_centre_hex_wall_thickness = 3;
+    // TB-08: plain round shaft bore through the hub (was a hex bore).
+    cage_shaft_hole_diameter = p_axle_shaft_hole_d();
 
     cage_top_hole_diameter = 18;
     cage_top_hole_angle = cage_button_angle;
@@ -2178,13 +2172,6 @@ module hope_turtle_sail_apparatus(
     cage_top_hole_radial_position = hole_spacing_cc;
     cage_top_hole_edge_to_centre =
         cage_outer_radius - cage_top_hole_radial_position;
-    cage_centre_hex_outer_across_flats =
-        cage_centre_hex_across_flats
-        + 2 * cage_centre_hex_wall_thickness;
-    cage_centre_hex_corner_diameter =
-        cage_centre_hex_across_flats / cos(30);
-    cage_centre_hex_outer_corner_diameter =
-        cage_centre_hex_outer_across_flats / cos(30);
 
     // In the cage's native coordinates, this is the bearing-tip plane.
     cage_bearing_tip_native_z =
@@ -2203,15 +2190,15 @@ module hope_turtle_sail_apparatus(
            && max(cage_mount_z_positions) - side_batten_bottom_native_z
            < side_batten_height - cage_mount_hole_diameter / 2);
     // (clip-pocket dimension assert removed with the pocket -- top_pocket = false)
-    assert(cage_hub_diameter > cage_centre_hex_corner_diameter,
-           "Shaft hub must clear the hex bore corners.");
+    assert(cage_hub_diameter > cage_shaft_hole_diameter,
+           "Shaft hub must clear the shaft bore.");
     assert(cage_top_hole_radial_position - cage_top_hole_diameter/2
            > cage_hub_diameter/2);
     assert(cage_top_hole_radial_position + cage_top_hole_diameter/2
            < cage_bearing_pcd/2 - cage_bearing_diameter/2);
-    assert(round_shaft_extension_above_cap + hex_shaft_length
+    assert(round_shaft_extension_above_cap + shaft_upper_length
            > cage_bearing_diameter/2 + cage_surface_thickness + top_sail_bar_thickness,
-           "Hex shaft must reach through the roof and sail bar.");
+           "Sail shaft must reach through the cage roof and sail bar.");
 
     assert(cage_outer_diameter > 0,
         "Cage outer diameter must be greater than zero.");
@@ -2234,16 +2221,6 @@ module hope_turtle_sail_apparatus(
            + cage_bearing_diameter / 2
            < cage_inner_cavity_radius,
         "The cage bearings do not fit inside the cavity.");
-    assert(cage_centre_hex_wall_height > 0
-           && cage_centre_hex_wall_thickness > 0,
-        "The cage central reinforcing-wall dimensions must be positive.");
-    assert(cage_centre_hex_outer_corner_diameter / 2
-           < cage_inner_cavity_radius,
-        "The cage central reinforcing wall does not fit.");
-    assert(cage_top_hole_radial_position
-           > cage_centre_hex_outer_corner_diameter / 2
-           + cage_top_hole_diameter / 2,
-        "The cage top hole overlaps the central reinforcing wall.");
     assert(cage_top_hole_radial_position
            + cage_top_hole_diameter / 2
            < cage_outer_radius,
@@ -2255,10 +2232,10 @@ module hope_turtle_sail_apparatus(
             - top_sail_bar_width / 2) < 0.001,
         "Top sail bar slots must reach the bar centreline."
     );
-    assert(cage_centre_hex_across_flats < top_sail_bar_width,
-        "The axle opening does not fit within the top sail bar.");
-    assert(hex_corner_diameter < top_sail_bar_axle_hole_diameter,
-        "The hex shaft does not fit through the sail bar axle hole.");
+    assert(cage_shaft_hole_diameter < top_sail_bar_width,
+        "The shaft opening does not fit within the top sail bar.");
+    assert(round_shaft_diameter < top_sail_bar_axle_hole_diameter,
+        "The sail shaft does not fit through the sail bar axle hole.");
     assert(
         top_sail_bar_slot_centre_radius + top_sail_bar_slot_width / 2
             < top_sail_bar_length / 2,
@@ -2479,13 +2456,13 @@ module hope_turtle_sail_apparatus(
 
     module rotating_cage_sail_unit() {
         // One rigid moving group in the same upright coordinate frame.
-        // Keep the axle with the cage so their hexagonal connection stays aligned.
+        // Keep the shaft with the cage so their set-screw lock stays engaged.
         translate([0, 0, bottle_height])
         rotate([180, 0, 0]) {
             translate([cx, cy,
-                       control_assembly_z - (p_axle_hex_len() + p_axle_round_ext())])
+                       control_assembly_z - (p_axle_upper_len() + p_axle_round_ext())])
                 color([0.95, 0.65, 0.12])
-                    control_axle();
+                    sail_shaft();
             positioned_cage_assembly();
             positioned_sail_frame();
         }
@@ -2505,7 +2482,7 @@ module hope_turtle_sail_apparatus(
         control_cap();
     }
     else if (part == "axle") {
-        control_axle();  // hex end already on Z=0
+        sail_shaft();  // upper end already on Z=0
     }
     else if (part == "buttons") {
         button_preview_cylinders();

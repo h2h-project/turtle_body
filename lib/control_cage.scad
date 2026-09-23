@@ -21,9 +21,18 @@
 //    * do NOT add a downward-facing pocket, lip or overhang to the roof top,
 //      and do NOT make the bevel an undercut (radius growing then shrinking).
 //  A change that would need support material in the roof-down pose must be
-//  flagged to the user, not silently made. The horizontal M3 bores bridge in
-//  the slicer; keep them inspectable. The recessed clip pocket around the axle
-//  is behind `top_pocket` (OFF by default -- no shaft clip while prototyping).
+//  flagged to the user, not silently made. The horizontal M3 bores (batten
+//  mounts + the TB-08 shaft set screw) bridge in the slicer; keep them
+//  inspectable. The recessed clip pocket around the axle is behind
+//  `top_pocket` (OFF by default -- no shaft clip while prototyping).
+//
+//  TB-08: the central bore is now a plain round hole (shaft_hole_d, shared
+//  with the sail bar's own hole) that the uniform round shaft passes
+//  through with a light running clearance -- not a shaped (hex)
+//  interference fit. A single radial M3 set screw through the hub wall
+//  (setscrew_pilot_d/setscrew_angle) presses on the shaft to lock it to the
+//  rotating cage. The pilot is a self-tapping hole into the printed PLA hub,
+//  not a clearance hole for a separate nut -- untested thread engagement.
 //
 //  Definitions only. Geometry is emitted by control_cage(); the wrapper /
 //  full assembly applies the print-pose or installed transform.
@@ -55,7 +64,7 @@ module control_cage(inner_d       = p_cage_inner_d(),
                     bump_count    = p_cage_bearing_count(),
                     bump_pcd      = p_cage_bearing_pcd(),
                     hub_d         = p_cage_hub_d(),
-                    hex_bore_af   = p_cage_hex_bore_af(),
+                    shaft_hole_d  = p_axle_shaft_hole_d(),
                     pocket_d      = p_cage_pocket_d(),
                     pocket_depth  = p_cage_pocket_depth(),
                     top_pocket    = false,  // recessed clip pocket around the axle; off for prototyping
@@ -65,6 +74,8 @@ module control_cage(inner_d       = p_cage_inner_d(),
                     scallops      = true,
                     roof_bevel    = p_cage_roof_bevel(),
                     wave_segments = p_cage_wave_segments(),
+                    setscrew_pilot_d = p_cage_setscrew_pilot_d(),  // TB-08: locks the shaft to the cage
+                    setscrew_angle   = p_cage_setscrew_angle(),
                     fn            = undef) {
     nn  = fn == undef ? p_fn_plastic() : fn;
     eps = p_eps();
@@ -84,6 +95,9 @@ module control_cage(inner_d       = p_cage_inner_d(),
     lower_hole_z    = wall_tip_z + lower_hole_from_tip;
     cut_start       = ri - m3_d;
     cut_length      = ro - cut_start + 2 * eps;
+    // Set-screw hole: centred in the hub's own Z span so it clears both the
+    // hub floor and the roof top with margin either side.
+    setscrew_z      = (cage_hub_bottom + cage_top) / 2;
 
     // four identical rounded crests: max wall height at 0/90/180/270
     function edge_z(a) = wall_tip_z + (scallops ?
@@ -98,14 +112,15 @@ module control_cage(inner_d       = p_cage_inner_d(),
     assert(lower_hole_from_tip > m3_d / 2 + 2
            && lower_hole_from_tip < max_wall_h - m3_d / 2);
     assert(bump_d > 0 && bump_pcd / 2 + bump_d / 2 < ri);
-    assert(hex_bore_af > 10, "control_cage: hex bore across-flats too small.");
+    assert(shaft_hole_d > 0 && shaft_hole_d < hub_d,
+           "control_cage: shaft hole must fit inside the hub.");
     assert(roof_t >= 2 && cage_top > cage_hub_bottom + 2,
            "control_cage: roof too thin over the shaft hub.");
     if (top_pocket) {
         // recessed clip pocket around the axle -- kept behind a flag while
         // prototyping without a shaft clip. See CLAUDE.md s6.
         assert(roof_t > pocket_depth && pocket_depth > 0);
-        assert(hex_bore_af / cos(30) < pocket_d);
+        assert(shaft_hole_d < pocket_d);
         assert(hub_d > pocket_d && pocket_d > 25 && pocket_floor > cage_hub_bottom);
         assert(pocket_floor <= 6.5 && cage_top > 10.2,
                "control_cage: keep the shaft / clip axial clearances.");
@@ -115,6 +130,13 @@ module control_cage(inner_d       = p_cage_inner_d(),
            "control_cage: button must clear the bearings at every angle.");
     assert(lower_hole_z - m3_d / 2 > edge_z(hole_edge_angle) + 2,
            "control_cage: lower M3 hole needs 2 mm material to the sine edge.");
+    // TB-08: single radial set screw through the hub wall, pressing on the
+    // shaft to lock it to the (rotating) cage.
+    assert(setscrew_pilot_d > 0 && setscrew_pilot_d < hub_d,
+           "control_cage: set screw pilot must fit within the hub.");
+    assert(setscrew_z - setscrew_pilot_d / 2 > cage_hub_bottom
+           && setscrew_z + setscrew_pilot_d / 2 < cage_top,
+           "control_cage: set screw hole must stay inside the hub's own height.");
     // FABRICATION: roof prints face-down. Bevel is chamfered off that face,
     // must leave a flat central landing, and must not undercut.
     assert(roof_bevel >= 0 && roof_bevel < roof_t,
@@ -183,8 +205,15 @@ module control_cage(inner_d       = p_cage_inner_d(),
                 translate([bump_pcd / 2, 0, cage_under]) hemisphere();
         }
         translate([0, 0, cage_hub_bottom - eps])
-            cylinder(d = hex_bore_af / cos(30),
-                     h = cage_top - cage_hub_bottom + 2 * eps, $fn = 6);
+            cylinder(d = shaft_hole_d,
+                     h = cage_top - cage_hub_bottom + 2 * eps);
+        // TB-08: single radial set screw, drilled from the hub's outer
+        // surface in past the centre so it always reaches the shaft hole
+        // regardless of shaft_hole_d.
+        rotate([0, 0, setscrew_angle])
+            translate([-eps, 0, setscrew_z])
+                rotate([0, 90, 0])
+                    cylinder(d = setscrew_pilot_d, h = hub_d / 2 + 2 * eps, $fn = 32);
         if (top_pocket)
             translate([0, 0, pocket_floor])
                 cylinder(d = pocket_d, h = pocket_depth + eps);
@@ -200,6 +229,8 @@ module control_cage(inner_d       = p_cage_inner_d(),
     echo("CAGE: OD / ID / roof-to-tip = ", outer_d, inner_d, cage_top - wall_tip_z);
     echo("CAGE: groove w / d = ", notch_w, notch_depth,
          " | M3 dia / pitch = ", m3_d, mount_hole_z - lower_hole_z);
+    echo("CAGE: shaft hole = ", shaft_hole_d,
+         " | set-screw pilot dia / angle = ", setscrew_pilot_d, setscrew_angle);
     echo("CAGE: prints ROOF-FACE-DOWN (flat top on the bed). roof_bevel = ",
          roof_bevel, " mm, a 45-deg OUTWARD chamfer (printable). Any new ",
          "roof-top feature must be self-supporting in that pose -- no undercut, ",

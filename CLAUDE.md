@@ -72,7 +72,7 @@ Paths below were verified in the inspected GitHub tree.
 | --- | --- |
 | `lib/params.scad` | **Editable.** Shared dimension contract — every cross-subsystem value as a `function p_*()`. One definition per concept; derived values are functions of other `p_*()`. |
 | `lib/util.scad` | **Editable.** `wood_color()`, `m6_bolt_placeholder()`, `clamp()`, `hex_prism_af()`. |
-| `lib/<subsystem>.scad` | **Editable.** One parametric module per subsystem: `control_cap`, `control_cage`, `hex_shaft` (`control_axle`), `silicone_ring_mold`, `ecojoiner`, `ballast_fin`, `rear_fin`, `sail_frame`, `bottle_mockup`. Module args default to `p_*()`; wrappers override individually. Definitions only — no top-level geometry or assignments. |
+| `lib/<subsystem>.scad` | **Editable.** One parametric module per subsystem: `control_cap`, `control_cage`, `sail_shaft` (`sail_shaft`, TB-08: was `hex_shaft` / `control_axle`), `silicone_ring_mold`, `ecojoiner`, `ballast_fin`, `rear_fin`, `sail_frame`, `bottle_mockup`. Module args default to `p_*()`; wrappers override individually. Definitions only — no top-level geometry or assignments. |
 | `src/components/*.scad` | **Editable.** Thin wrappers: customizer block + `use <../../lib/...>` + a `part=` dispatch → one lib call. |
 | `src/Full_Turtle.scad` | **Editable.** The full-assembly source (git-renamed from `Full_Turtle_v1.scad`). M7 pending: still holds embedded geometry, not yet `use`-ing lib. |
 | `Full_Turtle_v1.scad` | **GENERATED** by `build/build.py` from `src/Full_Turtle.scad`. Self-contained, committed, downloadable. Do not hand-edit (a banner says so). |
@@ -80,7 +80,7 @@ Paths below were verified in the inspected GitHub tree.
 | `build/` | `scad_lib.py` (helpers), `bundle.py` (inline `use`/`include`), `build.py` (regenerate all bundles = the sync step), `lint.py`, `test.py`, `baseline.py`, `export_stl.py`, `manifest.json`, `README.md`. Python 3 stdlib only. |
 | `tests/expected_bounds.json` | Regression baseline (per-render bounding box + tris + known warnings) checked by `build/test.py`. `tests/baseline/` holds the full per-render dumps. |
 | `VERSION.json` | Single set-level version + bump rules + changelog. STL exports carry this version in their filename. |
-| `stls_v1/` | Fabrication exports, written on demand by `build/export_stl.py` as `<name>_v<version>.stl`. The pre-refactor un-versioned STLs were deleted at v1.6.0; the v1.7.0/v1.7.1 set was cleared at v1.10.0 so only the current version's files remain. Current printable set (all `_v1.10.0`): cap, cage, hex shaft, the combined mold layout (`Silicone_Ring_Mold`) and its two plates (`Silicone_Ring_Mold_bottom` / `_top`). F6-verified, not physically validated. |
+| `stls_v1/` | Fabrication exports, written on demand by `build/export_stl.py` as `<name>_v<version>.stl`. The pre-refactor un-versioned STLs were deleted at v1.6.0; the v1.7.0/v1.7.1 set was cleared at v1.10.0 so only the current version's files remain. Current printable set (all `_v1.10.0`): cap, cage, sail shaft (TB-08: renamed from hex shaft), the combined mold layout (`Silicone_Ring_Mold`) and its two plates (`Silicone_Ring_Mold_bottom` / `_top`). F6-verified, not physically validated. |
 | `README.md` | Project overview and generator intent |
 | `LICENSE` | CERN Open Hardware Licence v2, Strongly Reciprocal |
 
@@ -179,7 +179,8 @@ The design evolved from a continuous cylindrical skirt with four grooves to a co
 | Lower hole distance from peak tip | 10 |
 | Bearing bumps | Eight Ø9 hemispheres |
 | Bearing pitch-circle diameter | 91.5 |
-| Hex opening across flats | 10.3 |
+| Centre shaft hole (TB-08: round, was a 10.3 AF hex) | 8.2 |
+| Set screw (TB-08) | single radial M3, pilot Ø2.5, angle adjustable (`p_cage_setscrew_angle()`) |
 | Centre hub / top pocket diameter | 29 / 26 (top pocket OFF by default since v1.10.0 — `control_cage(top_pocket=false)`) |
 | Pocket depth | 4 (only when `top_pocket=true`) |
 | Button opening / centre radius | 18 / 24 |
@@ -271,7 +272,7 @@ in one session:
   of **every** flat-ring mold ("an additional mold circle" per ring), so the
   default 2-ring mold casts **two** O-rings and you get two chances at a good
   one. ID = `p_axle_oring_id()` = `p_axle_round_d()` (**8 — tied to the sealing
-  round section of the hex-shaft axle**), CS `p_axle_oring_cs()` (2), OD 12.
+  section of the sail shaft, TB-08: uniform round, no hex**), CS `p_axle_oring_cs()` (2), OD 12.
   Each torus is split across the two plates (lower half in the bottom, upper
   half in the top).
 
@@ -291,31 +292,41 @@ of a silicone lip on a rotating PLA shaft, and demoulding a round ring from a
 pressed mold without flash all need real testing. Casting two O-rings per
 session is a yield hedge, not a fix for any of those.
 
-## 9. Round/hex centre axle and magnetic sensing
+## 9. Sail shaft and magnetic sensing
 
-The earlier 100 mm hex shaft, coupler ideas and 50 mm stepped axle are historical. The latest delivered standalone axle is:
+> **TB-08 (2026-09-22) — the axle is now a uniform round shaft, no hex.**
+> `lib/hex_shaft.scad` / `control_axle()` were renamed to `lib/sail_shaft.scad`
+> / `sail_shaft()` (wrapper: `Bottle_Hex_Shaft.scad` → `Bottle_Sail_Shaft.scad`).
+> The shaft free-spins in the cap's bore (unchanged, `p_cap_axle_bore_d()`)
+> and passes with a light **0.2 mm diametral running clearance**
+> (`p_axle_shaft_clearance()`) through both the cage hub bore and the top
+> sail bar's own hole — both now `p_axle_shaft_hole_d()` = shaft diameter +
+> that clearance = **Ø8.2**, replacing the old Ø12 hex-corner clearance hole
+> and the Ø10.3 hex cage bore. The shaft no longer *keys* into the cage by
+> shape; instead it is locked to the (rotating) cage by a single radial M3
+> **set screw** through the cage hub wall (`p_cage_setscrew_pilot_d()` /
+> `p_cage_setscrew_angle()`, `lib/control_cage.scad`) that presses directly
+> against the shaft. This is a **hardware interface break**: an
+> old hex shaft will not engage a new cage (no more hex bore), and a new
+> round shaft will not stay put in an old cage (nothing to press against
+> without the set-screw hole). The cap needed no change — its axle bore was
+> already round and already sized only for the shaft's uniform diameter.
+
+The earlier 100 mm hex shaft, coupler ideas and 50 mm stepped axle are historical, as is the 10 mm-AF hex section itself (TB-08 removed it). The latest delivered shaft:
 
 | Feature | Value |
 | --- | ---: |
-| Round diameter | 8 |
-| Nominal round length | 35 |
-| Hex across flats / nominal length | 10 / 23 |
-| Overall length | 58 |
-| Joining overlap | 0.2 |
+| Diameter (uniform, whole shaft) | 8 |
+| Nominal length inside cap | 35 |
+| Upper length (through cage hub + sail bar) | 23 |
+| Overall length | 59 |
 | Magnet recess | Ø3 × 1 deep, adjustable |
-| Assumed cap roof / boss | 4 / 6 — stale relative to repository cap |
+| Cage hub / sail-bar running hole | 8.2 (shaft + 0.2 mm clearance) |
+| Cage lock | single radial M3 set screw through the hub, pilot Ø2.5 (untested thread engagement) |
 
-The nominal round length was `30 inside cap + 4 roof + 1 external extension`. The 30 mm measurement starts at the roof underside and includes the boss; do not add the boss again. The magnet recess opens at the circular end for an AS5600 sensing magnet. Sensor-to-magnet distance and orientation remain installation checks.
+The nominal round-in-cap length is `30 inside cap + 5 roof + 1 external extension` (TB-03/TB-04 datum). The 30 mm measurement starts at the roof underside and includes the boss; do not add the boss again. The magnet recess opens at the lower end for an AS5600 sensing magnet. Sensor-to-magnet distance and orientation remain installation checks.
 
-For a six-sided OpenSCAD cylinder, the specified diameter is across corners:
-
-```scad
-hex_corner_diameter = hex_across_flats / cos(30);
-```
-
-A 10 mm-AF hex is about 11.55 mm across corners, fitting the Ø12 sail-bar opening. The cage hex is 10.3 mm AF. Preserve angular phase as well as size when combining standalone and embedded parts.
-
-The 23 mm hex was lengthened from 20 mm when the cage roof increased from 3 to 6 mm. The stack check includes a 4.5 mm bearing height, the cage roof (4 mm since v1.10.0, was 6) and a 12 mm sail bar; the thinner roof only adds clearance to the "axle must reach through" assert, so the axle was not re-cut — it now protrudes ~2 mm further above the roof. The centre hub is not proof of a complete axial retention or clip mechanism (the roof clip pocket is off by default); do not claim the assembly locks together without inspecting the actual retaining components.
+The 23 mm upper length (unchanged from the old hex length) was originally lengthened from 20 mm when the cage roof increased from 3 to 6 mm, and the stack check that sizes it (shaft must reach through the cage roof + sail bar) is unchanged by TB-08 — only the cross-section changed from hex to round. The centre hub is not proof of a complete axial retention mechanism; the set screw provides rotational lock, not axial retention, and neither has been physically validated (thread engagement into printed PLA, torque before stripping, and how much axial float remains all need a real test).
 
 ## 10. Sail apparatus and mounting-hole rules
 
@@ -603,7 +614,7 @@ For physical prototypes, separately check bottle fit, cage rubbing, shaft wobble
 ## 16. Printing, modelling and communication conventions
 
 - Cap: flat bearing face on the bed, open insert and boss pointing upward.
-- Axle: hex end on the bed, magnet opening upward.
+- Sail shaft: upper (cage-lock) end on the bed, magnet opening upward (TB-08: uniform round bar, no hex end to orient by — either end would sit flat, this just keeps the as-modelled convention).
 - Cage: **printed roof-face-down** (flat top on the bed) — this is a hard fabrication constraint, not a preference. Roof-top features must be self-supporting in that pose (bevels flare outward ≤ 45°, no undercut, no downward pocket/overhang); flag any change that would need support instead of making it. Inspect the clip-pocket bridging and horizontal bores in the slicer. See section 6.
 - Mold: openings up. Silicone rings are flexible cast parts, not rigid printed substitutes.
 - Sail and wood assemblies: inspection outputs are not automatically flat fabrication layouts.
@@ -674,7 +685,7 @@ rule" precedent, applied in the generator→lib direction.
 | Rear fin, bottle-holder shafts, solar holder | `lib/rear_fin.scad` | `Turtle_Rear_Fin.scad` | `objects/back_fin.py` + `back_fin_generator.py` | `fin` |
 | Ballast (core slats, bottom board, lock feet, fin) | `lib/ballast_fin.scad` | `Turtle_Bottom_Ballast_Fin.scad` | `objects/ballast.py` + `bottom_ballast_fin_generator.py` | `ballast` |
 | Sail frame (bars, battens, strengtheners, C pieces, sails) | `lib/sail_frame.scad` | `Turtle_Sail_Apparatus.scad` | `objects/sails.py` + `generate_sails.py` | `sails` |
-| Cap, cage, axle, mold (printed PLA) | `lib/control_*.scad`, `lib/hex_shaft.scad`, `lib/silicone_ring_mold.scad` | — | **no generator; never needs propagation** | — |
+| Cap, cage, shaft, mold (printed PLA) | `lib/control_*.scad`, `lib/sail_shaft.scad`, `lib/silicone_ring_mold.scad` | — | **no generator; never needs propagation** | — |
 
 Each generator carries three copies of every formula — the `lib/` module, its embedded
 SCAD body, and a Python `derive_dimensions()` that re-derives 2D outlines for SVG/DXF/PDF.

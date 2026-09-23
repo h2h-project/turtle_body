@@ -3,7 +3,11 @@
 // --------------------------------------------------------------------------
 //  Wooden frame only: top crossbar, four battens (two sail, two non-sail),
 //  bottom sail bars, joint strengtheners, orange C ends and the sail
-//  membranes. Emits NO cap, cage, axle or bottle. See CLAUDE.md s10.
+//  membranes. Emits no axle. Emits no bottle/cap/cage either unless
+//  show_control_bottle=true, which adds reference-only cut_bottle +
+//  control_cap + control_cage geometry (from lib/bottle_mockup.scad,
+//  lib/control_cap.scad, lib/control_cage.scad), positioned the same way
+//  the full turtle places them relative to the frame. See CLAUDE.md s10.
 //
 //  Final screw-hole rules (TB-01): both Ø3.2 cage-mount holes kept in ALL
 //  four battens; no tangential M6 bore in the C pieces; no lower joint bore
@@ -18,6 +22,9 @@
 
 use <params.scad>
 use <util.scad>
+use <bottle_mockup.scad>
+use <control_cap.scad>
+use <control_cage.scad>
 
 module sf_wood(coded_color, colored = true)
     color(colored ? coded_color : p_wood_shade_sail()) children();
@@ -51,7 +58,8 @@ module sail_frame(
     curve_segments = p_fn_curve(),
     part = "assembly",
     colored = true,
-    show_hardware = true
+    show_hardware = true,
+    show_control_bottle = false
 ) {
     $fn = curve_segments;
     cage_epsilon = 0.02;
@@ -88,7 +96,8 @@ module sail_frame(
 
     top_sail_bar_slot_depth = 11;
     top_sail_bar_slot_width = 10;
-    top_sail_bar_axle_hole_diameter = 12;
+    // TB-08: round shaft + running clearance (was Ø12 for the hex corners).
+    top_sail_bar_axle_hole_diameter = p_sail_bar_axle_hole_d();
 
     // ============================================================
     // SIDE BATTENS
@@ -117,22 +126,19 @@ module sail_frame(
     c_end_piece_thickness = board_width;
     c_end_piece_outer_extension = 15;
 
-    // Lower sail-bar / batten joint strengtheners from the PNG.
+    // Lower sail-bar / batten joint strengthener: a solid block that sits
+    // directly on top of the bottom rail, its bottom face resting on the
+    // rail's own top (horizontal) surface. No notch, no fastener into the
+    // rail -- the rail keeps only its own batten slot (see
+    // bottom_sail_bar_part()), and the strengthener is held by the
+    // horizontal M6 bolt through the side batten alone.
     joint_strengthener_width = 24;
     joint_strengthener_above_bar = 24;
-    joint_strengthener_below_bar = 15;
     joint_strengthener_thickness = board_width;
-    joint_strengthener_slot_depth = 12;
-    joint_strengthener_slot_height = bottom_sail_bar_thickness;
-    joint_strengthener_height =
-        joint_strengthener_above_bar
-        + bottom_sail_bar_thickness
-        + joint_strengthener_below_bar;
+    joint_strengthener_height = joint_strengthener_above_bar;
 
-    // Front-facing M6 bolt through the centre of the solid upper section.
-    joint_strengthener_m6_z_local =
-        joint_strengthener_below_bar + joint_strengthener_slot_height
-        + joint_strengthener_above_bar / 2;
+    // Front-facing M6 bolt through the centre of the block.
+    joint_strengthener_m6_z_local = joint_strengthener_above_bar / 2;
     side_batten_strengthener_m6_z_local =
         side_batten_end_margin + bottom_sail_bar_thickness
         + joint_strengthener_above_bar / 2;
@@ -219,19 +225,12 @@ module sail_frame(
     shaft_hole_d        = 8.6;
 
     // ============================================================
-    // CONTROL AXLE
+    // SAIL SHAFT (TB-08: uniform round, no hex)
     // ============================================================
     round_shaft_diameter   = 8.0;
     round_shaft_length     = 30.0;  // length inside the cap cavity
     round_shaft_extension_above_cap = 1.0;
-    // Ø12 mm bar hole fit: 10 mm AF = 11.55 mm across corners.
-    hex_shaft_across_flats = 10.0;
-    hex_shaft_length       = 23.0; // Adds 3 mm for the thicker sine-cage roof
-    joining_overlap        = 0.2;
-
-    // OpenSCAD measures a six-sided cylinder across its corners.
-    hex_corner_diameter =
-        hex_shaft_across_flats / cos(30);
+    shaft_upper_length     = 23.0; // continues up through the cage hub + sail bar (was hex_shaft_length)
 
     // ============================================================
     // DERIVED
@@ -353,9 +352,8 @@ module sail_frame(
         cage_inner_cavity_diameter
         + 2 * cage_side_wall_thickness;
 
-    cage_centre_hex_across_flats = 10.3;
-    cage_centre_hex_wall_height = 3.5;
-    cage_centre_hex_wall_thickness = 3;
+    // TB-08: plain round shaft bore through the hub (was a hex bore).
+    cage_shaft_hole_diameter = p_axle_shaft_hole_d();
 
     cage_top_hole_diameter = 18;
     cage_top_hole_angle = cage_button_angle;
@@ -397,11 +395,6 @@ module sail_frame(
         + side_batten_thickness
         + c_end_piece_outer_extension;
 
-    // The strengthener sits immediately outward of the main batten.
-    joint_strengthener_rail_slot_offset =
-        bottom_sail_bar_inner_overhang
-        + side_batten_thickness;
-
     // Place each sail-bar slot so its inward-facing edge is flush
     // with the inner/root surface of the corresponding cage notch.
     top_sail_bar_slot_centre_radius =
@@ -439,13 +432,6 @@ module sail_frame(
     cage_top_hole_radial_position = hole_spacing_cc;
     cage_top_hole_edge_to_centre =
         cage_outer_radius - cage_top_hole_radial_position;
-    cage_centre_hex_outer_across_flats =
-        cage_centre_hex_across_flats
-        + 2 * cage_centre_hex_wall_thickness;
-    cage_centre_hex_corner_diameter =
-        cage_centre_hex_across_flats / cos(30);
-    cage_centre_hex_outer_corner_diameter =
-        cage_centre_hex_outer_across_flats / cos(30);
 
     // In the cage's native coordinates, this is the bearing-tip plane.
     cage_bearing_tip_native_z =
@@ -464,15 +450,15 @@ module sail_frame(
            && max(cage_mount_z_positions) - side_batten_bottom_native_z
            < side_batten_height - cage_mount_hole_diameter / 2);
     // (clip-pocket dimension assert removed with the pocket -- top_pocket = false)
-    assert(cage_hub_diameter > cage_centre_hex_corner_diameter,
-           "Shaft hub must clear the hex bore corners.");
+    assert(cage_hub_diameter > cage_shaft_hole_diameter,
+           "Shaft hub must clear the shaft bore.");
     assert(cage_top_hole_radial_position - cage_top_hole_diameter/2
            > cage_hub_diameter/2);
     assert(cage_top_hole_radial_position + cage_top_hole_diameter/2
            < cage_bearing_pcd/2 - cage_bearing_diameter/2);
-    assert(round_shaft_extension_above_cap + hex_shaft_length
+    assert(round_shaft_extension_above_cap + shaft_upper_length
            > cage_bearing_diameter/2 + cage_surface_thickness + top_sail_bar_thickness,
-           "Hex shaft must reach through the roof and sail bar.");
+           "Sail shaft must reach through the cage roof and sail bar.");
 
     assert(cage_outer_diameter > 0,
         "Cage outer diameter must be greater than zero.");
@@ -495,16 +481,6 @@ module sail_frame(
            + cage_bearing_diameter / 2
            < cage_inner_cavity_radius,
         "The cage bearings do not fit inside the cavity.");
-    assert(cage_centre_hex_wall_height > 0
-           && cage_centre_hex_wall_thickness > 0,
-        "The cage central reinforcing-wall dimensions must be positive.");
-    assert(cage_centre_hex_outer_corner_diameter / 2
-           < cage_inner_cavity_radius,
-        "The cage central reinforcing wall does not fit.");
-    assert(cage_top_hole_radial_position
-           > cage_centre_hex_outer_corner_diameter / 2
-           + cage_top_hole_diameter / 2,
-        "The cage top hole overlaps the central reinforcing wall.");
     assert(cage_top_hole_radial_position
            + cage_top_hole_diameter / 2
            < cage_outer_radius,
@@ -516,10 +492,10 @@ module sail_frame(
             - top_sail_bar_width / 2) < 0.001,
         "Top sail bar slots must reach the bar centreline."
     );
-    assert(cage_centre_hex_across_flats < top_sail_bar_width,
-        "The axle opening does not fit within the top sail bar.");
-    assert(hex_corner_diameter < top_sail_bar_axle_hole_diameter,
-        "The hex shaft does not fit through the sail bar axle hole.");
+    assert(cage_shaft_hole_diameter < top_sail_bar_width,
+        "The shaft opening does not fit within the top sail bar.");
+    assert(round_shaft_diameter < top_sail_bar_axle_hole_diameter,
+        "The sail shaft does not fit through the sail bar axle hole.");
     assert(
         top_sail_bar_slot_centre_radius + top_sail_bar_slot_width / 2
             < top_sail_bar_length / 2,
@@ -545,10 +521,6 @@ module sail_frame(
         "The bottle-side closure must be at least 10 mm long.");
     assert(c_end_piece_outer_extension >= 10,
         "The outer C-piece closure must be at least 10 mm long.");
-    assert(joint_strengthener_below_bar == side_batten_end_margin,
-        "The strengthener bottom must align with the batten bottom.");
-    assert(joint_strengthener_slot_depth <= joint_strengthener_width,
-        "The strengthener slot is deeper than the slat width.");
     assert(joint_strengthener_above_bar > m6_bolt_head_diameter
            && joint_strengthener_width > m6_bolt_head_diameter,
         "The supporter upper face must fit the M6 bolt head.");
@@ -839,17 +811,10 @@ module sail_frame(
                     bottom_sail_bar_thickness + 2 * cage_epsilon
                 ]);
 
-            // Complementary half-lap for the 90-degree strengthener slat.
-            translate([
-                joint_strengthener_rail_slot_offset,
-                slot_y,
-                -cage_epsilon
-            ])
-                cube([
-                    joint_strengthener_thickness,
-                    bottom_sail_bar_slot_depth + cage_epsilon,
-                    bottom_sail_bar_thickness + 2 * cage_epsilon
-                ]);
+            // No second (strengthener) mortise here any more: the rail
+            // keeps only its own batten slot. The joint strengthener now
+            // rests on the rail via its own notch's horizontal shelf and
+            // is screwed down from above -- see joint_strengthener_part().
         }
     }
 
@@ -893,24 +858,14 @@ module sail_frame(
     module joint_strengthener_part() {
         difference() {
             // Rotated slat: board thickness runs radially in X,
-            // while the 24 mm face width runs tangentially in Y.
+            // while the 24 mm face width runs tangentially in Y. Bottom
+            // face (Z=0) sits flush on the rail's own top surface -- no
+            // notch, no fastener into the rail itself.
             cube([
                 joint_strengthener_thickness,
                 joint_strengthener_width,
                 joint_strengthener_height
             ]);
-
-            // 12 mm deep × one-board-thickness-high slot from the PNG.
-            translate([
-                -cage_epsilon,
-                0,
-                joint_strengthener_below_bar
-            ])
-                cube([
-                    joint_strengthener_thickness + 2 * cage_epsilon,
-                    joint_strengthener_slot_depth,
-                    joint_strengthener_slot_height
-                ]);
 
             // Through the broad front face (X thickness), never the side edge.
             translate([
@@ -937,14 +892,15 @@ module sail_frame(
         batten_bottom_z = batten_top_z - side_batten_height;
         bottom_bar_z = batten_bottom_z + side_batten_end_margin;
         strengthener_z =
-            bottom_bar_z - joint_strengthener_below_bar;
+            bottom_bar_z + bottom_sail_bar_thickness;
 
         strengthener_inner_x =
             top_sail_bar_slot_centre_radius
             + side_batten_thickness / 2;
 
         sf_wood([0.35, 0.92, 0.34], colored) {
-            // Right joint: rotated slat sits radially flush beside the batten.
+            // Right joint: rotated slat sits radially flush beside the batten,
+            // resting on top of the bottom rail.
             translate([
                 strengthener_inner_x,
                 -joint_strengthener_width / 2,
@@ -952,7 +908,7 @@ module sail_frame(
             ])
                 joint_strengthener_part();
 
-            // Left joint: identical mirrored half-lap arrangement.
+            // Left joint: identical mirrored arrangement.
             rotate([0, 0, 180])
                 translate([
                     strengthener_inner_x,
@@ -1138,6 +1094,68 @@ module sail_frame(
 
 
 
+    // ============================================================
+    // CONTROL BOTTLE + CAP + CAGE (reference only)
+    // ============================================================
+    //
+    // Reference geometry for checking the frame fits around the actual
+    // control head, all gated by the one show_control_bottle switch.
+    // Positioned in this module's own cage-native frame by inverting
+    // src/Full_Turtle.scad's placement chain: hope_turtle_sail_apparatus()
+    // places the bottle/cap/cage/frame as four sibling groups sharing one
+    // "local" (pre-outer-flip) coordinate space --
+    //   bottle:      translate(0,0,0)                            . p
+    //   cap:         translate(0,0,control_assembly_z)            . p
+    //   cage:        translate(0,0,control_assembly_z)
+    //                  . rotateZ(90) . rotateX(180)                . p
+    //   sail_frame:  translate(0,0,control_assembly_z+cage_bearing_tip_native_z)
+    //                  . rotateZ(90) . rotateZ(90) . rotateX(180)  . p
+    // (cage_vertical_position=0, cx=cy=0 at these defaults). Composing each
+    // target's transform with the frame transform's inverse gives, for a
+    // point p in the target's own native space, its equivalent point in
+    // this module's own frame-native space:
+    //   bottle:  translate(0,0, control_assembly_z + cage_bearing_tip_native_z) . rotateY(180) . p
+    //   cap:     translate(0,0, cage_bearing_tip_native_z)                      . rotateY(180) . p
+    //   cage:    translate(0,0, cage_bearing_tip_native_z)                      . rotateZ(90)  . p
+    // (rotateY(180) on the bottle/cap looks like an odd choice next to
+    // rotateX(180)/rotateZ(90) above, but it is the correct composed
+    // result, not a guess -- verified against the cage line by hand: it
+    // reduces to "translate by cage_bearing_tip_native_z, rotate 90 about
+    // Z", exactly matching this file's own existing use of
+    // cage_bearing_tip_native_z as the frame-native Z where the cap's
+    // outer face / cage bearing-tip plane sits.) Inspection aid only; not
+    // itself a fabrication or fit reference for the cap/cage interfaces.
+    module control_reference_native() {
+        translate([0, 0, control_assembly_z + cage_bearing_tip_native_z])
+            rotate([0, 180, 0])
+                cut_bottle(
+                    bottle_d      = bottle_diameter,
+                    bottle_h      = bottle_height,
+                    cap_d         = cap_diameter,
+                    cap_h         = cap_height,
+                    collar_d      = collar_diameter,
+                    collar_h      = bottle_collar_height,
+                    neck_d        = cap_diameter - 3,
+                    neck_h        = bottle_neck_height,
+                    top_dome_h    = top_dome_height,
+                    bottom_dome_h = bottom_dome_height,
+                    dome_p        = bottle_dome_power,
+                    base_ratio    = bottle_bottom_base_ratio,
+                    steps         = bottle_profile_steps,
+                    cut_height    = bottle_cut_height,
+                    socket_d      = bottle_socket_diameter,
+                    socket_h      = insert_total_h
+                );
+        translate([0, 0, cage_bearing_tip_native_z]) {
+            rotate([0, 180, 0])
+                color([0.78, 0.78, 0.82])
+                    control_cap();
+            rotate([0, 0, 90])
+                color([0.74, 0.77, 0.79])
+                    control_cage(button_angle = cage_button_angle);
+        }
+    }
+
     module sail_frame_native_group() {
         top_sail_bar_native_assembly();
         side_battens_native_assembly();
@@ -1149,6 +1167,8 @@ module sail_frame(
             cage_batten_bolts_native_assembly();
             sail_strengthener_bolts_native();
         }
+        if(show_control_bottle)
+            control_reference_native();
     }
 
     // All parts share the cage's native coordinates. "assembly" raises the

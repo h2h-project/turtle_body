@@ -5,22 +5,22 @@
   "defines": {},
   "returncode": 0,
   "timed_out": false,
-  "seconds": 6.6,
+  "seconds": 5.0,
   "bounds": {
     "min": [
       0.0,
       -118.0,
-      -206.0
+      -208.0
     ],
     "max": [
-      294.0,
-      176.0,
+      296.0,
+      178.0,
       88.0
     ],
     "size": [
-      294.0,
-      294.0,
-      294.0
+      296.0,
+      296.0,
+      296.0
     ],
     "tris": 9512
   },
@@ -29,7 +29,7 @@
   ],
   "errors": [],
   "echoes": [
-    "ECHO: \"ECOJOINER: John L/H = \", 294, 58, \" | slot depth std/master = \", 29, 34, \" | slot w = \", 12.2",
-    "ECHO: \"ECOJOINER: final key L/W/T = \", 130, 24, 12, \" | presser dia = \", 30"
+    "ECHO: \"ECOJOINER: John L/H = \", 296, 60, \" | slot depth std/master = \", 30, 36, \" | slot w = \", 12.2",
+    "ECHO: \"ECOJOINER: final key L/W/T = \", 132, 24, 12, \" | presser dia = \", 30"
   ]
 }

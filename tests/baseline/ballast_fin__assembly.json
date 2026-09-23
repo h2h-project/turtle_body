@@ -11,17 +11,17 @@
   "bounds": {
     "min": [
       0.0,
-      -164.0,
+      -168.0,
       0.0
     ],
     "max": [
-      287.0,
+      294.0,
       93.0,
       360.0
     ],
     "size": [
-      287.0,
-      257.0,
+      294.0,
+      261.0,
       360.0
     ],
     "tris": 696
@@ -31,9 +31,6 @@
   ],
   "errors": [],
   "echoes": [
-    "ECHO: \"Green slats: width / length / thickness = \", 58, 360, 12",
-    "ECHO: \"Green slat inner-face gap = \", 82",
-    "ECHO: \"M6 hole diameter / distance from slat top = \", 6.4, 69",
-    "ECHO: \"Bottom board length / width = \", 287, 93"
+    "ECHO: \"BALLAST: slat w/len/t = \", 60, 360, 12, \" | inner-face gap = \", 84, \" | M6 from slat top = \", 69"
   ]
 }

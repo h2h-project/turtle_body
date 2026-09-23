@@ -7,7 +7,7 @@
   },
   "returncode": 0,
   "timed_out": false,
-  "seconds": 0.5,
+  "seconds": 0.1,
   "bounds": {
     "min": [
       -250.0,

@@ -1,13 +1,13 @@
 {
   "target": "control_cage",
   "render": "print",
-  "source": "src/components/Bottle_Control_Cage.scad",
+  "source": "scads_v1/Bottle_Control_Cage.scad",
   "defines": {
     "part": "print"
   },
   "returncode": 0,
   "timed_out": false,
-  "seconds": 84.3,
+  "seconds": 88.3,
   "bounds": {
     "min": [
       -56.3837,
@@ -24,13 +24,14 @@
       112.7674,
       68.0
     ],
-    "tris": 67620
+    "tris": 68254
   },
   "warnings": [],
   "errors": [],
   "echoes": [
     "ECHO: \"CAGE: OD / ID / roof-to-tip = \", 115, 102, 68",
     "ECHO: \"CAGE: groove w / d = \", 22.5, 3.7, \" | M3 dia / pitch = \", 3.2, 32",
+    "ECHO: \"CAGE: shaft hole = \", 8.2, \" | set-screw pilot dia / angle = \", 2.5, 0",
     "ECHO: \"CAGE: prints ROOF-FACE-DOWN (flat top on the bed). roof_bevel = \", 3, \" mm, a 45-deg OUTWARD chamfer (printable). Any new \", \"roof-top feature must be self-supporting in that pose -- no undercut, \", \"no downward pocket, no >45-deg overhang.\""
   ]
 }

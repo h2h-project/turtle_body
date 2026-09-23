@@ -28,10 +28,5 @@
   },
   "warnings": [],
   "errors": [],
-  "echoes": [
-    "ECHO: \"Green slats: width / length / thickness = \", 58, 360, 12",
-    "ECHO: \"Green slat inner-face gap = \", 82",
-    "ECHO: \"M6 hole diameter / distance from slat top = \", 6.4, 69",
-    "ECHO: \"Bottom board length / width = \", 287, 93"
-  ]
+  "echoes": []
 }

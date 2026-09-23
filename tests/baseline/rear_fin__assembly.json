@@ -9,7 +9,7 @@
   },
   "returncode": 0,
   "timed_out": false,
-  "seconds": 0.8,
+  "seconds": 0.3,
   "bounds": {
     "min": [
       -250.0,
@@ -19,18 +19,18 @@
     "max": [
       108.0,
       74.0,
-      246.0
+      252.0
     ],
     "size": [
       358.0,
       148.0,
-      246.0
+      252.0
     ],
     "tris": 942
   },
   "warnings": [],
   "errors": [],
   "echoes": [
-    "ECHO: \"REAR FIN: shaft length = \", 334, \" | hole from front (TB-07) = \", 103, \" | slot opening = \", 12.2"
+    "ECHO: \"REAR FIN: shaft length = \", 334, \" | hole from front (TB-07) = \", 105, \" | slot opening = \", 12.2"
   ]
 }

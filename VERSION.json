@@ -1,6 +1,6 @@
 {
-  "version": "2.3.1",
-  "updated": "2026-09-16",
+  "version": "4.0.0",
+  "updated": "2026-09-22",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
     "patch": "+0.0.1  component-scoped change (one lib/<subsystem>.scad or one src/components/*.scad)",
@@ -8,6 +8,92 @@
     "major": "+1.0.0  bottle / board / hardware interface break (existing builds no longer fit)"
   },
   "changelog": [
+    {
+      "version": "4.0.0",
+      "date": "2026-09-22",
+      "files": [
+        "lib/params.scad",
+        "src/components/Silicone_Ring_Mold.scad",
+        "build/params.json",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad",
+        "tests/expected_bounds.json",
+        "tests/baseline/*.json"
+      ],
+      "note": "MASTER BOTTLE INTERFACE BREAK: p_bottle_d() 86 -> 84 mm (every other bottle dimension -- height, dome heights, cap/collar diameters, wall thickness -- held). Every value that cascades from bottle diameter moved accordingly: p_insert_shaft_d(), p_seal_groove_root_d(), p_port_height() / p_port_length() (== bottle diameter + taper/allowance terms), Ecojoiner john_height/john_length/rectangle_y, top_crossbar_len, bottom_rail_len, ballast core_w/slat_gap/slat_spacing/board_len/fin_len, rear-fin shaft_length, and the cage/cap/sail-frame radial-clearance chain (cage_notch_root_radius, bottom_sail_bar_inner_radius, etc.) that all key off the shared insert/cap-diameter derivation. build/build.py + build/lint.py run clean (0 problem groups). SHARED-CONTRACT CHANGE per CLAUDE.md s15 step 5: build/test.py and build/baseline.py were explicitly requested and run in this same pass, not just recommended. First full run: 7/30 passed, 23 bounds-moved failures -- all reviewed and confirmed as either (a) the intended bottle-diameter cascade above, (b) two items of PRE-EXISTING un-recorded drift unrelated to this change (control_cap's Z-max 40->68 from v2.2.0's side_tabs, never baselined; several wooden-part lengths that were still baselined against the even older 82 mm bottle from before the 86 mm change), or (c) one REAL BUG this run caught: src/components/Silicone_Ring_Mold.scad's flat_ring_inner_d/outer_d customizer literals (59.25/79.25) were hardcoded at build time for the 86 mm bottle in v2.3.1 and do not auto-track lib/params.scad -- corrected to 57.75/77.75 (matches p_seal_groove_root_d() x 0.75 stretch-fit + 10 mm radial width at 84 mm). No new ERROR or unexpected WARNING anywhere. Re-ran build/baseline.py (full set, all 30 renders) with review notes added to every changed tests/expected_bounds.json entry explaining its cause; deleted the orphaned hex_shaft__default entry (target renamed to sail_shaft in the TB-08 pass). Final confirmation run: build/test.py 30/30 renders passed clean against the new baseline. HopeTurtles.org generator propagation (CLAUDE.md s19) done in the same pass: fixed generator/sync_from_turtle_body.py (it was still looking for the pre-v1.7.1 'v1.0 SCADs/*_v1.scad' paths turtle_body renamed to 'scads_v1/*.scad' releases ago -- silently freezing the vendored snapshot at turtle_body ~1.8.3/bottle-82 this whole time), re-ran it, then generator/check_params_sync.py, which for the first time in a long while actually caught real drift (bottle_diameter 82 in the 6fc/fin/ballast/sails generator defaults, never actually updated for either the 86 or 84 mm bottle changes) -- fixed all four to 84; all 39 shared inputs now genuinely match. Also synced the sail-shaft (TB-08) design into generate_sails.py's embedded SCAD_TEMPLATE and objects/sails.py's 2D carpenter-sheet derivation (round shaft, Ø8.2 mm cage-hub/sail-bar hole, no hex, simplified joint strengthener) -- verified by generating and OpenSCAD-parsing all 8 sail-apparatus parts plus a rendered PDF carpenter sheet, no errors. See that repo's own SYNC_LOG.md entry for full detail.",
+      "component_bump": false
+    },
+    {
+      "version": "3.0.0",
+      "date": "2026-09-22",
+      "files": [
+        "lib/params.scad",
+        "lib/hex_shaft.scad (deleted)",
+        "lib/sail_shaft.scad (new)",
+        "lib/control_cage.scad",
+        "lib/sail_frame.scad",
+        "src/Full_Turtle.scad",
+        "src/components/Bottle_Hex_Shaft.scad -> Bottle_Sail_Shaft.scad",
+        "src/components/Bottle_Control_Cage.scad",
+        "build/manifest.json",
+        "scads_v1/Bottle_Hex_Shaft.scad (deleted)",
+        "scads_v1/Bottle_Sail_Shaft.scad (new)",
+        "scads_v1/Bottle_Control_Cage.scad",
+        "scads_v1/Turtle_Sail_Apparatus.scad",
+        "Full_Turtle_v1.scad",
+        "stls_v1/Bottle_Hex_Shaft_v1.10.0.stl (deleted, now stale)",
+        "CLAUDE.md",
+        "build/params.json"
+      ],
+      "note": "TB-08: HARDWARE INTERFACE BREAK -- the centre axle drops its hex section entirely and becomes one uniform round Ø8 mm shaft, with a new lock mechanism. (1) Renamed lib/hex_shaft.scad's control_axle() to lib/sail_shaft.scad's sail_shaft() (wrapper Bottle_Hex_Shaft.scad -> Bottle_Sail_Shaft.scad, build/manifest.json id hex_shaft -> sail_shaft, stale stls_v1/Bottle_Hex_Shaft_v1.10.0.stl deleted -- no replacement STL exported in this pass, run build/export_stl.py when one is needed). The shaft is now a single cylinder(d=round_d, h=total_len) with the magnet recess at the lower end -- no join_overlap Boolean needed since there's only one piece. Total length held at 59 mm (p_axle_upper_len(), was p_axle_hex_len(), still 23 mm) so the existing cap/full-turtle placement transforms (control_assembly_z - (p_axle_upper_len()+p_axle_round_ext())) needed no change. (2) New p_axle_shaft_clearance() = 0.2 mm diametral running clearance and p_axle_shaft_hole_d() = p_axle_round_d() + that = 8.2 mm -- the ONE hole size now shared by both places the shaft passes through without bearing in: the cage hub bore (lib/control_cage.scad, was p_cage_hex_bore_af() = 10.3 mm hex AF, now a plain round cylinder) and the top sail bar's own hole (p_sail_bar_axle_hole_d(), was a hardcoded 12 mm sized for the ~11.55 mm hex-corner diameter). p_cap_axle_bore_d() (8.7, the cap's FREE-SPINNING bearing bore) is untouched -- it was already round and only ever sized for the shaft's uniform diameter, so the cap needed no change at all. (3) New shaft-to-cage lock: control_cage() gains a single radial M3 set screw through the hub wall (p_cage_setscrew_pilot_d() = 2.5 mm self-tapping pilot into the printed PLA hub -- untested thread engagement, not a clearance hole for a separate nut like the batten M3 holes; p_cage_setscrew_angle() = 0, adjustable) that presses directly on the shaft once it's inserted -- replaces the old hex-to-hex shape lock entirely. Modelled as a single cylinder drilled from the hub's outer surface in past the centre (cage_hub_bottom..cage_top Z-span asserted to contain it with margin), so it always reaches the shaft bore regardless of shaft_hole_d. (4) Cleaned up the inert cap/cage/axle parameter block duplicated in BOTH lib/sail_frame.scad and src/Full_Turtle.scad (kept only because their own asserts read from it, per CLAUDE.md s17): replaced every hex_shaft_across_flats/hex_corner_diameter/cage_centre_hex_* local + assert with round-shaft equivalents (cage_shaft_hole_diameter, shaft_upper_length), and DELETED three asserts in each file that had gone stale even before this change -- a 'central reinforcing wall' concept (cage_centre_hex_wall_height/thickness, cage_centre_hex_outer_corner_diameter) that does not exist in the actual lib/control_cage.scad module (which just cuts the bore straight through the solid hub) and duplicated/conflicted with the already-correct hub-fit check a few lines above it (cage_top_hole_radial_position - cage_top_hole_diameter/2 > cage_hub_diameter/2). Both files' remaining checks now literally mirror lib/control_cage.scad's own asserts. build/build.py + build/lint.py clean (0 problem groups) -- every assert in every render passed, including the two full asserts newly exercising the round-hole math. Rendered and inspected in OpenSCAD: Bottle_Sail_Shaft.scad (echo confirms 59/36/23 mm, Ø8 uniform, no hex); Bottle_Control_Cage.scad part=upright (echo confirms shaft hole 8.2, set-screw pilot 2.5 @ 0deg; --render gives Simple: yes, a single valid manifold solid); Full_Turtle_v1.scad assembly_view=top_sail and Turtle_Sail_Apparatus.scad part=assembly with show_control_bottle=true (no ERROR/WARNING, cap+cage+shaft+frame all sit together as expected). CLAUDE.md s3/s6/s9/s16/s19 updated for the rename and the new lock mechanism. HARDWARE INTERFACE BREAK per CLAUDE.md s15 step 6 rules (+1.0.0): an old printed hex shaft will not engage a new-design cage (no hex bore left to key into) and a new round shaft will not stay locked in an old-design cage (no set-screw hole to press against it) -- existing prints of either part do not interoperate with the other's new design. Per CLAUDE.md s15 step 5, this is a shared-contract change (lib/params.scad + two lib module signatures) -- build/test.py (full cross-subsystem mesh regression) and build/baseline.py (tests/expected_bounds.json is now stale for hex_shaft/control_cage/full_turtle/sail_apparatus -- the target itself was renamed hex_shaft->sail_shaft, so a maintainer baseline run is required, not optional, before this can be considered release-verified) were NOT run automatically -- recommended to the maintainer, not run. PLA-only + wooden sail-bar-hole change -- no HopeTurtles.org generator propagation needed (the generators' sails object never modelled an axle/hex hole at all; CLAUDE.md s19's PLA-only exemption covers the cap/cage/shaft side).",
+      "component_bump": false
+    },
+    {
+      "version": "2.3.5",
+      "date": "2026-09-22",
+      "files": [
+        "lib/sail_frame.scad",
+        "scads_v1/Turtle_Sail_Apparatus.scad",
+        "Full_Turtle_v1.scad"
+      ],
+      "note": "Simplified the joint strengthener per user feedback on the 2.3.2 redesign (screenshot showed both the new vertical screw hole and the leftover below-rail remnant as unwanted). Removed the vertical M6 screw clearance hole added in 2.3.2 -- not needed, the strengthener is held by the existing horizontal M6 bolt through the side batten alone. Removed the below-rail solid remnant + its now-pointless notch entirely: joint_strengthener_part() is now just the above-rail block (joint_strengthener_height = joint_strengthener_above_bar, was above_bar+bar_thickness+below_bar), its bottom face (Z=0) resting flush on the rail's own top surface. joint_strengthener_m6_z_local simplified to above_bar/2 (centred in the now-shorter block); joint_strengtheners_native_assembly()'s strengthener_z changed from bottom_bar_z-joint_strengthener_below_bar to bottom_bar_z+bottom_sail_bar_thickness (top of the rail) -- verified the M6 bolt's world Z is unchanged (side_batten_strengthener_m6_z_local already measured from the rail's top, so it needed no change). Removed the now-dead joint_strengthener_below_bar/slot_depth/slot_height locals and their two asserts. build/build.py + build/lint.py clean; rendered part=assembly (orthographic side-on and a close perspective) in OpenSCAD confirming the strengthener sits flush on the rail with no remnant below and no hole on top. Component-scoped to lib/sail_frame.scad, effect fully visible in the renders -- per CLAUDE.md s15 step 5, build/test.py was neither run nor recommended.",
+      "component_bump": true
+    },
+    {
+      "version": "2.3.4",
+      "date": "2026-09-22",
+      "files": [
+        "lib/sail_frame.scad",
+        "src/components/Turtle_Sail_Apparatus.scad",
+        "scads_v1/Turtle_Sail_Apparatus.scad",
+        "Full_Turtle_v1.scad"
+      ],
+      "note": "Fixed the show_control_bottle reference geometry added in 2.3.2: it was upside down and mispositioned, because the offset used (-(control_assembly_z + cage_bearing_tip_native_z), no rotation) ignored the rotate([180,0,0]) that src/Full_Turtle.scad's positioned_sail_frame() and positioned_cage_assembly() each apply when installing the cage/frame group against the fixed cap+bottle group -- a real orientation flip between bottle-native space and this module's own frame-native space, not just a Z offset. Rederived the correct transform by composing each of Full_Turtle's four placement chains (bottle/cap/cage/sail_frame, all siblings in one shared pre-outer-flip coordinate space) and inverting the frame's own chain against the other three -- verified by hand against the cage line, which reduces cleanly to this file's own existing cage_bearing_tip_native_z convention. Also, per this request: show_control_bottle now additionally draws control_cap() and control_cage() (new use <control_cap.scad> / <control_cage.scad>), not just the bottle -- control_reference_native() (renamed from control_bottle_native()) places all three: bottle + cap via translate(0,0,control_assembly_z-or-cage_bearing_tip_native_z) . rotateY(180), cage via translate(0,0,cage_bearing_tip_native_z) . rotateZ(90). Rendered part=assembly with show_control_bottle=true in OpenSCAD (two camera angles): the bottle's cut/open end now correctly meets the cap's flat face, the cage sits directly above that under the cap, and the bottle's own neck+screwcap hang below through the frame -- matching how the full turtle actually installs it (bottle mounted neck-down). No ERROR/WARNING. Separately tried reducing top_sail_bar_axle_hole_diameter 12->8 mm as requested but reverted it: build/lint.py caught a real physical conflict -- the axle's 10 mm-AF hex section is ~11.55 mm across corners (hex_corner_diameter) and must pass through this hole per the existing assert and CLAUDE.md s9's 'a 10 mm-AF hex... fitting the Ø12 sail-bar opening' -- an 8 mm hole is too small for it. Flagged to the user rather than silently keeping the old value or breaking the assert; left at 12 mm pending direction. Component-scoped to lib/sail_frame.scad (no lib/params.scad or shared-signature change), effect fully visible in OpenSCAD views -- per CLAUDE.md s15 step 5, build/test.py was neither run nor recommended.",
+      "component_bump": true
+    },
+    {
+      "version": "2.3.3",
+      "date": "2026-09-22",
+      "files": [
+        "lib/ballast_fin.scad",
+        "scads_v1/Turtle_Bottom_Ballast_Fin.scad",
+        "Full_Turtle_v1.scad"
+      ],
+      "note": "Bottom ballast fin: bl_fin_front_chamfer() was 1.5*bl_t() (18 mm at reference params), leaving only 0.5*bl_t() (6 mm) of solid material between the chamfer and the lower slot above it (bl_fin_lower_protrusion() = 2*bl_t() = 24 mm) -- a thin sliver right where two cuts meet, the same kind of unnecessarily-weakened joint flagged on the sail frame's bottom rail in this session. Changed to bl_fin_lower_protrusion() - bl_t() (= bl_t(), 12 mm), giving a full board-thickness of solid wood between the two cuts. Position and shape of the chamfer (still the corner clip at the fin's near end) are unchanged, only its size. build/build.py + build/lint.py clean. Component-scoped to lib/ballast_fin.scad (no lib/params.scad or shared-signature change), effect fully visible in one OpenSCAD view (bl_fin_profile_2d()'s corner chamfer shrinks, the rest of the fin is untouched) -- per CLAUDE.md s15 step 5, build/test.py was neither run nor recommended. PROPAGATION (CLAUDE.md s19): this value is vendored by ../hopeTurtles.org/generator/bottom_ballast_fin_generator.py (ballast_fin_front_chamfer) and generator/objects/ballast.py (derive_dimensions()'s ballast_fin_front_chamfer) -- both updated in the same task to match (see that repo's own changelog/SYNC_LOG for the corresponding entry).",
+      "component_bump": true
+    },
+    {
+      "version": "2.3.2",
+      "date": "2026-09-22",
+      "files": [
+        "lib/sail_frame.scad",
+        "src/components/Turtle_Sail_Apparatus.scad",
+        "scads_v1/Turtle_Sail_Apparatus.scad",
+        "Full_Turtle_v1.scad"
+      ],
+      "note": "Three sail-apparatus changes, all component-scoped to lib/sail_frame.scad. (1) New show_control_bottle=false arg on sail_frame() (wired through the standalone wrapper): when true, draws lib/bottle_mockup.scad's cut_bottle() -- the bottle only, no control cap and no cage -- inside the frame's own native coordinates, positioned with the same relative offset (control_assembly_z + cage_bearing_tip_native_z) that src/Full_Turtle.scad's positioned_sail_frame() uses to place the frame against the bottle, just applied in reverse. Confirmed visually: rendered part=assembly with show_control_bottle=true, the bottle sits centred through the battens with its cut/neck end at the top, no cap/cage geometry present. (2) Confirmed (not changed) the top sail bar's axle hole: top_sail_bar_axle_hole_diameter is a hard-limited Oe12 mm round hole (lib/sail_frame.scad, top_sail_bar_profile_2d()). (3) Removed the bottom sail bar's second ('complementary half-lap') mortise cut for the joint strengthener -- the rail was carrying two interlocking slots (its own batten slot plus a full-thickness strengthener mortise) in the same cross-section, which the user identified as an avoidable weak point. The rail now keeps only its own batten slot. joint_strengthener_part()'s own notch is unchanged (its floor is the horizontal shelf the rail now simply rests on), and it gains a new vertical Oe6.4 mm (batten_cage_m6_hole_diameter) screw clearance hole straight down through the solid section above the notch to the notch floor, so the strengthener is screwed down onto the rail from above instead of interlocking with it. Removed the now-unused joint_strengthener_rail_slot_offset local. build/build.py + build/lint.py clean (0 problem groups, full OpenSCAD parse of every lib/src/bundle file including Full_Turtle_v1.scad, since sail_frame.scad is shared-contract-adjacent -- it's consumed by both the standalone wrapper and src/Full_Turtle.scad). Visual check: rendered part=assembly with and without show_control_bottle; no new ERROR/WARNING. Per CLAUDE.md s15 step 5 this stayed within one subsystem with effects fully visible in OpenSCAD views, so build/test.py was neither run nor recommended. No lib/params.scad value or module signature default changed, so no HopeTurtles.org generator propagation is needed (the sails generator's own frame formulas are unaffected -- CLAUDE.md s19).",
+      "component_bump": true
+    },
     {
       "version": "2.3.1",
       "date": "2026-09-16",

@@ -35,12 +35,17 @@ mold_spacing = 8; // gap between flat mold bodies
    Tweak these to re-size the flat ring's mold cavity for a one-off STL
    export without touching lib/params.scad (which also feeds the cap
    groove geometry). Defaults below are the as-cast values that match the
-   current lib/params.scad groove spec: inner Ø59.25 / outer Ø79.25 x 2.6
-   thick, derived from a 79 mm groove root shrunk 25% for stretch-fit
-   tension plus a 10 mm radial width. The nested axle O-ring (small ring,
-   ID/OD 8/12) is not affected by these three values. */
-flat_ring_inner_d  = 59.25; // mm, as-cast inner diameter
-flat_ring_outer_d  = 79.25; // mm, as-cast outer diameter
+   current lib/params.scad groove spec at the 84 mm reference bottle:
+   inner Ø57.75 / outer Ø77.75 x 2.6 thick, derived from a 77 mm groove
+   root shrunk 25% for stretch-fit tension plus a 10 mm radial width.
+   These are literals, not live p_*() calls (OpenSCAD's Customizer needs a
+   literal default) -- they must be re-typed by hand after any upstream
+   change to p_bottle_d()/p_seal_groove_root_d()/p_seal_ring_radial_w()/
+   p_seal_ring_elasticity_reduction(); build/test.py's bounds check is what
+   catches a forgotten update. The nested axle O-ring (small ring, ID/OD
+   8/12) is not affected by these three values. */
+flat_ring_inner_d  = 57.75; // mm, as-cast inner diameter
+flat_ring_outer_d  = 77.75; // mm, as-cast outer diameter
 flat_ring_axial_t  = 2.6;   // mm, cast thickness
 
 use <../../lib/silicone_ring_mold.scad>

@@ -27,7 +27,7 @@ function p_fn_wood()      = 96;     // cut wooden parts
 function p_fn_curve()     = 180;    // fine profile curves (bottle, sails)
 
 // ---- bottle (the foundation reference) ---------------------------------
-function p_bottle_d()        = 86;    // outside diameter (was 82; other bottle dims held)
+function p_bottle_d()        = 84;    // outside diameter (was 86, and 82 before that; other bottle dims held)
 function p_bottle_h()        = 305;   // total height incl. ordinary screw cap
 function p_bottle_wall_t()   = 0.5;   // modelling assumption, not a measurement
 function p_bottle_cap_d()    = 31;    // ordinary screw cap (NOT the control-cap disk)
@@ -116,18 +116,24 @@ function p_seal_ring_elasticity_reduction() = 0.25;
 function p_seal_groove_root_d() = p_insert_shaft_d()
                                 - 2 * p_seal_groove_radial_depth();            // 79 at the 86 mm bottle
 
-// ---- round / hex centre axle (CLAUDE.md s9) -----------------------
+// ---- sail shaft: uniform round centre axle (CLAUDE.md s9) ----------
 //  Derived to the 5/2 cap datum (TB-03/TB-04). round_inside_cap is measured
 //  from the roof underside and INCLUDES the boss -- do not add the boss again.
+//  TB-08: the shaft is now one uniform round bar top to bottom -- no hex
+//  section. It free-spins in the cap bore (p_cap_axle_bore_d) and passes
+//  with a light running clearance through the cage hub bore and the top
+//  sail bar's own hole (both p_axle_shaft_hole_d()); it locks to the
+//  ROTATING cage with a single M3 set screw through the cage hub
+//  (p_cage_setscrew_pilot_d()) rather than a shaped (hex) interference fit.
 function p_axle_round_d()        = 8;
 function p_axle_round_ext()      = 1;    // projection above the cap's outer face
 function p_axle_round_inside_cap() = p_cap_insert_len() - 5;  // 30: roof underside to round end (incl. boss)
 function p_axle_round_len()      = p_axle_round_inside_cap() + p_cap_roof_t() + p_axle_round_ext();  // 36
-function p_axle_hex_af()         = 10.0; // shaft across-flats (0.3 mm to the Ø10.3 cage bore)
-function p_axle_hex_len()        = 23;
-function p_axle_join_overlap()   = 0.2;  // hex<->round Boolean overlap
-function p_axle_total_len()      = p_axle_hex_len() + p_axle_round_len();
-function p_axle_hex_corner_d()   = p_axle_hex_af() / cos(30);                  // ~11.55
+function p_axle_upper_len()      = 23;   // continues up through the cage hub + sail bar (was the hex length)
+function p_axle_total_len()      = p_axle_upper_len() + p_axle_round_len();
+function p_axle_shaft_clearance() = 0.2; // light running clearance, diametral: any hole the shaft passes
+                                          // (but does not bear in) is p_axle_round_d() + this
+function p_axle_shaft_hole_d()   = p_axle_round_d() + p_axle_shaft_clearance();  // 8.2
 function p_magnet_d()            = 3;    // AS5600 sensing magnet recess
 function p_magnet_t()            = 1;
 
@@ -160,7 +166,9 @@ function p_cage_wave_segments() = 240;
 function p_cage_hub_d()      = 29;
 function p_cage_pocket_d()   = 26;    // top clip pocket (control_cage top_pocket, OFF by default)
 function p_cage_pocket_depth() = 4;   //   "        "     "
-function p_cage_hex_bore_af() = 10.3; // central hex bore (0.3 mm to the Ø10.0 shaft)
+// TB-08: hex bore replaced by a plain round bore (p_axle_shaft_hole_d(),
+// shared with the sail bar) + a radial M3 set screw that locks the cage to
+// the shaft -- see p_cage_setscrew_*() below.
 function p_cage_bearing_d()  = 9;     // hemispherical bearing bump
 function p_cage_bearing_count() = 8;
 function p_cage_bearing_pcd() = p_cap_disk_d() - p_cage_bearing_d() + 0.5;          // 91.5
@@ -168,6 +176,14 @@ function p_cage_top_hole_d() = 18;    // central button / access hole through th
 function p_cage_mount_hole_d() = 3.2; // two M3 clearance holes per batten / groove
 function p_cage_mount_pitch()  = 32;  // vertical pitch of the pair
 function p_cage_lower_hole_from_tip() = 10;
+// Single radial M3 set (grub) screw through the hub wall, pressing on the
+// shaft to lock cage <-> shaft rotation (TB-08). Self-tapping into the
+// printed PLA hub -- not a clearance hole for a separate nut, unlike the
+// batten/mount M3 holes above. Pilot diameter is an untested starting
+// point (typical M3-into-rigid-plastic self-tap pilots run 2.5-2.8 mm) --
+// verify real thread engagement and tapping torque before relying on it.
+function p_cage_setscrew_pilot_d() = 2.5;
+function p_cage_setscrew_angle()   = 0;    // radial angle of the lock screw around the hub
 // 45-deg outward chamfer on the roof-top outer edge (0 = sharp). The cage
 // prints roof-face-down, so this bevel flares OUT from the bed and stays
 // printable; it runs the full perimeter, batten grooves included. See
@@ -181,7 +197,8 @@ function p_side_batten_radial_t() = 10;
 function p_top_crossbar_len() = 6 * p_bottle_d();   // 492
 function p_top_crossbar_w()  = 22;
 function p_top_crossbar_t()  = p_wood_t();          // 12
-function p_sail_bar_axle_hole_d() = 12;             // Ø12; fits the ~11.55 hex corner dia
+function p_sail_bar_axle_hole_d() = p_axle_shaft_hole_d();  // TB-08: Ø8.2, same running
+                                                              // clearance as the cage hub bore (was Ø12 for the hex corners)
 function p_bottom_rail_len() = 3 * p_bottle_d();    // 246
 function p_bottom_rail_bottle_clearance() = 1;
 function p_sail_rail_color()  = [0.56, 0.39, 0.39]; // brown (top AND bottom rails)

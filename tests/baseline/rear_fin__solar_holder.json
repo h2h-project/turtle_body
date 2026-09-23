@@ -7,17 +7,17 @@
   },
   "returncode": 0,
   "timed_out": false,
-  "seconds": 0.1,
+  "seconds": 0.0,
   "bounds": {
     "min": [
       84.0,
       -74.0,
-      210.0
+      216.0
     ],
     "max": [
       96.0,
       74.0,
-      246.0
+      252.0
     ],
     "size": [
       12.0,
