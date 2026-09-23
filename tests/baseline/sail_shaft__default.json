@@ -1,0 +1,33 @@
+{
+  "target": "sail_shaft",
+  "render": "default",
+  "source": "scads_v1/Bottle_Sail_Shaft.scad",
+  "defines": {},
+  "returncode": 0,
+  "timed_out": false,
+  "seconds": 0.1,
+  "bounds": {
+    "min": [
+      -4.0,
+      -4.0,
+      0.0
+    ],
+    "max": [
+      4.0,
+      4.0,
+      59.0
+    ],
+    "size": [
+      8.0,
+      8.0,
+      59.0
+    ],
+    "tris": 956
+  },
+  "warnings": [],
+  "errors": [],
+  "echoes": [
+    "ECHO: \"SAIL SHAFT: total / round-in-cap / upper length = \", 59, 36, 23",
+    "ECHO: \"SAIL SHAFT: diameter (uniform, no hex) = \", 8"
+  ]
+}
