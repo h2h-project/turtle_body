@@ -180,10 +180,12 @@ The design evolved from a continuous cylindrical skirt with four grooves to a co
 | Bearing bumps | Eight Ø9 hemispheres |
 | Bearing pitch-circle diameter | 91.5 |
 | Centre shaft hole (TB-08: round, was a 10.3 AF hex) | 8.2 |
-| Set screw (TB-08) | single radial M3, pilot Ø2.5, angle adjustable (`p_cage_setscrew_angle()`) |
+| Set screw (TB-08) | single radial M3, pilot Ø2.5, aimed at the centre of the roof button opening (follows `button_angle`), at the vertical centre of the access recess (Z 4.75 installed) — v4.1.2 |
 | Centre hub / top pocket diameter | 29 / 26 (top pocket OFF by default since v1.10.0 — `control_cage(top_pocket=false)`) |
 | Pocket depth | 4 (only when `top_pocket=true`) |
-| Button opening / centre radius | 18 / 24 |
+| Button opening / centre radius | 22 / 25 (v4.1.0: was 18 / 24; the Ø22 opening bites 0.5 mm into the Ø29 hub to uncover the set-screw face) |
+| Set-screw access recess | 5 wide × 3 deep, flat floor at r 11, full hub height Z 1 → 8.5, open end to end (`p_cage_setscrew_recess_*()`) — v4.1.2 |
+| Hub bottom above cap face | 1 mm gap (bearing tips carry the cage; hub is a tilt backstop — keep) |
 
 The wave uses `cos(4*a)`: maxima in wall depth align with 0°, 90°, 180° and 270°; minimum wall depth is halfway between. Cosine is simply the chosen phase of the sinusoidal profile.
 
@@ -305,7 +307,7 @@ session is a yield hedge, not a fix for any of those.
 > and the Ø10.3 hex cage bore. The shaft no longer *keys* into the cage by
 > shape; instead it is locked to the (rotating) cage by a single radial M3
 > **set screw** through the cage hub wall (`p_cage_setscrew_pilot_d()` /
-> `p_cage_setscrew_angle()`, `lib/control_cage.scad`) that presses directly
+> `lib/control_cage.scad`; since v4.1.0 it points into the roof button opening) that presses directly
 > against the shaft. This is a **hardware interface break**: an
 > old hex shaft will not engage a new cage (no more hex bore), and a new
 > round shaft will not stay put in an old cage (nothing to press against

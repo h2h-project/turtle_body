@@ -13,7 +13,8 @@
  the axle is OFF by default (top_pocket) while prototyping without a clip.
  TB-08: the central bore is a plain round hole for the uniform round sail
  shaft (see Bottle_Sail_Shaft.scad); a single radial M3 set screw through
- the hub wall locks the shaft to the cage. Prototype: not load-tested.
+ the hub wall locks the shaft to the cage; it points into the roof button
+ opening so a hex key reaches it from above. Prototype: not load-tested.
  Test fit, torsion, bending, layer adhesion, set-screw thread engagement.
 
  SOURCE FILE — geometry lives in lib/control_cage.scad + lib/params.scad.
@@ -39,15 +40,16 @@ roof_bevel = 3;         // 45-deg outward chamfer on the roof-top edge (0 = shar
 
 /* [Bearings and button] */
 bump_d = 9;
-button_diameter = 18;
-button_r = 24;
+button_diameter = 22;  // opens onto the hub face -> set-screw access
+button_r = 25;         // matches the cap's button holes (p_button_radius())
 button_angle = 90; // [0:0.5:359.5]
 
 /* [Shaft hub, lock screw and clip pocket] */
 shaft_hole_diameter = 8.2;  // TB-08: round bore, shaft dia + running clearance (was a hex bore)
 cage_hub_d = 29;
 setscrew_pilot_diameter = 2.5;  // self-tapping M3 grub-screw pilot, untested thread engagement
-setscrew_angle = 0; // [0:0.5:359.5]
+setscrew_recess_width = 5;      // key-access recess around the screw (tangential)
+setscrew_recess_depth = 3;      //   "  radial, inward from the opening edge (0 = none)
 top_pocket = false;      // recessed clip pocket around the axle (off while prototyping)
 clip_pocket_depth = 4;   // used only when top_pocket = true
 pocket_d = 26;           //   "    "    "     "      "
@@ -68,7 +70,8 @@ module _cage()
                  hub_d = cage_hub_d,
                  shaft_hole_d = shaft_hole_diameter,
                  setscrew_pilot_d = setscrew_pilot_diameter,
-                 setscrew_angle = setscrew_angle,
+                 setscrew_recess_w = setscrew_recess_width,
+                 setscrew_recess_depth = setscrew_recess_depth,
                  pocket_d = pocket_d,
                  pocket_depth = clip_pocket_depth,
                  top_pocket = top_pocket,

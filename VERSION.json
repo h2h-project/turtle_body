@@ -1,6 +1,6 @@
 {
-  "version": "4.0.0",
-  "updated": "2026-09-22",
+  "version": "4.1.2",
+  "updated": "2026-09-29",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
     "patch": "+0.0.1  component-scoped change (one lib/<subsystem>.scad or one src/components/*.scad)",
@@ -8,6 +8,47 @@
     "major": "+1.0.0  bottle / board / hardware interface break (existing builds no longer fit)"
   },
   "changelog": [
+    {
+      "version": "4.1.2",
+      "date": "2026-09-29",
+      "files": [
+        "lib/params.scad",
+        "lib/control_cage.scad",
+        "src/components/Bottle_Control_Cage.scad",
+        "build/params.json",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad"
+      ],
+      "note": "Cage set-screw recess widened 4 -> 5 mm and extended through the full hub height (roof top Z 8.5 down through the hub bottom Z 1), so it is open end to end (no roof-down bridge). M3 pilot moved to the recess vertical centre, Z 4.75 (was 6.5)."
+    },
+    {
+      "version": "4.1.1",
+      "date": "2026-09-29",
+      "files": [
+        "lib/params.scad",
+        "lib/control_cage.scad",
+        "src/components/Bottle_Control_Cage.scad",
+        "build/params.json",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad"
+      ],
+      "note": "Cage set-screw key-access recess: 4 mm wide (tangential) x 3 mm deep (radial) flat-floored notch cut into the hub face at the inner edge of the roof button opening, through the roof thickness (Z 4.5-8.5); floor at r 11, leaving 6.9 mm of hub for the M3 pilot. New p_cage_setscrew_recess_w()/_depth(). Screw stays at mid-roof Z 6.5. Roof-down print: 4 mm bridge over the recess."
+    },
+    {
+      "version": "4.1.0",
+      "date": "2026-09-29",
+      "files": [
+        "lib/params.scad",
+        "lib/control_cage.scad",
+        "src/components/Bottle_Control_Cage.scad",
+        "lib/sail_frame.scad",
+        "src/Full_Turtle.scad",
+        "build/params.json",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad"
+      ],
+      "note": "Cage set-screw access: roof button opening Ø18 -> Ø22 (p_cage_top_hole_d(), +2 mm radius) so it bites 0.5 mm into the Ø29 hub and uncovers a hub face; the M3 set screw now aims at the centre of that opening (follows button_angle; p_cage_setscrew_angle() removed) at the mid-height of the uncovered face (Z 6.5, was 4.75). Cage wrapper button_r 24 -> 25 to match the cap (p_button_radius()). Inert cage-hole asserts in sail_frame / Full_Turtle updated to the new rule. PLA-only; the 1 mm hub-to-cap gap is unchanged."
+    },
     {
       "version": "4.0.0",
       "date": "2026-09-22",

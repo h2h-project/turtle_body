@@ -7,10 +7,16 @@
  production src/components/Bottle_Control_Cap.scad / lib/control_cap.scad
  (turtle_body v4.0.0). Everything outside the side tabs (disk, insert,
  O-ring gland, band channels, button holes, asserts) is copied verbatim from
- lib/control_cap.scad and still tracks lib/params.scad live via `use` — only
- the side-tab placement/taper/wire-channel logic below is a hand-modified
- fork, so this file does NOT auto-update if lib/control_cap.scad's tab
- geometry changes later (see the precedent: v1.0 SCADs/Bottle_Control_Cap_v1XX.scad).
+ lib/control_cap.scad; only the side-tab placement/taper/wire-channel logic
+ below is a hand-modified fork (see the precedent: v1.0
+ SCADs/Bottle_Control_Cap_v1XX.scad).
+
+ SELF-CONTAINED (2026-09-23): lib/params.scad and lib/util.scad are pasted
+ inline below (between the "[bundle] begin/end" markers), snapshotted at
+ turtle_body v4.0.0. No other files are needed to open or render this file.
+ Consequence: it no longer tracks lib/params.scad — a later lib change must
+ be re-bundled by hand (python3 build/bundle.py on a copy with the two
+ `use <../lib/...>` lines restored).
 
  Revision history (all 2026-09-22):
 
@@ -226,6 +232,24 @@
       the tabs now go straight down to the inner cap surface with sharp
       corners, as asked.
 
+ Rev 16 (2026-09-24) — two changes:
+  (a) hole_spacing_cc (button radius, centre-to-axis) 15 -> 20 mm: 40 mm
+      centre-to-centre along the axis. The hole's outer edge now reaches
+      28.5 mm from the axis, exactly r_inner -- tangent to the tab rib's
+      inner face at the roof, zero margin (no overlap: holes are in the roof,
+      tabs start below it).
+  (b) Taper returned to both tabs, new input tab_taper_loss (2 mm). The
+      inner face runs straight at r_inner from the tip down through the
+      PCB-spacer notch; from the notch's lower edge (the lip when tab_notch
+      is off) it leans linearly OUTWARD (toward the cap wall, away from the
+      axis) going down, reaching r_inner + 2 = 30.5 mm where the tab meets
+      the cap surface (roof_t) -- thinner at the base, which gives the
+      button holes (outer edge 28.5 mm, from (a)) 2 mm of clearance to the
+      tab base instead of being tangent to it. Spans the lip stretch below
+      the notch and the whole rib. Tip, notch and wire channel unchanged.
+      (Earlier attempts in the same session tapered above the notch, then
+      toward the axis -- both wrong, reverted.)
+
  Confirmed current production dimensions this variant was forked from:
    - insert (plug) outer diameter:      81 mm
    - cavity (inner) diameter:           73 mm  (insert_od - 2 x wall_t)
@@ -238,8 +262,300 @@
  SOURCE OF THE UNCHANGED PORTIONS — lib/control_cap.scad + lib/params.scad.
 */
 
-use <../lib/params.scad>
-use <../lib/util.scad>
+// [bundle] begin use <../lib/params.scad>
+// ==========================================================================
+//  Turtle Body -- shared dimension contract
+// --------------------------------------------------------------------------
+//  The single source of truth for every dimension that more than one
+//  subsystem depends on. Values are exposed as zero-argument functions so
+//  this file can be pulled in with `use <params.scad>` (which ignores
+//  top-level variable assignments) without polluting any namespace.
+//
+//  lib/ modules take these as DEFAULT argument values:
+//      module control_cap(roof_t = p_cap_roof_t(), ...) { ... }
+//  so a src/ wrapper can still override one value from its customizer block
+//  while every other subsystem keeps the shared number.
+//
+//  Rules:
+//   * one function per concept, canonical name (see CLAUDE.md cross-file table)
+//   * derived values are functions of other p_*() functions, never re-typed
+//   * mm throughout; names say _d (diameter), _r (radius), _t (thickness),
+//     _len / _h (axial), _af (hex across-flats)
+//   * do NOT add a bare `x = ...;` here -- bundle.py / lint.py will reject it
+// ==========================================================================
+
+// ---- tolerances and render quality --------------------------------------
+function p_eps()          = 0.02;   // Boolean overlap / cut-through fudge
+function p_fit_clearance() = 0.2;   // wood joint: TOTAL extra slot width, centred on the board
+function p_fn_plastic()   = 120;    // printed PLA parts (cap, cage, axle, mold)
+function p_fn_wood()      = 96;     // cut wooden parts
+function p_fn_curve()     = 180;    // fine profile curves (bottle, sails)
+
+// ---- bottle (the foundation reference) ---------------------------------
+function p_bottle_d()        = 84;    // outside diameter (was 86, and 82 before that; other bottle dims held)
+function p_bottle_h()        = 305;   // total height incl. ordinary screw cap
+function p_bottle_wall_t()   = 0.5;   // modelling assumption, not a measurement
+function p_bottle_cap_d()    = 31;    // ordinary screw cap (NOT the control-cap disk)
+function p_bottle_cap_h()    = 17;    // ordinary screw cap height (rear-fin / ballast formulas)
+function p_collar_d()        = 34;    // bottle collar, independent of cap diameter
+function p_top_dome_h()      = 62;
+function p_bottom_dome_h()   = 25;
+function p_dome_power()      = 2.5;   // superellipse exponent
+function p_bottle_neck_h()   = 5;
+function p_bottle_collar_h() = 1;
+function p_bottle_neck_d()   = p_bottle_cap_d() - 3;   // 28: neck is 3 mm under the cap
+function p_bottle_base_ratio() = 0.88; // slightly narrower footprint at the base
+function p_bottle_profile_steps() = 16;
+// cut bottle (control head): the lower dome is removed and a short socket is
+// bored so the control-cap insert slides in. Cut plane sits 5 mm above the
+// bottom dome height.
+function p_bottle_cut_extra()  = 5;
+function p_bottle_cut_height() = p_bottom_dome_h() + p_bottle_cut_extra();   // 30
+
+// nominal bottle interior and the cap insert that enters it
+function p_bottle_socket_d() = p_bottle_d() - 2 * p_bottle_wall_t();          // 81
+function p_insert_shaft_radial_clearance() = 1;
+function p_insert_shaft_d()  = p_bottle_socket_d()
+                             - 2 * p_insert_shaft_radial_clearance();          // 79
+
+// ---- wooden stock -----------------------------------------------------
+function p_wood_t()          = 12;    // shared board / slat thickness
+function p_fin_board_w()     = 93;    // shared fin-system stock width
+function p_screw_side_offset() = 25;  // mounting-hole inset from a John end
+
+// ---- Ecojoiner port --------------------------------------------------
+// A port must swallow the bottle's tapered top (the top dome) plus a seating
+// allowance, so its axial length is DERIVED from the bottle, not fixed. This
+// is the same rule the HopeTurtles.org generators use
+// (port_length = taper_height + port_allowance); until 2026-09-08 lib carried
+// the evaluated constant 82 instead, which silently broke the rule for any
+// bottle other than the reference one. Ballast and Ecojoiner both read it.
+function p_port_allowance()  = 20;                 // seating allowance beyond the dome
+function p_port_length()     = p_top_dome_h() + p_port_allowance();   // 62 + 20 = 82
+function p_port_height()     = p_bottle_d();       // opening height == bottle diameter (asserted)
+
+// ---- M6 hardware ---------------------------------------------------
+function p_m6_clearance_d()  = 6.4;   // M6 clearance hole
+function p_m6_bolt_shaft_d() = 6;     // visual placeholder only
+function p_m6_bolt_head_d()  = 12;
+function p_m6_bolt_head_t()  = 4;
+
+// ---- control cap (large stationary disk; see CLAUDE.md s7) ----------
+//  TB-03 resolution: repository 5 mm roof / 2 mm boss is authoritative;
+//  the axle (below) is derived to this datum.
+function p_cap_disk_d()      = 100;   // control-cap disk (independent of p_bottle_cap_d)
+function p_cap_roof_t()      = 5;     // disk / roof thickness
+function p_cap_boss_depth()  = 1.5;   // extra projection of the centre boss into the hollow cap
+                                       // (was 2; lowered 0.5 mm -> 6.5 mm axle bearing length)
+function p_cap_boss_d()      = 18;
+function p_cap_insert_len()  = 35;    // straight insert shaft length
+function p_cap_insert_wall_t() = 4;
+function p_cap_entry_chamfer_h()     = 1;
+function p_cap_entry_chamfer_delta() = 1;
+function p_cap_axle_bore_d() = 8.7;   // 0.35 mm radial clearance to the Ø8 shaft (was 8.6 / 0.3 mm)
+function p_cap_cage_radial_clearance() = 1;   // cap disk -> cage inner wall (radial)
+function p_cap_total_h()     = p_cap_roof_t() + p_cap_insert_len();           // 40
+function p_cap_bearing_len() = p_cap_roof_t() + p_cap_boss_depth();           // 6.5 (was 7)
+
+// buttons (through both cap and cage)
+function p_button_upper_d()  = 17;    // clearance hole in the cap
+function p_button_axis()     = "y";   // "x" or "y"
+function p_button_radius()   = 25;    // radial position of the two button centres (50 mm apart;
+                                       // was 24 / 48 mm -- shared with the cage's matching bore)
+
+// ---- silicone seal grooves + rings (CLAUDE.md s8) ------------------
+function p_seal_groove_count()      = 2;
+function p_seal_groove_axial_h()    = 2.7; // groove height (was 3.5; retuned to just clear
+                                            // the 2.6 mm ring axial thickness below, 0.1 mm margin)
+function p_seal_groove_radial_depth() = 2; // groove depth
+function p_seal_groove1_from_shoulder() = 12;  // groove centre, measured from the insert SHOULDER
+function p_seal_groove2_from_shoulder() = 25;
+function p_seal_ring_axial_t()      = 2.6;  // cast ring thickness (was 3)
+function p_seal_ring_radial_w()     = 10;   // cast ring radial width (was 5; doubled). NOT validated.
+function p_seal_ring_elasticity_reduction() = 0.25;
+    // Cast the ring's inner diameter this fraction SMALLER than the groove
+    // root it mates to, so real (stretchy) silicone is under tension --
+    // and therefore actually grips -- once stretched onto the cap, instead
+    // of sitting at a 1:1 as-cast fit. Tweak this here as real silicone
+    // behaviour is characterized; NOT validated (see lib/silicone_ring_mold.scad).
+function p_seal_groove_root_d() = p_insert_shaft_d()
+                                - 2 * p_seal_groove_radial_depth();            // 79 at the 86 mm bottle
+
+// ---- sail shaft: uniform round centre axle (CLAUDE.md s9) ----------
+//  Derived to the 5/2 cap datum (TB-03/TB-04). round_inside_cap is measured
+//  from the roof underside and INCLUDES the boss -- do not add the boss again.
+//  TB-08: the shaft is now one uniform round bar top to bottom -- no hex
+//  section. It free-spins in the cap bore (p_cap_axle_bore_d) and passes
+//  with a light running clearance through the cage hub bore and the top
+//  sail bar's own hole (both p_axle_shaft_hole_d()); it locks to the
+//  ROTATING cage with a single M3 set screw through the cage hub
+//  (p_cage_setscrew_pilot_d()) rather than a shaped (hex) interference fit.
+function p_axle_round_d()        = 8;
+function p_axle_round_ext()      = 1;    // projection above the cap's outer face
+function p_axle_round_inside_cap() = p_cap_insert_len() - 5;  // 30: roof underside to round end (incl. boss)
+function p_axle_round_len()      = p_axle_round_inside_cap() + p_cap_roof_t() + p_axle_round_ext();  // 36
+function p_axle_upper_len()      = 23;   // continues up through the cage hub + sail bar (was the hex length)
+function p_axle_total_len()      = p_axle_upper_len() + p_axle_round_len();
+function p_axle_shaft_clearance() = 0.2; // light running clearance, diametral: any hole the shaft passes
+                                          // (but does not bear in) is p_axle_round_d() + this
+function p_axle_shaft_hole_d()   = p_axle_round_d() + p_axle_shaft_clearance();  // 8.2
+function p_magnet_d()            = 3;    // AS5600 sensing magnet recess
+function p_magnet_t()            = 1;
+
+// ---- axle rotary shaft O-ring (waterproofs the axle bore; cast in the mold) ----
+//  A round-section O-ring seated in a gland in the control-cap bore, sealing
+//  against the spinning round section of the axle. ID is tied to the shaft.
+function p_axle_oring_cs()     = 2.0;                                   // cross-section
+function p_axle_oring_id()     = p_axle_round_d();                      // 8 -- hugs the shaft
+function p_axle_oring_od()     = p_axle_oring_id() + 2 * p_axle_oring_cs();          // 12
+function p_axle_oring_mean_r() = (p_axle_oring_id() + p_axle_oring_cs()) / 2;        // 5
+//  gland cut into the cap bore for it
+function p_cap_oring_squeeze()      = 0.25;  // radial squeeze on the seal
+function p_cap_oring_gland_od()     = p_axle_oring_od() - 2 * p_cap_oring_squeeze(); // 11.5
+function p_cap_oring_gland_w()      = 1.3 * p_axle_oring_cs();                       // 2.6 axial
+function p_cap_oring_gland_from_face() = 3.5; // gland centre, from the cap outer face, along the bore
+
+// ---- rotating control cage (CLAUDE.md s6) ------------------------
+function p_cage_wall_t()     = 6.5;   // radial wall thickness
+function p_cage_roof_t()     = 4;     // roof / surface plate thickness
+function p_cage_inner_d()    = p_cap_disk_d() + 2 * p_cap_cage_radial_clearance();   // 102
+function p_cage_outer_d()    = p_cage_inner_d() + 2 * p_cage_wall_t();               // 115
+function p_cage_skirt_depth()   = 44;   // roof underside to the ORIGINAL skirt rim
+function p_cage_peak_extension() = 20;  // crest extends this far past the original rim
+function p_cage_valley_wall_h()  = 10;  // minimum wall depth between mounts
+function p_cage_total_h()    = p_cage_skirt_depth() + p_cage_roof_t();              // 48 (native)
+function p_cage_notch_count()   = 4;
+function p_cage_notch_w()    = 22.5;  // batten groove width
+function p_cage_notch_depth() = 3.7;
+function p_cage_wave_segments() = 240;
+function p_cage_hub_d()      = 29;
+function p_cage_pocket_d()   = 26;    // top clip pocket (control_cage top_pocket, OFF by default)
+function p_cage_pocket_depth() = 4;   //   "        "     "
+// TB-08: hex bore replaced by a plain round bore (p_axle_shaft_hole_d(),
+// shared with the sail bar) + a radial M3 set screw that locks the cage to
+// the shaft -- see p_cage_setscrew_*() below.
+function p_cage_bearing_d()  = 9;     // hemispherical bearing bump
+function p_cage_bearing_count() = 8;
+function p_cage_bearing_pcd() = p_cap_disk_d() - p_cage_bearing_d() + 0.5;          // 91.5
+function p_cage_top_hole_d() = 18;    // central button / access hole through the roof
+function p_cage_mount_hole_d() = 3.2; // two M3 clearance holes per batten / groove
+function p_cage_mount_pitch()  = 32;  // vertical pitch of the pair
+function p_cage_lower_hole_from_tip() = 10;
+// Single radial M3 set (grub) screw through the hub wall, pressing on the
+// shaft to lock cage <-> shaft rotation (TB-08). Self-tapping into the
+// printed PLA hub -- not a clearance hole for a separate nut, unlike the
+// batten/mount M3 holes above. Pilot diameter is an untested starting
+// point (typical M3-into-rigid-plastic self-tap pilots run 2.5-2.8 mm) --
+// verify real thread engagement and tapping torque before relying on it.
+function p_cage_setscrew_pilot_d() = 2.5;
+function p_cage_setscrew_angle()   = 0;    // radial angle of the lock screw around the hub
+// 45-deg outward chamfer on the roof-top outer edge (0 = sharp). The cage
+// prints roof-face-down, so this bevel flares OUT from the bed and stays
+// printable; it runs the full perimeter, batten grooves included. See
+// lib/control_cage.scad.
+function p_cage_roof_bevel() = 3;
+
+// ---- sail apparatus (CLAUDE.md s10) ---------------------------
+function p_side_batten_h()   = 205;
+function p_side_batten_w()   = 20;
+function p_side_batten_radial_t() = 10;
+function p_top_crossbar_len() = 6 * p_bottle_d();   // 492
+function p_top_crossbar_w()  = 22;
+function p_top_crossbar_t()  = p_wood_t();          // 12
+function p_sail_bar_axle_hole_d() = p_axle_shaft_hole_d();  // TB-08: Ø8.2, same running
+                                                              // clearance as the cage hub bore (was Ø12 for the hex corners)
+function p_bottom_rail_len() = 3 * p_bottle_d();    // 246
+function p_bottom_rail_bottle_clearance() = 1;
+function p_sail_rail_color()  = [0.56, 0.39, 0.39]; // brown (top AND bottom rails)
+function p_c_piece_color()    = [1.0, 0.52, 0.20];  // orange, retained
+
+// ---- rear fin + solar support (CLAUDE.md s11) ----------------
+function p_solar_panel_w() = 148;
+function p_solar_panel_h() = 223;
+function p_solar_panel_t() = 2.5;    // real panel, independent of wood thickness
+function p_rear_shaft_len() = p_bottle_h()
+                            + (2/3) * (p_fin_board_w() - 2 * p_wood_t())
+                            - p_bottle_cap_h();                                 // 334
+function p_rear_half_lap_engagement() = 42;   // green/yellow interlock depth
+function p_rear_fin_tab_width() = 15;
+function p_rear_shaft_width()   = 59;
+// TB-07: the green-slat mounting hole follows the mating Ecojoiner John, not a
+// fixed 50 mm. Derived from the install transform; the john_length/2 terms
+// cancel, leaving a pure function of the shared contract (= 103 at defaults).
+function p_rear_shaft_hole_from_front() =
+    p_rear_shaft_len() - p_screw_side_offset() - p_bottle_h()
+    + p_bottle_cap_h() + p_port_height();
+
+// ---- ballast attachment (CLAUDE.md s12) ---------------------
+function p_ballast_core_w()   = p_bottle_d() - 2 * p_wood_t();                  // 58
+function p_ballast_core_len() = p_bottle_h() - p_bottle_cap_h() + 6 * p_wood_t();  // 360
+function p_ballast_slat_gap() = p_bottle_d();          // clear inner-face gap
+function p_ballast_slat_spacing() = p_bottle_d() + p_wood_t();                  // 94
+function p_ballast_board_len() = 3.5 * p_bottle_d();   // 287
+function p_ballast_fin_len()   = 3 * p_bottle_d();     // 246
+function p_ballast_lock_w()    = 5 * p_wood_t();       // 60
+
+// ---- neutral wood shades (used when enable_color_coding = false) -------
+// With the full colour code off, every wooden subsystem still renders in its
+// OWN shade of brown so the parts stay visually separable. All are warm browns
+// (R > G > B) spaced by lightness. The two large fins share one darker shade so
+// they read as a matched pair, distinct from the rest of their own assembly.
+function p_wood_shade_sail()     = [0.85, 0.66, 0.47]; // sail frame  (lightest)
+function p_wood_shade_rear_fin() = [0.72, 0.50, 0.33]; // rear-fin shafts + solar holder
+function p_wood_shade_eco()      = [0.62, 0.44, 0.28]; // Ecojoiner core
+function p_wood_shade_ballast()  = [0.52, 0.34, 0.22]; // ballast slats / board / locks
+function p_wood_shade_fin()      = [0.40, 0.26, 0.17]; // rear fin + ballast fin, shared (darkest)
+// [bundle] end   <../lib/params.scad>
+// [bundle] begin use <../lib/util.scad>
+// ==========================================================================
+//  Turtle Body -- shared helper modules and functions
+// --------------------------------------------------------------------------
+//  Small pieces that were copy-pasted across the standalone files. Geometry
+//  lives in the per-subsystem lib/ modules; this file is only glue.
+//
+//  Definitions only -- no top-level geometry, no top-level assignments.
+// ==========================================================================
+
+// [bundle] begin use <params.scad>
+// [bundle] already inlined: params.scad
+// [bundle] end   <params.scad>
+
+// Colour wrapper for wooden parts. When colour coding is off, every wooden
+// component renders in one neutral wood tone; bottles, hardware, sails and
+// printed parts keep their own colours and never call this.
+module wood_color(coded_color, enabled = true, neutral = [0.94, 0.83, 0.62]) {
+    color(enabled ? coded_color : neutral) children();
+}
+
+// scalar clamp
+function clamp(v, lo, hi) = v < lo ? lo : (v > hi ? hi : v);
+
+// Visual-only M6 bolt: plain shaft + hex-less cylindrical head. No thread,
+// no torque rating -- a placeholder for fit inspection.
+//  Local Z=0 is the underside of the head; the shaft runs toward +Z from Z=0
+//  (plus an optional tip_extension), the head sits at Z=-head_t..0. Matches
+//  the standalone files.
+module m6_bolt_placeholder(grip_length, tip_extension = 1,
+                           shaft_d = undef, head_d = undef, head_t = undef,
+                           color_rgb = [0.15, 0.15, 0.15], fn = 48) {
+    sd = shaft_d == undef ? p_m6_bolt_shaft_d() : shaft_d;
+    hd = head_d  == undef ? p_m6_bolt_head_d()  : head_d;
+    ht = head_t  == undef ? p_m6_bolt_head_t()  : head_t;
+    assert(grip_length > 0, "m6_bolt_placeholder: grip_length must be positive.");
+    color(color_rgb)
+        union() {
+            cylinder(d = sd, h = grip_length + tip_extension, $fn = fn);
+            translate([0, 0, -ht])
+                cylinder(d = hd, h = ht, $fn = fn);
+        }
+}
+
+// Regular hexagonal prism specified by across-flats width (OpenSCAD's
+// cylinder($fn=6) is specified across corners, which is the usual trap).
+module hex_prism_af(across_flats, h, center = false) {
+    cylinder(d = across_flats / cos(30), h = h, $fn = 6, center = center);
+}
+// [bundle] end   <../lib/util.scad>
 
 /* [Cap body] */
 top_disk_thickness  = 5;
@@ -257,11 +573,12 @@ entry_chamfer_delta = 1;
 shaft_hole_d   = 8.7;
 button_upper_d = 17;
 button_axis    = "y"; // [x,y]
-hole_spacing_cc = 15;  // button_radius -- 18 mm centre-to-centre (radius 9) was
-                        // requested but fails assembly asserts at the current 17 mm
-                        // button diameter + 6 mm button_axis_offset; 15 is the
-                        // smallest radius that still clears the boss with margin,
-                        // giving 30 mm true centre-to-centre spacing -- see chat
+hole_spacing_cc = 20;  // button_radius (centre-to-axis, NOT centre-to-centre) --
+                        // 40 mm centre-to-centre along the axis. Rev 16: 15 -> 20.
+                        // At 20 the hole's outer edge (20 + 17/2 along the axis, at
+                        // x = button_axis_offset, inside the tab's width) reaches
+                        // 28.5 mm, flush with the tab rib's inner face (r_inner) --
+                        // tangent, zero margin.
 button_axis_offset = 6;  // shift BOTH button centres off the etched axle line,
                           // same direction and magnitude as tab_side_offset
 
@@ -286,7 +603,8 @@ band2_center_z_local = 25;
 band_channel_depth = 2;   // = O-ring groove radius; O-ring cross-section dia = 2 x this (4 mm)
 
 /* [Side tabs -- vX] */
-// Two internal ribs, straight (untapered) inner face, CURVED outer face
+// Two internal ribs, inner face straight from the tip through the notch, then
+// tapering inward down to the cap surface (rev 16), CURVED outer face
 // that hugs the real cavity/insert wall (see header for why this is safe).
 // No rotation off the button axis -- both tabs slide the SAME real-world
 // direction, sideways (tangentially), by tab_side_offset.
@@ -302,6 +620,13 @@ tab_corner_fillet = 3;  // rounds the tab's OUTWARD-facing vertical edges (where
                          // runs straight down to the cap's inner surface with
                          // sharp bottom corners -- only the outward edges round.
 tab_side_offset = 6;   // same direction for both tabs (not mirrored)
+tab_taper_loss  = 2;   // rev 16: the tab's inner face leans OUTWARD (toward the
+                        // cap wall, away from the axis -- the tab gets thinner,
+                        // giving the button holes room) by this much in total,
+                        // linearly, from the
+                        // PCB-spacer notch's lower edge (the lip when the notch
+                        // is off) down to where the tab meets the cap surface.
+                        // Notch + leg above it stay straight. Both tabs. 0 = off.
 
 /* [Reference etch line -- vX] */
 // Faint reference groove on the cavity ceiling (roof underside, the "inner"
@@ -451,8 +776,9 @@ module cap_button_holes_cut(roof_t, button_d, axis, radius, offset = 0) {
 //    LIP (Z: lip_z .. tip_z):  clipped to r_wall_true (the true insert
 //        outer wall) -- matches the insert body's own outer surface there,
 //        continuing it flush past the lip with no step.
-//  The inner face is a straight (untapered) flat plane at r_inner for the
-//  full height -- never clipped/curved, never filleted. Only the two
+// The inner face is a flat plane at r_inner -- never clipped/curved, never
+//  filleted -- straight from the tip down to taper_top_z (rev 16: the notch's
+//  lower edge), then leaning outward by taper_loss down to the floor (roof_t). Only the two
 //  OUTWARD vertical edges -- where each flat X-side wall meets the curved
 //  outer surface, full height -- are filleted (tab_fillet_r); the floor
 //  (bottom, Z) transition stays sharp. The wire-routing channel is cut
@@ -460,7 +786,7 @@ module cap_button_holes_cut(roof_t, button_d, axis, radius, offset = 0) {
 // ==========================================================================
 module cap_side_tabs_vX(r_inner, r_outer_true, r_wall_true, roof_t, lip_z, tip_z,
                         tab_width, axis, tab_fillet_r = 0, tab_side_offset = 0,
-                        fn = 48) {
+                        taper_top_z = 0, taper_loss = 0, fn = 48) {
     // Tab cross-section (2D, plan view), rounded only on its two OUTWARD
     // corners -- where the flat X-side edges meet the curved outer arc --
     // and only when fillet_on is true (the caller passes false for the rib
@@ -478,11 +804,11 @@ module cap_side_tabs_vX(r_inner, r_outer_true, r_wall_true, roof_t, lip_z, tip_z
     // core specifically so the regrowth can't push it outward, and this
     // final clip removes any bleed past it. Built for the sign>0
     // orientation (Y: r_inner .. r_outer); callers mirror for sign<0.
-    module tab_profile_2d(x_off, r_outer, fillet_on) {
+    module tab_profile_2d(x_off, r_outer, fillet_on, r_in = r_inner) {
         half_w = tab_width / 2;
         if (tab_fillet_r <= 0 || !fillet_on) {
             intersection() {
-                translate([-half_w + x_off, r_inner])
+                translate([-half_w + x_off, r_in])
                     square([tab_width, r_outer]);
                 circle(r = r_outer, $fn = fn);
             }
@@ -492,13 +818,13 @@ module cap_side_tabs_vX(r_inner, r_outer_true, r_wall_true, roof_t, lip_z, tip_z
             intersection() {
                 minkowski() {
                     intersection() {
-                        translate([-core_half_w + x_off, r_inner - 1000])
+                        translate([-core_half_w + x_off, r_in - 1000])
                             square([2 * core_half_w, 1000 + core_r]);
                         circle(r = core_r, $fn = fn);
                     }
                     circle(r = tab_fillet_r, $fn = fn);
                 }
-                translate([-half_w - 10 + x_off, r_inner])
+                translate([-half_w - 10 + x_off, r_in])
                     square([tab_width + 20, 10000]);
             }
         }
@@ -511,11 +837,38 @@ module cap_side_tabs_vX(r_inner, r_outer_true, r_wall_true, roof_t, lip_z, tip_z
         // boundary between the two extrusions is a degenerate/non-manifold
         // coincident face; a hair of overlap avoids that, same as the
         // original intersection-based construction used).
-        module segment(z0, z1, r_outer, fillet_on)
-            translate([0, 0, z0 - p_eps()])
-                linear_extrude(height = z1 - z0 + 2 * p_eps())
-                    if (sign > 0) tab_profile_2d(x_off, r_outer, fillet_on);
-                    else mirror([0, 1, 0]) tab_profile_2d(x_off, r_outer, fillet_on);
+        //
+        // Rev 16: the inner face tapers. It sits at r_inner from taper_top_z
+        // (the PCB-spacer notch's lower edge) up to the tip, and leans OUTWARD
+        // (toward the cap wall) linearly going down, reaching
+        // r_inner + taper_loss where the tab meets the cap surface (roof_t).
+        function r_in_at(z) = (taper_loss <= 0 || z >= taper_top_z) ? r_inner
+            : r_inner + taper_loss * (taper_top_z - z) / (taper_top_z - roof_t);
+        // One Z-span of the tab. The profile is convex, so where the inner
+        // face differs between the two ends a hull() of a thin slice at each
+        // end is exactly the linear taper (outer arc + fillets are identical
+        // in both slices and stay vertical); otherwise a plain extrusion.
+        module slice(z, h, r_outer, fillet_on, r_in)
+            translate([0, 0, z])
+                linear_extrude(height = h)
+                    mirror([0, sign > 0 ? 0 : 1, 0])
+                        tab_profile_2d(x_off, r_outer, fillet_on, r_in);
+        module segment(z0, z1, r_outer, fillet_on) {
+            ra = r_in_at(z0);
+            rb = r_in_at(z1);
+            if (z1 - z0 > p_eps()) {
+                if (abs(ra - rb) < 1e-6)
+                    slice(z0 - p_eps(), z1 - z0 + 2 * p_eps(), r_outer, fillet_on, ra);
+                else
+                    hull() {
+                        slice(z0 - p_eps(), p_eps(), r_outer, fillet_on, ra);
+                        slice(z1, p_eps(), r_outer, fillet_on, rb);
+                    }
+            }
+        }
+        // Leg split at the taper top so the tapered and straight stretches
+        // are each one linear piece.
+        t_top = max(lip_z, min(tip_z, taper_top_z));
         union() {
             // r_outer_true here is the SAME radius cap_cavity_cut() uses for
             // its own wall (both derive from inner_top_od/2) -- unioning the
@@ -526,7 +879,8 @@ module cap_side_tabs_vX(r_inner, r_outer_true, r_wall_true, roof_t, lip_z, tip_z
             // the cap body, so it stays sharp (fillet_on = false); only the
             // lip -- the part that sticks out past the cap -- gets rounded.
             segment(roof_t, lip_z, r_outer_true + p_eps(), false);
-            segment(lip_z, tip_z, r_wall_true, true);
+            segment(lip_z, t_top, r_wall_true, true);
+            segment(t_top, tip_z, r_wall_true, true);
         }
     }
 
@@ -639,6 +993,7 @@ module control_cap(disk_od       = p_cap_disk_d(),
                    tab_overhang_p = 14,
                    tab_fillet_p   = 0,
                    tab_side_offset_p = 0,
+                   tab_taper_loss_p = 0,   // rev 16: inner face leans outward (toward the wall) this much at the cap surface
                    tab_wire_hole    = false,
                    tab_wire_hole_d  = 4,
                    tab_wire_hole_exit_angle = 45,
@@ -660,6 +1015,12 @@ module control_cap(disk_od       = p_cap_disk_d(),
     r_inner      = r_wall_true - tab_wall_inset_p;  // measured from the TRUE outer wall, not the cavity wall
     lip_z        = roof_t + insert_len;
     tip_z        = lip_z + tab_overhang_p;
+    // Rev 16: the tab's inner face tapers from the PCB-spacer notch's lower
+    // edge (the lip if the notch is off) down to the cap surface (roof_t),
+    // leaning outward (toward the wall) by tab_taper_loss_p there. Notch and
+    // leg above: straight.
+    taper_top_z  = tab_notch ? lip_z + tab_notch_from_lip : lip_z;
+    r_base_inner = r_inner + tab_taper_loss_p;
 
     // Wire channel angle clamp -- computed unconditionally (not just inside
     // an `if (tab_wire_hole)`) so the same clamped value reaches both the
@@ -719,6 +1080,15 @@ module control_cap(disk_od       = p_cap_disk_d(),
            "control_cap: side tab width does not fit the cavity wall.");
     assert(tab_overhang_p > 0,
            "control_cap: side tab overhang must be positive.");
+    assert(tab_taper_loss_p >= 0 && r_base_inner < r_outer_true,
+           "control_cap: side tab taper loss must be non-negative and leave the tab's base inside the cavity wall.");
+    // The button holes are cut through the roof only; a tab base that reaches
+    // over a hole partly covers that opening from the inside. Flagged, not blocked.
+    button_far_r = button_radius + button_d / 2;
+    if (abs(button_offset) < tab_width_p / 2 + abs(tab_side_offset_p) && button_far_r > r_base_inner)
+        echo(str("CAP vX WARNING: the tapered tab base (inner face r=", r_base_inner,
+                 " at the cap surface) overhangs the button hole (outer edge r=", button_far_r,
+                 ") by ", button_far_r - r_base_inner, " mm -- reduce hole_spacing_cc or increase tab_taper_loss."));
     assert(tab_fillet_p >= 0,
            "control_cap: side tab fillet radius cannot be negative.");
     // Not a hard assert: at tab_width/tab_side_offset combinations where the
@@ -730,11 +1100,11 @@ module control_cap(disk_od       = p_cap_disk_d(),
     // larger r_wall_true, is unaffected). Flagged, not blocked.
     tab_x_far = tab_width_p / 2 + abs(tab_side_offset_p);
     rib_far_edge_reach = sqrt(max(0, r_outer_true * r_outer_true - tab_x_far * tab_x_far));
-    if (rib_far_edge_reach <= r_inner)
+    if (rib_far_edge_reach <= r_base_inner)
         echo(str("CAP vX WARNING: the rib's far edge (below the lip) vanishes to a point ",
                  "before reaching its nominal width -- tab_width/tab_side_offset put it ",
                  "past the cavity wall's own curve there (far-edge reach ", rib_far_edge_reach,
-                 " mm <= r_inner ", r_inner, " mm). The lip extension above is unaffected."));
+                 " mm <= tab base inner face ", r_base_inner, " mm). The lip extension above is unaffected."));
     if (tab_wire_hole) {
         assert(tab_wire_hole_d > 0, "control_cap: wire hole diameter must be positive.");
         assert(tab_wire_hole_exit_angle > 0 && tab_wire_hole_exit_angle < 90,
@@ -777,7 +1147,8 @@ module control_cap(disk_od       = p_cap_disk_d(),
             translate([0, 0, roof_t - 2 * p_eps()])
                 cylinder(d = boss_d, h = boss_depth + 2 * p_eps());
             cap_side_tabs_vX(r_inner, r_outer_true, r_wall_true, roof_t, lip_z, tip_z,
-                             tab_width_p, button_axis, tab_fillet_p, tab_side_offset_p, nn);
+                             tab_width_p, button_axis, tab_fillet_p, tab_side_offset_p,
+                             taper_top_z, tab_taper_loss_p, nn);
         }
         translate([0, 0, -p_eps()])
             cylinder(h = roof_t + boss_depth + 2 * p_eps(), d = axle_bore_d);
@@ -826,6 +1197,11 @@ module control_cap(disk_od       = p_cap_disk_d(),
          "; floor to lip+overhang height ", tip_z - roof_t, " mm, ", tab_fillet_p,
          " mm outward-edge fillet, on the ", button_axis,
          " axis, BOTH tabs slid ", tab_side_offset_p, " mm the same direction (no rotation, not mirrored).");
+    if (tab_taper_loss_p > 0)
+        echo("CAP vX: tab taper -- inner face straight at r=", r_inner, " from the tip down to z=", taper_top_z,
+             tab_notch ? " (PCB-spacer notch lower edge)" : " (lip)",
+             ", then leans outward ", tab_taper_loss_p, " mm to r=", r_base_inner,
+             " at the cap surface (z=", roof_t, ").");
     if (tab_wire_hole) {
         echo_break_z = tip_z - (wire_entry_r - r_inner) / tan(wire_exit_angle_eff);
         echo("CAP vX: tab wire channel -- ", tab_wire_hole_d,
@@ -877,6 +1253,7 @@ control_cap(roof_t        = top_disk_thickness,
             tab_overhang_p = tab_top_overhang,
             tab_fillet_p   = tab_corner_fillet,
             tab_side_offset_p = tab_side_offset,
+            tab_taper_loss_p = tab_taper_loss,
             tab_wire_hole    = tab_wire_hole_enable,
             tab_wire_hole_d  = tab_wire_hole_diameter,
             tab_wire_hole_exit_angle = tab_wire_hole_exit_angle,

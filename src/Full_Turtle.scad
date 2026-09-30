@@ -2089,7 +2089,7 @@ module hope_turtle_sail_apparatus(
     // TB-08: plain round shaft bore through the hub (was a hex bore).
     cage_shaft_hole_diameter = p_axle_shaft_hole_d();
 
-    cage_top_hole_diameter = 18;
+    cage_top_hole_diameter = p_cage_top_hole_d();
     cage_top_hole_angle = cage_button_angle;
 
     cage_bearing_diameter = 9;
@@ -2193,7 +2193,9 @@ module hope_turtle_sail_apparatus(
     assert(cage_hub_diameter > cage_shaft_hole_diameter,
            "Shaft hub must clear the shaft bore.");
     assert(cage_top_hole_radial_position - cage_top_hole_diameter/2
-           > cage_hub_diameter/2);
+           < cage_hub_diameter/2
+           && cage_top_hole_radial_position - cage_top_hole_diameter/2
+           > cage_shaft_hole_diameter/2 + 2);  // opening uncovers the hub's set-screw face
     assert(cage_top_hole_radial_position + cage_top_hole_diameter/2
            < cage_bearing_pcd/2 - cage_bearing_diameter/2);
     assert(round_shaft_extension_above_cap + shaft_upper_length
