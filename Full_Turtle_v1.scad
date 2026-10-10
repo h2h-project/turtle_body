@@ -1,7 +1,7 @@
 // ==========================================================================
 //  GENERATED FILE -- DO NOT EDIT.
 //  Produced by build/build.py from src/Full_Turtle.scad
-//  Turtle Body version 5.2.0
+//  Turtle Body version 5.3.0
 //  Edit lib/ and src/ instead, then run: python3 build/build.py
 // ==========================================================================
 /*
@@ -462,18 +462,31 @@ function p_c_piece_color()    = [1.0, 0.52, 0.20];  // orange, retained
 function p_solar_panel_w() = 148;
 function p_solar_panel_h() = 223;
 function p_solar_panel_t() = 2.5;    // real panel, independent of wood thickness
+// The green shafts overlap the yellow fin over X = 0..p_rear_shaft_rear_x()
+// (the half-lap zone, 84 mm). v5.3.0: the bottle base must ABUT the fin's
+// front edge (X = 0) so the fin holds the bottle in its port -- previously
+// the full turtle seated the bottle base at the shafts' rear end, putting the
+// first 84 mm of the fin inside the bottle. The shaft front (and its John
+// hole pair) stays where it was, so the shafts grow by exactly that overlap:
+//   334 (old approved formula) + 84 = 418.
+function p_rear_shaft_rear_x() = p_fin_board_w() + p_rear_fin_tab_width()
+                               - 2 * p_wood_t();                               // 84
 function p_rear_shaft_len() = p_bottle_h()
                             + (2/3) * (p_fin_board_w() - 2 * p_wood_t())
-                            - p_bottle_cap_h();                                 // 334
+                            - p_bottle_cap_h()
+                            + p_rear_shaft_rear_x();                            // 418 (334 until v5.3.0)
 function p_rear_half_lap_engagement() = 42;   // green/yellow interlock depth
 function p_rear_fin_tab_width() = 15;
 function p_rear_shaft_width()   = 59;
 // TB-07: the green-slat mounting hole follows the mating Ecojoiner John, not a
 // fixed 50 mm. Derived from the install transform; the john_length/2 terms
 // cancel, leaving a pure function of the shared contract (= 113 at defaults).
+// v5.3.0: the install now seats the bottle base at fin X = 0 (not at the
+// shaft rear, X = p_rear_shaft_rear_x()), so that overlap is subtracted back
+// out -- the hole stays 113 mm from the (unmoved) shaft front.
 function p_rear_shaft_hole_from_front() =
-    p_rear_shaft_len() - p_screw_side_offset() - p_bottle_h()
-    + p_bottle_cap_h() + p_port_height();
+    p_rear_shaft_len() - p_rear_shaft_rear_x() - p_screw_side_offset()
+    - p_bottle_h() + p_bottle_cap_h() + p_port_height();
 
 // ---- ballast attachment (CLAUDE.md s12) ---------------------
 function p_ballast_core_w()   = p_bottle_d() - 2 * p_wood_t();                  // 58
@@ -1208,7 +1221,8 @@ module local_ballast_assembly(inspection_pullout = 0, colored = true) {
 //  crossbar. In the standalone the panel + bottle are %-reference only and
 //  excluded from F6/STL. See CLAUDE.md s11.
 //
-//  Shaft length keeps the approved formula 305 + (2/3)(93-24) - 17 = 334.
+//  Shaft length = 305 + (2/3)(93-24) - 17 + 84 = 418 (v5.3.0: + the 84 mm
+//  fin overlap, so the bottle base abuts the fin's front edge at X = 0).
 //  Half-lap and solar-joint clearances are 0.2 mm TOTAL, centred on the
 //  12 mm board (slot opening 12.2 mm, not 12.4). TB-07: the green-slat
 //  M5 mounting-hole pair is p_rear_shaft_hole_from_front() (113 mm at defaults),
@@ -1229,13 +1243,13 @@ function rf_t()             = p_wood_t();
 function rf_fin_width()     = p_fin_board_w() + p_rear_fin_tab_width();          // 108
 function rf_fin_height()    = 3 * p_bottle_d();                                  // 246
 function rf_diag()          = (2/3) * p_bottle_d();                              // 54.667
-function rf_shaft_length()  = p_rear_shaft_len();                               // 334
+function rf_shaft_length()  = p_rear_shaft_len();                               // 418 (334 until v5.3.0)
 function rf_shaft_width()   = p_rear_shaft_width();                             // 59
 function rf_solar_holder_len() = p_solar_panel_w();                            // 148
 function rf_solar_holder_h()   = 3 * rf_t();                                    // 36
 function rf_solar_chamfer()    = 1.5 * rf_t();                                  // 18
 function rf_solar_slot_depth() = rf_solar_holder_h() / 2;                       // 18
-function rf_solar_notch_x0()   = rf_fin_width() - 2 * rf_t();                    // 84
+function rf_solar_notch_x0()   = rf_fin_width() - 2 * rf_t();                    // 84 == p_rear_shaft_rear_x()
 function rf_shaft_rear_x()     = rf_solar_notch_x0();                            // 84
 function rf_shaft_front_x()    = rf_shaft_rear_x() - rf_shaft_length();
 function rf_joint_meet_x()     = rf_shaft_rear_x() / 2;
@@ -4395,10 +4409,10 @@ rear_mount_hole_pre_x =
 rear_joint_slot_thickness =
     rear_wood_thickness;
 
+// v5.3.0: + the 84 mm green/yellow overlap so the bottle base abuts the
+// yellow fin's front edge (see p_rear_shaft_len() / install below).
 rear_shaft_length =
-    rear_bottle_height
-    + (2/3 * (fin_board_width - 2 * rear_wood_thickness))
-    - rear_cap_height;
+    p_rear_shaft_len();
 
 rear_shaft_width =
     59;
@@ -4691,8 +4705,12 @@ module full_rear_fin_assembly() {
 //   rear local +Y -> pre -Z
 //   rear local +Z -> pre +Y -> physical DOWN
 //
-// The source rear-fin virtual bottle ends at local X = rear_shaft_rear_x.
-// Align that point with the ACTUAL base of the +X bottle.
+// The yellow fin's front edge is rear-local X = 0. Align that edge with the
+// ACTUAL base of the +X bottle, so the fin butts against the bottle bottom and
+// holds it in the port. (Until v5.3.0 the bottle base was aligned with the
+// shafts' rear end, X = rear_shaft_rear_x, which put the first 84 mm of the
+// fin inside the bottle; the shafts were lengthened by that 84 mm so their
+// front end and John hole pair did not move.)
 
 rear_target_bottle_base_pre_x =
     assembly_center[0]
@@ -4704,11 +4722,10 @@ rear_local_bottle_axis_z =
     + rear_shaft_gap / 2;
 
 // Solve translation so:
-//   transformed [rear_shaft_rear_x, 0, rear_local_bottle_axis_z]
+//   transformed [0, 0, rear_local_bottle_axis_z]
 //   = actual +X bottle base centre.
 rear_install_pre_x =
-    rear_target_bottle_base_pre_x
-    - rear_shaft_rear_x;
+    rear_target_bottle_base_pre_x;
 
 rear_install_pre_y =
     assembly_center[1]
@@ -4730,6 +4747,12 @@ assert(rear_shaft_hole_from_front > rear_shaft_hole_diameter / 2
 assert(abs(rear_install_pre_x + rear_shaft_rear_x - rear_shaft_length
            + rear_shaft_hole_from_front - rear_mount_hole_pre_x) < 0.001,
        "Rear-fin and John mounting-hole axes must coincide.");
+// The lib shaft drills its hole pair at p_rear_shaft_hole_from_front(); the
+// install transform above must put the John's pair at that same distance.
+assert(abs(rear_shaft_hole_from_front - p_rear_shaft_hole_from_front()) < 0.001,
+       "Rear shaft: lib hole position disagrees with the install transform.");
+echo("Rear fin: yellow fin front edge abuts the +X bottle base; shaft length = ",
+     rear_shaft_length, " | hole pair from shaft front = ", rear_shaft_hole_from_front);
 assert(rear_shaft_rear_x - rear_shaft_length + rear_shaft_hole_from_front
        + rear_shaft_hole_diameter / 2 < 0,
        "Rear mounting hole must stay forward of the green/yellow joint.");

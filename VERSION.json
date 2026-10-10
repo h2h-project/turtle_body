@@ -1,5 +1,5 @@
 {
-  "version": "5.2.0",
+  "version": "5.3.0",
   "updated": "2026-10-09",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
@@ -8,6 +8,20 @@
     "major": "+1.0.0  bottle / board / hardware interface break (existing builds no longer fit)"
   },
   "changelog": [
+    {
+      "version": "5.3.0",
+      "date": "2026-10-10",
+      "files": [
+        "lib/params.scad",
+        "lib/rear_fin.scad",
+        "src/Full_Turtle.scad",
+        "build/params.json",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad",
+        "CLAUDE.md"
+      ],
+      "note": "Rear fin fix: the full turtle seated the +X bottle base at the green shafts' rear end (rear-local X = 84), so the first 84 mm of the yellow fin sat INSIDE the bottle. Install now seats the bottle base at the fin's front edge (X = 0) so the fin abuts and holds the bottle; the green shafts grow by the 84 mm overlap (new p_rear_shaft_rear_x()) 334 -> 418 mm, keeping their front end and M5 hole pair at the same place on the John (p_rear_shaft_hole_from_front() stays 113, formula subtracts the overlap). New assert ties the full turtle's computed hole position to the lib value. The rear assembly moves 84 mm further out along the +X port, so full_turtle/core bounds grow. Changes a cut-part length -> minor. Propagated to the HopeTurtles.org rear-fin generator. build/test.py not run."
+    },
     {
       "version": "5.2.0",
       "date": "2026-10-10",

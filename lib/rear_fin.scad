@@ -5,7 +5,8 @@
 //  crossbar. In the standalone the panel + bottle are %-reference only and
 //  excluded from F6/STL. See CLAUDE.md s11.
 //
-//  Shaft length keeps the approved formula 305 + (2/3)(93-24) - 17 = 334.
+//  Shaft length = 305 + (2/3)(93-24) - 17 + 84 = 418 (v5.3.0: + the 84 mm
+//  fin overlap, so the bottle base abuts the fin's front edge at X = 0).
 //  Half-lap and solar-joint clearances are 0.2 mm TOTAL, centred on the
 //  12 mm board (slot opening 12.2 mm, not 12.4). TB-07: the green-slat
 //  M5 mounting-hole pair is p_rear_shaft_hole_from_front() (113 mm at defaults),
@@ -22,13 +23,13 @@ function rf_t()             = p_wood_t();
 function rf_fin_width()     = p_fin_board_w() + p_rear_fin_tab_width();          // 108
 function rf_fin_height()    = 3 * p_bottle_d();                                  // 246
 function rf_diag()          = (2/3) * p_bottle_d();                              // 54.667
-function rf_shaft_length()  = p_rear_shaft_len();                               // 334
+function rf_shaft_length()  = p_rear_shaft_len();                               // 418 (334 until v5.3.0)
 function rf_shaft_width()   = p_rear_shaft_width();                             // 59
 function rf_solar_holder_len() = p_solar_panel_w();                            // 148
 function rf_solar_holder_h()   = 3 * rf_t();                                    // 36
 function rf_solar_chamfer()    = 1.5 * rf_t();                                  // 18
 function rf_solar_slot_depth() = rf_solar_holder_h() / 2;                       // 18
-function rf_solar_notch_x0()   = rf_fin_width() - 2 * rf_t();                    // 84
+function rf_solar_notch_x0()   = rf_fin_width() - 2 * rf_t();                    // 84 == p_rear_shaft_rear_x()
 function rf_shaft_rear_x()     = rf_solar_notch_x0();                            // 84
 function rf_shaft_front_x()    = rf_shaft_rear_x() - rf_shaft_length();
 function rf_joint_meet_x()     = rf_shaft_rear_x() / 2;

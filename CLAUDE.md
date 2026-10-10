@@ -365,14 +365,15 @@ The cage and frame must use common radial and vertical datums. For the current n
 
 The rear assembly consists of one yellow vertical fin, two green bottle-holder shafts and one red solar crossbar. The separate panel is reference geometry in the standalone rear-fin file; its F5 background display is excluded from F6/STL there. The full assembly uses a visible panel and visual fasteners instead.
 
-Preserve the explicitly approved shaft formula:
+Shaft formula (v5.3.0, user-directed — supersedes the earlier "approved" 334 mm):
 
 ```text
-shaft_length = bottle_height + (2/3)*(fin_board_width - 2*wood_thickness) - cap_height
-             = 305 + (2/3)*(93 - 24) - 17 = 334 mm
+shaft_rear_x = fin_board_width + rear_fin_tab_width - 2*wood_thickness = 93 + 15 - 24 = 84
+shaft_length = bottle_height + (2/3)*(fin_board_width - 2*wood_thickness) - cap_height + shaft_rear_x
+             = 305 + (2/3)*(93 - 24) - 17 + 84 = 418 mm
 ```
 
-Older alternate formulas and 310.5 mm results are superseded for this design.
+**The bottle base abuts the yellow fin's front edge (rear-local X = 0)** — the fin holds the bottle in its port. Until v5.3.0 the full turtle seated the bottle base at the shafts' rear end (X = 84), which put the first 84 mm of the fin inside the bottle; the shafts were lengthened by exactly that overlap so their front end and John hole pair did not move (`p_rear_shaft_hole_from_front()` stays 113). Do not re-seat the bottle at `rear_shaft_rear_x`. The 334 mm, 310.5 mm and other older results are superseded.
 
 The green/yellow common overlap is X=0..84. Split it at X=42: yellow slots open from the front, green slots open from the rear. Two slots cut into the same end do not form a functioning interlock. The corrected nominal engagement depth is 42 mm.
 

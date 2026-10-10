@@ -1285,10 +1285,10 @@ rear_mount_hole_pre_x =
 rear_joint_slot_thickness =
     rear_wood_thickness;
 
+// v5.3.0: + the 84 mm green/yellow overlap so the bottle base abuts the
+// yellow fin's front edge (see p_rear_shaft_len() / install below).
 rear_shaft_length =
-    rear_bottle_height
-    + (2/3 * (fin_board_width - 2 * rear_wood_thickness))
-    - rear_cap_height;
+    p_rear_shaft_len();
 
 rear_shaft_width =
     59;
@@ -1581,8 +1581,12 @@ module full_rear_fin_assembly() {
 //   rear local +Y -> pre -Z
 //   rear local +Z -> pre +Y -> physical DOWN
 //
-// The source rear-fin virtual bottle ends at local X = rear_shaft_rear_x.
-// Align that point with the ACTUAL base of the +X bottle.
+// The yellow fin's front edge is rear-local X = 0. Align that edge with the
+// ACTUAL base of the +X bottle, so the fin butts against the bottle bottom and
+// holds it in the port. (Until v5.3.0 the bottle base was aligned with the
+// shafts' rear end, X = rear_shaft_rear_x, which put the first 84 mm of the
+// fin inside the bottle; the shafts were lengthened by that 84 mm so their
+// front end and John hole pair did not move.)
 
 rear_target_bottle_base_pre_x =
     assembly_center[0]
@@ -1594,11 +1598,10 @@ rear_local_bottle_axis_z =
     + rear_shaft_gap / 2;
 
 // Solve translation so:
-//   transformed [rear_shaft_rear_x, 0, rear_local_bottle_axis_z]
+//   transformed [0, 0, rear_local_bottle_axis_z]
 //   = actual +X bottle base centre.
 rear_install_pre_x =
-    rear_target_bottle_base_pre_x
-    - rear_shaft_rear_x;
+    rear_target_bottle_base_pre_x;
 
 rear_install_pre_y =
     assembly_center[1]
@@ -1620,6 +1623,12 @@ assert(rear_shaft_hole_from_front > rear_shaft_hole_diameter / 2
 assert(abs(rear_install_pre_x + rear_shaft_rear_x - rear_shaft_length
            + rear_shaft_hole_from_front - rear_mount_hole_pre_x) < 0.001,
        "Rear-fin and John mounting-hole axes must coincide.");
+// The lib shaft drills its hole pair at p_rear_shaft_hole_from_front(); the
+// install transform above must put the John's pair at that same distance.
+assert(abs(rear_shaft_hole_from_front - p_rear_shaft_hole_from_front()) < 0.001,
+       "Rear shaft: lib hole position disagrees with the install transform.");
+echo("Rear fin: yellow fin front edge abuts the +X bottle base; shaft length = ",
+     rear_shaft_length, " | hole pair from shaft front = ", rear_shaft_hole_from_front);
 assert(rear_shaft_rear_x - rear_shaft_length + rear_shaft_hole_from_front
        + rear_shaft_hole_diameter / 2 < 0,
        "Rear mounting hole must stay forward of the green/yellow joint.");
