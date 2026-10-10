@@ -379,6 +379,8 @@ The green/yellow common overlap is X=0..84. Split it at X=42: yellow slots open 
 
 Both half-lap clearance and solar-joint clearance are 0.2 mm **total** extra width, centred on the mating 12 mm board. Thus slot openings are 12.2 mm, not 12.4 mm. Root clearances are also symmetric. Do not add clearance to the wooden part's thickness or move the nominal installation datum.
 
+**Green shaft width = Ecojoiner John height** (`p_rear_shaft_width()` = port height − 2 × stock, 60 mm at defaults; v5.4.0 — was a fixed 59). The shaft bolts flush against a Little John, so their edges and M5 pairs must line up; a full-turtle assert enforces it. Downstream, the fin generator derives it from the fit-adjusted port height (57 mm at "Very Tight").
+
 The red crossbar is 148 mm long, 36 mm high and 12 mm thick. The actual panel is 148 × 223 × 2.5 mm: width along local Y, length/height along local X, thickness along Z. It extends forward from the crossbar. Panel thickness is independent of stock thickness.
 
 Standalone rear shafts use a 50 mm mounting-hole offset from their front. The full assembly computes the offset from the mating John, yielding 103 mm at current defaults. Preserve that distinction until the standalone/full mounting interface is deliberately unified. (Since TB-07 both use the derived value, 113 mm after v4.2.0. Since v5.0.0 that position carries an **M5 hole pair** (Ø5.2 bite holes since v5.1.0) at ±18 mm (since v5.2.0) across the 59 mm shaft width, matching the John clamp pair; see section 13.)

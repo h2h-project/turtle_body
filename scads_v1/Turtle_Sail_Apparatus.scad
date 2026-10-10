@@ -1,7 +1,7 @@
 // ==========================================================================
 //  GENERATED FILE -- DO NOT EDIT.
 //  Produced by build/build.py from components/Turtle_Sail_Apparatus.scad
-//  Turtle Body version 5.3.0
+//  Turtle Body version 5.4.0
 //  Edit lib/ and src/ instead, then run: python3 build/build.py
 // ==========================================================================
 /*
@@ -311,7 +311,11 @@ function p_rear_shaft_len() = p_bottle_h()
                             + p_rear_shaft_rear_x();                            // 418 (334 until v5.3.0)
 function p_rear_half_lap_engagement() = 42;   // green/yellow interlock depth
 function p_rear_fin_tab_width() = 15;
-function p_rear_shaft_width()   = 59;
+// v5.4.0: the green shaft is as wide as the Ecojoiner John it bolts flush
+// against (John height = port height - 2 x stock), so their edges and M5 pair
+// line up. Was a fixed 59 -- 1 mm narrower than the 60 mm John, and the M5
+// pair (centred on it) sat 11.5 mm in from its edges instead of 12.
+function p_rear_shaft_width()   = p_port_height() - 2 * p_wood_t();            // 60
 // TB-07: the green-slat mounting hole follows the mating Ecojoiner John, not a
 // fixed 50 mm. Derived from the install transform; the john_length/2 terms
 // cancel, leaving a pure function of the shared contract (= 113 at defaults).

@@ -1291,7 +1291,7 @@ rear_shaft_length =
     p_rear_shaft_len();
 
 rear_shaft_width =
-    59;
+    p_rear_shaft_width();   // == Ecojoiner John height (was a literal 59 until v5.4.0)
 
 rear_shaft_thickness =
     rear_wood_thickness;
@@ -1623,6 +1623,10 @@ assert(rear_shaft_hole_from_front > rear_shaft_hole_diameter / 2
 assert(abs(rear_install_pre_x + rear_shaft_rear_x - rear_shaft_length
            + rear_shaft_hole_from_front - rear_mount_hole_pre_x) < 0.001,
        "Rear-fin and John mounting-hole axes must coincide.");
+// The green shaft bolts flush against a Little John: same width, so their
+// edges and M5 pairs line up (v5.4.0; the shaft was a fixed 59 before).
+assert(abs(rear_shaft_width - eco_john_height()) < 0.001,
+       "Rear shaft width must equal the Ecojoiner John height.");
 // The lib shaft drills its hole pair at p_rear_shaft_hole_from_front(); the
 // install transform above must put the John's pair at that same distance.
 assert(abs(rear_shaft_hole_from_front - p_rear_shaft_hole_from_front()) < 0.001,

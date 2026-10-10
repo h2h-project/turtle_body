@@ -24,7 +24,7 @@ function rf_fin_width()     = p_fin_board_w() + p_rear_fin_tab_width();         
 function rf_fin_height()    = 3 * p_bottle_d();                                  // 246
 function rf_diag()          = (2/3) * p_bottle_d();                              // 54.667
 function rf_shaft_length()  = p_rear_shaft_len();                               // 418 (334 until v5.3.0)
-function rf_shaft_width()   = p_rear_shaft_width();                             // 59
+function rf_shaft_width()   = p_rear_shaft_width();                             // 60 (== John height)
 function rf_solar_holder_len() = p_solar_panel_w();                            // 148
 function rf_solar_holder_h()   = 3 * rf_t();                                    // 36
 function rf_solar_chamfer()    = 1.5 * rf_t();                                  // 18

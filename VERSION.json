@@ -1,5 +1,5 @@
 {
-  "version": "5.3.0",
+  "version": "5.4.0",
   "updated": "2026-10-09",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
@@ -8,6 +8,20 @@
     "major": "+1.0.0  bottle / board / hardware interface break (existing builds no longer fit)"
   },
   "changelog": [
+    {
+      "version": "5.4.0",
+      "date": "2026-10-10",
+      "files": [
+        "lib/params.scad",
+        "lib/rear_fin.scad",
+        "src/Full_Turtle.scad",
+        "build/params.json",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad",
+        "CLAUDE.md"
+      ],
+      "note": "p_rear_shaft_width() fixed 59 -> derived p_port_height() - 2*p_wood_t() (60 at defaults) = the Ecojoiner John height, so the green rear shaft is exactly as wide as the Little John it bolts flush against and its M5 pair sits 12 mm from its edges like the John's (was 11.5 on the 59 mm shaft). New full-turtle assert ties rear_shaft_width to eco_john_height(). Shaft 1 mm wider -> rear-fin / full-turtle bounds move slightly. Changes a cut-part width -> minor. Propagated to the HopeTurtles.org fin generator (shaft_width now derived from the fit-adjusted port height: 57 at 'Very Tight', matching the 6FC John). build/test.py not run."
+    },
     {
       "version": "5.3.0",
       "date": "2026-10-10",
