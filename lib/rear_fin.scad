@@ -8,7 +8,7 @@
 //  Shaft length keeps the approved formula 305 + (2/3)(93-24) - 17 = 334.
 //  Half-lap and solar-joint clearances are 0.2 mm TOTAL, centred on the
 //  12 mm board (slot opening 12.2 mm, not 12.4). TB-07: the green-slat
-//  mounting hole is p_rear_shaft_hole_from_front() (103 mm at defaults),
+//  M5 mounting-hole pair is p_rear_shaft_hole_from_front() (113 mm at defaults),
 //  matching the assembled Turtle -- not the old fixed 50 mm.
 //
 //  Definitions only. Geometry is emitted by rear_fin_assembly() or the
@@ -51,7 +51,9 @@ module rf_assert_valid(half_lap, solar_clear, hole_from_front, hole_d) {
     assert(solar_clear < t && rf_solar_notch_x0() > solar_clear / 2);
     assert(2 * rf_solar_chamfer() + t + solar_clear < rf_solar_holder_len(),
            "rear_fin: panel width leaves too little red-board material beside the slot.");
-    assert(hole_d > 0 && rf_shaft_width() > hole_d);
+    assert(hole_d > 0
+           && 2 * p_eco_screw_pair_offset() + hole_d < rf_shaft_width(),
+           "rear_fin: M5 hole pair runs off the shaft edges.");
     assert(hole_from_front > hole_d / 2
            && rf_shaft_front_x() + hole_from_front + hole_d / 2 < 0,
            "rear_fin: shaft hole must stay in the forward, unjointed portion.");
@@ -84,12 +86,14 @@ module bottle_holder_shaft(z0 = 0, half_lap = p_fit_clearance(),
     t = rf_t(); eps = p_eps();
     nn  = fn == undef ? p_fn_wood() : fn;
     hff = hole_from_front == undef ? p_rear_shaft_hole_from_front() : hole_from_front;
-    hd  = hole_d == undef ? p_m6_clearance_d() : hole_d;
+    hd  = hole_d == undef ? p_m5_hole_d() : hole_d;
     wood_color([0.2, 0.38, 0.05], colored, p_wood_shade_rear_fin()) difference() {
         translate([rf_shaft_front_x(), -rf_shaft_width() / 2, z0])
             cube([rf_shaft_length(), rf_shaft_width(), t]);
-        translate([rf_shaft_front_x() + hff, 0, z0 - eps])
-            cylinder(d = hd, h = t + 2 * eps, $fn = nn);
+        // M5 pair across the shaft width, matching the John clamp pair (v5.0.0)
+        for (dy = [-p_eco_screw_pair_offset(), p_eco_screw_pair_offset()])
+            translate([rf_shaft_front_x() + hff, dy, z0 - eps])
+                cylinder(d = hd, h = t + 2 * eps, $fn = 16);
         translate([rf_joint_meet_x() - half_lap / 2, -(t + half_lap) / 2, z0 - eps])
             cube([rf_shaft_rear_x() - rf_joint_meet_x() + half_lap / 2 + eps,
                   t + half_lap, t + 2 * eps]);
@@ -116,7 +120,7 @@ module solar_panel_holder(solar_clear = p_fit_clearance(), fn = undef,
 module rear_fin_assembly(half_lap = p_fit_clearance(), solar_clear = p_fit_clearance(),
                          exploded = 0, fn = undef, colored = true) {
     rf_assert_valid(half_lap, solar_clear,
-                    p_rear_shaft_hole_from_front(), p_m6_clearance_d());
+                    p_rear_shaft_hole_from_front(), p_m5_hole_d());
     rear_fin(half_lap, solar_clear, fn, colored);
     translate([-exploded, 0,  exploded]) bottle_holder_shaft(rf_upper_shaft_z0(), half_lap, fn = fn, colored = colored);
     translate([-exploded, 0, -exploded]) bottle_holder_shaft(rf_lower_shaft_z0(), half_lap, fn = fn, colored = colored);

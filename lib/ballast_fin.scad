@@ -32,7 +32,7 @@ function bl_core_slot_z0() = bl_lower_lobe();
 function bl_core_slot_z1() = bl_core_slot_z0() + bl_core_slot_h();
 function bl_lower_full_return() = bl_core_slot_z1() + bl_upper_lobe();
 function bl_lower_neck_start()  = bl_lower_full_return() + bl_shoulder_step();
-function bl_mount_hole_from_top() = p_port_length() + bl_t() - p_screw_side_offset();  // 69
+function bl_mount_hole_from_top() = p_port_length() + bl_t() - p_screw_side_offset();  // 77
 function bl_mount_hole_x()  = bl_core_w() / 2;
 function bl_mount_hole_y()  = bl_core_h() - bl_mount_hole_from_top();
 
@@ -74,10 +74,12 @@ module bl_assert_valid() {
     t = bl_t();
     assert(p_bottle_h() > p_bottle_cap_h() && t > 0 && p_bottle_d() > 3 * t);
     assert(bl_core_h() - p_bottle_d() - t > 6 * t, "ballast: slat shoulders overlap.");
-    assert(p_m6_clearance_d() > 0 && p_m6_clearance_d() < p_bottle_d() - 2 * t);
-    assert(bl_mount_hole_from_top() > p_m6_clearance_d() / 2
-           && bl_mount_hole_from_top() < p_bottle_d() - p_m6_clearance_d() / 2,
-           "ballast: mount hole misses the upper slat end.");
+    assert(p_m5_hole_d() > 0
+           && p_eco_screw_pair_offset() + p_m5_hole_d() / 2 < bl_core_w() / 2,
+           "ballast: M5 hole pair runs off the core slat edges.");
+    assert(bl_mount_hole_from_top() > p_m5_hole_d() / 2
+           && bl_mount_hole_from_top() < p_bottle_d() - p_m5_hole_d() / 2,
+           "ballast: mount holes miss the upper slat end.");
     assert(p_fin_board_w() > max(4.5 * t, p_bottle_d() / 2), "ballast: fin board too narrow.");
     assert(bl_core_w() == p_port_height() - 2 * t,
            "ballast: slat width must use the shared bottle diameter.");
@@ -106,8 +108,10 @@ module ballast_core_slat_part(colored = true)
     wood_color([0.12, 0.38, 0.20], colored, p_wood_shade_ballast())
         linear_extrude(height = bl_t()) difference() {
             bl_core_profile_2d();
-            translate([bl_mount_hole_x(), bl_mount_hole_y()])
-                circle(d = p_m6_clearance_d(), $fn = 48);
+            // M5 pair, matching the Little John's clamp pair (v5.0.0)
+            for (dx = [-p_eco_screw_pair_offset(), p_eco_screw_pair_offset()])
+                translate([bl_mount_hole_x() + dx, bl_mount_hole_y()])
+                    circle(d = p_m5_hole_d(), $fn = 16);
         }
 
 module ballast_bottom_board_part(colored = true) {
@@ -199,5 +203,5 @@ module local_ballast_assembly(inspection_pullout = 0, colored = true) {
 
     echo("BALLAST: slat w/len/t = ", bl_core_w(), bl_core_h(), bl_t(),
          " | inner-face gap = ", bl_slat_spacing() - bl_t(),
-         " | M6 from slat top = ", bl_mount_hole_from_top());
+         " | M5 pair from slat top = ", bl_mount_hole_from_top());
 }

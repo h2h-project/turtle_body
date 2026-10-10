@@ -380,7 +380,7 @@ Both half-lap clearance and solar-joint clearance are 0.2 mm **total** extra wid
 
 The red crossbar is 148 mm long, 36 mm high and 12 mm thick. The actual panel is 148 × 223 × 2.5 mm: width along local Y, length/height along local X, thickness along Z. It extends forward from the crossbar. Panel thickness is independent of stock thickness.
 
-Standalone rear shafts use a 50 mm mounting-hole offset from their front. The full assembly computes the offset from the mating John, yielding 103 mm at current defaults. Preserve that distinction until the standalone/full mounting interface is deliberately unified.
+Standalone rear shafts use a 50 mm mounting-hole offset from their front. The full assembly computes the offset from the mating John, yielding 103 mm at current defaults. Preserve that distinction until the standalone/full mounting interface is deliberately unified. (Since TB-07 both use the derived value, 113 mm after v4.2.0. Since v5.0.0 that position carries an **M5 hole pair** (Ø5.2 bite holes since v5.1.0) at ±18 mm (since v5.2.0) across the 59 mm shaft width, matching the John clamp pair; see section 13.)
 
 In the full Turtle, the rear assembly belongs at the physical 3-o'clock/back port and is rotated 180° around the bottle axis so the yellow fin points downward. Earlier 9-o'clock placements were corrected. Do not infer the port from a screenshot alone.
 
@@ -394,8 +394,8 @@ Six wooden components: two green core slats, one orange bottom board, two red lo
 | Core slat length | 305 - 17 + 6 × 12 = 360 |
 | Clear gap between core slats | 82 |
 | Slat centre spacing | 82 + 12 = 94 |
-| M6 hole diameter | 6.4 |
-| M6 hole distance from top | 82 + 12 - 25 = 69 |
+| Mount holes (v5.2.0) | M5 bite-hole pair, Ø5.2, 12 mm in from each long edge (matches the John clamp pair) |
+| Mount-pair distance from top | port_length + 12 - 17 = 77 |
 | Bottom board length × width | 287 × 93 |
 | Lock-foot width × height | 60 × 60 |
 | Yellow fin length × height | 246 × 93 |
@@ -408,11 +408,13 @@ Slots in the ballast extraction retain nominal stock widths; the rear fin's 0.2 
 
 ## 13. Ecojoiner-only output
 
-The standalone extraction (`eco_ecojoiner_only()`) contains six Long Johns, six Little Johns — one of which is the **Master John** — four Final Keys and twelve Pressers with visual M6 bolts. The Master John is a Little John whose two top slots are cut to `eco_master_slot_depth()` (34 mm at reference params) rather than the standard `eco_slot_depth()` (29 mm); everything else — outline, collar hole, M6 holes, placement — is identical. It is the piece fitted last, and the deeper slots are what let it drop past the already-seated Johns into the almost-closed frame. Restored in v1.8.1 (it had been flattened to a plain Little John in the v1.7.1 generator sync). The full-Turtle assembly (`ecojoiner_and_bottles()` in `src/Full_Turtle.scad`) does not flag a Master John, so its six Little Johns stay uniform; only the standalone artifact carries one. Talk of additional Saddlers still refers to other revisions, not this file.
+The standalone extraction (`eco_ecojoiner_only()`) contains six Long Johns, six Little Johns — one of which is the **Master John** — four Final Keys and the visual M5 clamp hardware (see below). The Master John is a Little John whose two top slots are cut to `eco_master_slot_depth()` (34 mm at reference params) rather than the standard `eco_slot_depth()` (29 mm); everything else — outline, collar hole, M5 holes, placement — is identical. It is the piece fitted last, and the deeper slots are what let it drop past the already-seated Johns into the almost-closed frame. Restored in v1.8.1 (it had been flattened to a plain Little John in the v1.7.1 generator sync). The full-Turtle assembly (`ecojoiner_and_bottles()` in `src/Full_Turtle.scad`) does not flag a Master John, so its six Little Johns stay uniform; only the standalone artifact carries one. Talk of additional Saddlers still refers to other revisions, not this file.
 
-All six ports have their pressers restored in the standalone Ecojoiner. The full Turtle suppresses selected pressers to accommodate the rear-fin and ballast attachments. Preserve the appropriate configuration for each output.
+**Bottle clamp (v5.0.0 → v5.1.0, 2026-10-09) — the Presser is gone.** Each Little/Master John port end carries **two black M5 × 30 socket-head cap screws** (`p_m5_bolt_len()`), stacked across the John height at ±`p_eco_screw_pair_offset()` (±18 mm; 12 mm in from each long edge, `p_eco_screw_edge_inset()` — 10 until v5.2.0) and still `p_screw_side_offset()` (17 mm) from the John end — four holes per John, 24 screws total. **There is no nut.** Each screw bites into a **Ø5.2** hole (`p_m5_hole_d()`, the builder's own research; slightly over the 5 mm nominal, so the hold relies on fibre springback — unverified here). The screw therefore holds its own position and is adjusted with a hex key from outside. A **black acorn nut** run fully onto the tip bears on the bottle. Off-centre, the round bottle has curved away, so the acorn reach is 16.05 mm (not the 12 mm centreline gap) and the head stands ~5 mm off the John's outer face. Asserts in `eco_assert_valid()` check head/acorn footprint fit and that the screw reaches. Hardware is visual only (ISO 4762 / DIN 1587 nominals) and **kept deliberately plain for fast renders** (v5.1.1): the screw is two cylinders, no thread, no socket, no chamfer; holes are $fn 16. Do not add cosmetic threads. Do not reintroduce the presser disk, the jam nut or the wing head (v5.0.0's interim hardware).
 
-Current references: 12 mm stock, 82 mm port length (derived: top dome 62 + 20 mm allowance), 82 mm port height, 31 mm cap diameter, 34 mm collar diameter, Ø6.4 M6 clearance holes and 0.2 mm slot fit allowance. Bottle dimensions are sizing inputs only; the Ecojoiner-only model must not emit bottle solids.
+On the four ports where the rear-fin shafts / ballast core slats fill the gap (the `suppress_*_port_pressers` flags, names kept from the presser era), the screw pair bites through John + slat with **no acorn**, backed out so the bare tip just meets the bottle (4.05 mm past the slat; head stands off ~1.95 mm). This resolved v5.0.0's 35 mm-bolt interference. Not physically tested.
+
+Current references: 12 mm stock, 82 mm port length (derived: top dome 62 + 20 mm allowance), 82 mm port height, 31 mm cap diameter, 34 mm collar diameter, Ø5.2 M5 bite-hole pairs and 0.2 mm slot fit allowance. Bottle dimensions are sizing inputs only; the Ecojoiner-only model must not emit bottle solids.
 
 ## 14. Python generation logic
 
@@ -683,7 +685,7 @@ rule" precedent, applied in the generator→lib direction.
 
 | Component | Source here | Wrapper / bundle | Generator there (`generator/`) | `object_type` |
 | --- | --- | --- | --- | --- |
-| Ecojoiner core (Long/Little/Master Johns, Final Keys, Pressers) | `lib/ecojoiner.scad` + `lib/params.scad` | `src/components/Turtle_Core_Ecojoiner.scad` → `scads_v1/Turtle_Core_Ecojoiner.scad` | `objects/ecojoiner_6fc.py` | `6fc` |
+| Ecojoiner core (Long/Little/Master Johns, Final Keys; M5 clamp holes — no Pressers since v5.0.0) | `lib/ecojoiner.scad` + `lib/params.scad` | `src/components/Turtle_Core_Ecojoiner.scad` → `scads_v1/Turtle_Core_Ecojoiner.scad` | `objects/ecojoiner_6fc.py` | `6fc` |
 | Rear fin, bottle-holder shafts, solar holder | `lib/rear_fin.scad` | `Turtle_Rear_Fin.scad` | `objects/back_fin.py` + `back_fin_generator.py` | `fin` |
 | Ballast (core slats, bottom board, lock feet, fin) | `lib/ballast_fin.scad` | `Turtle_Bottom_Ballast_Fin.scad` | `objects/ballast.py` + `bottom_ballast_fin_generator.py` | `ballast` |
 | Sail frame (bars, battens, strengtheners, C pieces, sails) | `lib/sail_frame.scad` | `Turtle_Sail_Apparatus.scad` | `objects/sails.py` + `generate_sails.py` | `sails` |

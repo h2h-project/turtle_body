@@ -1,7 +1,7 @@
 // ==========================================================================
 //  GENERATED FILE -- DO NOT EDIT.
 //  Produced by build/build.py from src/Full_Turtle.scad
-//  Turtle Body version 4.1.2
+//  Turtle Body version 5.2.0
 //  Edit lib/ and src/ instead, then run: python3 build/build.py
 // ==========================================================================
 /*
@@ -273,7 +273,7 @@ function p_insert_shaft_d()  = p_bottle_socket_d()
 // ---- wooden stock -----------------------------------------------------
 function p_wood_t()          = 12;    // shared board / slat thickness
 function p_fin_board_w()     = 93;    // shared fin-system stock width
-function p_screw_side_offset() = 25;  // mounting-hole inset from a John end
+function p_screw_side_offset() = 17;  // mounting-hole inset from a John end (was 25 until v4.2.0)
 
 // ---- Ecojoiner port --------------------------------------------------
 // A port must swallow the bottle's tapered top (the top dome) plus a seating
@@ -291,6 +291,34 @@ function p_m6_clearance_d()  = 6.4;   // M6 clearance hole
 function p_m6_bolt_shaft_d() = 6;     // visual placeholder only
 function p_m6_bolt_head_d()  = 12;
 function p_m6_bolt_head_t()  = 4;
+
+// ---- Ecojoiner bottle clamp: M5 cap screws + acorn nuts (v5.0.0/v5.1.0) --
+// Replaces the M6 bolt + 12 mm presser disk. Each John port end carries TWO
+// black M5 x 30 socket-head cap screws, stacked across the John height (one
+// above, one below the centreline). v5.1.0: no nut -- each screw BITES into
+// a 5.2 mm hole in the wood (builder's research; not verified here), so the
+// screw itself holds its position and is adjusted with a hex key from
+// outside. A black acorn (cap) nut, run fully onto the tip, bears on the
+// bottle. Hardware sizes are ISO 4762 / DIN 1587 nominals for visual and
+// stack checks only -- measure the hardware you buy.
+// Bite-fit hole (was 5.5 clearance in v5.0.0). NOTE it is slightly LARGER
+// than the 5 mm nominal major diameter: the hold relies on wood fibre
+// springback around the thread, per the builder's own tests -- unverified
+// here, and likely to vary with species, moisture and drill quality.
+function p_m5_hole_d()           = 5.2;
+function p_m5_bolt_d()           = 5;     // visual shank (plain cylinder)
+function p_m5_bolt_len()         = 30;    // shank length under the head
+function p_m5_head_d()           = 8.5;   // ISO 4762 socket head
+function p_m5_head_h()           = 5;
+function p_m5_acorn_af()         = 8;
+function p_m5_acorn_h()          = 10;    // overall, hex base to dome tip
+function p_m5_acorn_thread_depth() = 7;   // usable thread before the bolt bottoms
+// Pair layout, shared by the John holes and every board bolted through them
+// (rear-fin shafts, ballast core slats): each bolt sits this far in from a
+// John long edge, i.e. +-p_eco_screw_pair_offset() from the John centreline.
+function p_eco_screw_edge_inset()  = 12;   // was 10 until v5.2.0
+function p_eco_screw_pair_offset() =
+    (p_port_height() - 2 * p_wood_t()) / 2 - p_eco_screw_edge_inset();   // 18
 
 // ---- control cap (large stationary disk; see CLAUDE.md s7) ----------
 //  TB-03 resolution: repository 5 mm roof / 2 mm boss is authoritative;
@@ -442,7 +470,7 @@ function p_rear_fin_tab_width() = 15;
 function p_rear_shaft_width()   = 59;
 // TB-07: the green-slat mounting hole follows the mating Ecojoiner John, not a
 // fixed 50 mm. Derived from the install transform; the john_length/2 terms
-// cancel, leaving a pure function of the shared contract (= 103 at defaults).
+// cancel, leaving a pure function of the shared contract (= 113 at defaults).
 function p_rear_shaft_hole_from_front() =
     p_rear_shaft_len() - p_screw_side_offset() - p_bottle_h()
     + p_bottle_cap_h() + p_port_height();
@@ -602,15 +630,21 @@ module cut_bottle(bottle_d   = p_bottle_d(),
 //  Turtle Body -- Ecojoiner core frame  (lib module)
 // --------------------------------------------------------------------------
 //  Three interlocked rectangles of Long + Little Johns, four Final Keys and
-//  up to twelve pressers with visual M6 bolts. One of the six Little Johns is
+//  the M5 bottle clamps: two black socket-head cap screws at each Little/
+//  Master John port end (24 in all), stacked across the John height, each
+//  biting into its 5.2 mm hole and poking through to the port side where a
+//  black acorn nut bears on the bottle (v5.0.0 replaced the M6 bolt + 12 mm
+//  presser disk; v5.1.0 dropped the jam nut and wing head). One of the six Little Johns is
 //  a "Master John": identical outline, but its two top slots are cut deeper so
 //  it can be dropped in last, past the already-seated Johns of the almost-
 //  closed frame. Bottle dimensions are sizing inputs only -- this module never
 //  emits a bottle. See CLAUDE.md s13.
 //
-//  Standalone output restores all six ports' pressers. The full Turtle
-//  suppresses selected pressers where the rear fin and ballast attach; pass
-//  the suppress flags through eco_centered_rectangle().
+//  Standalone output clamps all six ports. Where the rear-fin shafts and
+//  ballast core slats fill the port gap, the full Turtle passes the suppress
+//  flags through eco_centered_rectangle(): those screw pairs then bite through
+//  John + slat, backed out so the bare tip just meets the bottle; no acorn.
+//  The suppress_* argument names are kept from the presser era.
 //
 //  Definitions only. Geometry is emitted by eco_ecojoiner_only() or, for the
 //  full assembly, by eco_centered_rectangle() + eco_inserted_final_key().
@@ -691,7 +725,6 @@ function eco_little_end_span()  = eco_port_length() + eco_slat_t();
 function eco_screw_y_center()  = eco_john_height() / 2;
 function eco_final_key_length() = eco_port_height() + 4 * eco_slat_t();      // 130
 function eco_final_key_width()  = 2 * eco_slat_t();                          // 24
-function eco_presser_d()       = max(1, p_bottle_cap_d() - 1);              // 30
 function eco_little_slot_1_x() = eco_little_end_span() + eco_slat_t() / 2;
 function eco_little_slot_2_x() = eco_john_length() - eco_little_end_span() - eco_slat_t() / 2;
 function eco_long_slot_2_x()   = eco_john_length() - eco_long_end_span() - eco_slat_t() / 2;
@@ -701,6 +734,33 @@ function eco_frame_center()    = [eco_john_length() / 2, eco_rectangle_y() / 2,
                                   eco_john_height() / 2];
 function eco_final_key_x_offset() = eco_john_height() / 2 + eco_final_key_width() / 2;
 function eco_final_key_z_offset() = eco_john_height() / 2 + eco_slat_t() / 2;
+
+// ---- M5 clamp stack (see p_m5_*() / p_eco_screw_*() in params) ----------
+// Bolt heights on the John: centreline +- the pair offset.
+function eco_screw_ys() = [eco_screw_y_center() - p_eco_screw_pair_offset(),
+                           eco_screw_y_center() + p_eco_screw_pair_offset()];
+// Clear gap between a Little John's port-side face and the bottle at its
+// closest point (the bottle is centred between the two Little Johns).
+function eco_port_gap() = (eco_rectangle_y() - eco_slat_t() - p_bottle_d()) / 2;   // 12
+// The pair sits off the centreline, where the round bottle has curved away:
+// distance along the bolt from the John's port face to the bottle surface.
+function eco_clamp_reach() = let(r = p_bottle_d() / 2, v = p_eco_screw_pair_offset())
+    eco_port_gap() + r - sqrt(r * r - v * v);                                   // 16.05
+// Open port, acorn run fully down the thread, dome tip touching the bottle:
+// shank tip measured inward from the John's port face, and how far the cap
+// screw head then stands off the John's outer face (the adjustable part --
+// the screw holds by its bite in the wood).
+function eco_clamp_tip()  = eco_clamp_reach() - p_m5_acorn_h() + p_m5_acorn_thread_depth();
+function eco_clamp_head_standoff() = p_m5_bolt_len() - eco_slat_t() - eco_clamp_tip();
+// Through port (John + rear-fin / ballast slat, no acorn): the bare tip is set
+// to just meet the bottle, so the head stands off by whatever is left over.
+function eco_through_room() = let(r = p_bottle_d() / 2, v = p_eco_screw_pair_offset())
+    r - sqrt(r * r - v * v);                                                     // 4.05
+function eco_through_tip() = min(p_m5_bolt_len() - 2 * eco_slat_t(), eco_through_room());
+function eco_through_head_standoff() = p_m5_bolt_len() - 2 * eco_slat_t() - eco_through_tip();
+// Footprint that must fit on a John face: the larger of the screw head and
+// the acorn's across-corners hex.
+function eco_clamp_footprint_d() = max(p_m5_head_d(), p_m5_acorn_af() / cos(30));
 
 module eco_assert_valid() {
     assert(eco_john_height() > 0,
@@ -713,6 +773,21 @@ module eco_assert_valid() {
            "Ecojoiner: Master John slot must be at least as deep as a standard slot.");
     assert(eco_master_slot_depth() < eco_john_height(),
            "Ecojoiner: Master John slot would cut through the slat.");
+    // M5 clamp pair
+    assert(p_eco_screw_pair_offset() + eco_clamp_footprint_d() / 2 <= eco_john_height() / 2,
+           "Ecojoiner: M5 screw head / acorn overhangs the John edge -- raise p_eco_screw_edge_inset().");
+    assert(2 * p_eco_screw_pair_offset() >= eco_clamp_footprint_d(),
+           "Ecojoiner: the two M5 screws of a pair are too close for their heads.");
+    assert(p_screw_side_offset() >= eco_clamp_footprint_d() / 2,
+           "Ecojoiner: M5 screw head overhangs the John end.");
+    assert(p_eco_screw_pair_offset() < p_bottle_d() / 2,
+           "Ecojoiner: M5 pair sits outside the bottle silhouette -- acorns cannot reach it.");
+    assert(eco_clamp_reach() - p_m5_acorn_h() >= 0,
+           "Ecojoiner: acorn nut would sit inside the John -- no room in the port gap.");
+    assert(eco_clamp_head_standoff() >= 0,
+           "Ecojoiner: M5 screw too short to reach the bottle through the John.");
+    assert(eco_through_tip() >= 0,
+           "Ecojoiner: M5 screw too short to pass through John + fin/ballast slat.");
 }
 
 // ---- 2D profiles ------------------------------------------------------
@@ -723,11 +798,11 @@ module eco_top_slot(center_x, depth)
 module eco_center_hole(diameter)
     translate([eco_john_length() / 2, eco_john_height() / 2]) circle(d = diameter);
 
-module eco_screw_holes_2d() {
-    translate([p_screw_side_offset(), eco_screw_y_center()]) circle(d = p_m6_clearance_d());
-    translate([eco_john_length() - p_screw_side_offset(), eco_screw_y_center()])
-        circle(d = p_m6_clearance_d());
-}
+// Two M5 clearance holes at each end: 4 per Little / Master John.
+module eco_screw_holes_2d()
+    for (x = [p_screw_side_offset(), eco_john_length() - p_screw_side_offset()])
+        for (y = eco_screw_ys())
+            translate([x, y]) circle(d = p_m5_hole_d(), $fn = 16);
 
 module eco_long_john_2d()
     difference() {
@@ -774,18 +849,42 @@ module eco_final_key(colored = true)
     wood_color([0.82, 0.78, 0.05], colored, p_wood_shade_eco())
         cube([eco_final_key_length(), eco_final_key_width(), eco_slat_t()]);
 
-module eco_presser(colored = true)
-    wood_color([0.10, 0.34, 0.20], colored, p_wood_shade_eco())
-        difference() {
-            cylinder(d = eco_presser_d(), h = eco_slat_t());
-            translate([0, 0, -0.1])
-                cylinder(d = p_m6_clearance_d(), h = eco_slat_t() + 0.2);
-        }
+// ---- M5 clamp hardware (visual only: no thread, no torque rating) -------
+// Local frame: Z = 0 is the John's port-side face, +Z points into the port
+// (toward the bottle), the John occupies Z = -slat_t..0.
+function eco_m5_black() = [0.07, 0.07, 0.08];
 
-module eco_presser_with_m6_bolt(colored = true) {
-    eco_presser(colored);
-    translate([0, 0, -eco_slat_t()])
-        m6_bolt_placeholder(grip_length = 2 * eco_slat_t());
+module eco_m5_hex(af, h) cylinder(d = af / cos(30), h = h, $fn = 6);
+
+// Black socket-head cap screw, kept deliberately plain for fast renders:
+// one cylinder for the shank, one for the head. tip_z is the shank tip; the
+// head sits below tip_z - bolt_len.
+module eco_m5_cap_screw(tip_z) color(eco_m5_black()) {
+    z0 = tip_z - p_m5_bolt_len();                // underside of the head
+    translate([0, 0, z0]) cylinder(d = p_m5_bolt_d(), h = p_m5_bolt_len(), $fn = 12);
+    translate([0, 0, z0 - p_m5_head_h()]) cylinder(d = p_m5_head_d(), h = p_m5_head_h(), $fn = 16);
+}
+
+// Black acorn nut whose dome tip is at tip_z: hex body + hemispherical dome.
+module eco_m5_acorn(tip_z) color(eco_m5_black()) {
+    r = p_m5_acorn_af() / 2;
+    base = tip_z - p_m5_acorn_h();
+    translate([0, 0, base]) eco_m5_hex(p_m5_acorn_af(), p_m5_acorn_h() - r);
+    translate([0, 0, tip_z - r]) intersection() {
+        sphere(r = r, $fn = 12);
+        translate([-r, -r, 0]) cube([2 * r, 2 * r, r]);
+    }
+}
+
+// Open port: screw bites through the John, acorn on the tip bears on the
+// bottle. Through port: screw bites through John + the fin/ballast slat that
+// fills the gap, bare tip just meeting the bottle, no acorn.
+module eco_m5_clamp(through = false) {
+    if (through) eco_m5_cap_screw(tip_z = eco_slat_t() + eco_through_tip());
+    else {
+        eco_m5_cap_screw(tip_z = eco_clamp_tip());
+        eco_m5_acorn(tip_z = eco_clamp_reach());
+    }
 }
 
 // ---- vertical Johns + rectangle -----------------------------------
@@ -801,19 +900,16 @@ module eco_standing_little_john(target_y = 0, inside_sign = 1,
         if (is_master) eco_master_john(colored);
         else eco_little_john(colored);
 
+    // "suppressed" ports are the ones a rear-fin / ballast slat fills: the
+    // screw pair there bites through John + slat (see eco_m5_clamp()).
     inner_face_y = target_y + inside_sign * eco_slat_t() / 2;
     for (hole_x = [p_screw_side_offset(), eco_john_length() - p_screw_side_offset()]) {
-        show = !(suppress_far_hole_presser  && hole_x > eco_john_length() / 2)
-             && !(suppress_near_hole_presser && hole_x < eco_john_length() / 2);
-        if (show)
-            translate([hole_x, inner_face_y, eco_screw_y_center()])
+        through = (suppress_far_hole_presser  && hole_x > eco_john_length() / 2)
+               || (suppress_near_hole_presser && hole_x < eco_john_length() / 2);
+        for (hole_z = eco_screw_ys())
+            translate([hole_x, inner_face_y, hole_z])
                 rotate([inside_sign > 0 ? -90 : 90, 0, 0])
-                    eco_presser_with_m6_bolt(colored);
-        else
-            translate([hole_x, inner_face_y, eco_screw_y_center()])
-                rotate([inside_sign > 0 ? -90 : 90, 0, 0])
-                    translate([0, 0, -eco_slat_t()])
-                        m6_bolt_placeholder(grip_length = 2 * eco_slat_t());
+                    eco_m5_clamp(through);
     }
 }
 
@@ -878,7 +974,17 @@ module eco_ecojoiner_only(colored = true) {
          " | slot depth std/master = ", eco_slot_depth(), eco_master_slot_depth(),
          " | slot w = ", eco_slot_width());
     echo("ECOJOINER: final key L/W/T = ", eco_final_key_length(),
-         eco_final_key_width(), eco_slat_t(), " | presser dia = ", eco_presser_d());
+         eco_final_key_width(), eco_slat_t());
+    eco_echo_clamp();
+}
+
+module eco_echo_clamp() {
+    echo("ECOJOINER M5 clamp: black M5x", p_m5_bolt_len(), " cap screws, 2 per John end at +-",
+         p_eco_screw_pair_offset(), " | bite hole d = ", p_m5_hole_d(),
+         " | port gap = ", eco_port_gap(), " | acorn reach = ", eco_clamp_reach(),
+         " | head stand-off = ", eco_clamp_head_standoff(),
+         " | fin/ballast ports: tip past slat = ", eco_through_tip(),
+         ", head stand-off = ", eco_through_head_standoff());
 }
 // [bundle] end   <../lib/ecojoiner.scad>
 // [bundle] begin use <../lib/ballast_fin.scad>
@@ -920,7 +1026,7 @@ function bl_core_slot_z0() = bl_lower_lobe();
 function bl_core_slot_z1() = bl_core_slot_z0() + bl_core_slot_h();
 function bl_lower_full_return() = bl_core_slot_z1() + bl_upper_lobe();
 function bl_lower_neck_start()  = bl_lower_full_return() + bl_shoulder_step();
-function bl_mount_hole_from_top() = p_port_length() + bl_t() - p_screw_side_offset();  // 69
+function bl_mount_hole_from_top() = p_port_length() + bl_t() - p_screw_side_offset();  // 77
 function bl_mount_hole_x()  = bl_core_w() / 2;
 function bl_mount_hole_y()  = bl_core_h() - bl_mount_hole_from_top();
 
@@ -962,10 +1068,12 @@ module bl_assert_valid() {
     t = bl_t();
     assert(p_bottle_h() > p_bottle_cap_h() && t > 0 && p_bottle_d() > 3 * t);
     assert(bl_core_h() - p_bottle_d() - t > 6 * t, "ballast: slat shoulders overlap.");
-    assert(p_m6_clearance_d() > 0 && p_m6_clearance_d() < p_bottle_d() - 2 * t);
-    assert(bl_mount_hole_from_top() > p_m6_clearance_d() / 2
-           && bl_mount_hole_from_top() < p_bottle_d() - p_m6_clearance_d() / 2,
-           "ballast: mount hole misses the upper slat end.");
+    assert(p_m5_hole_d() > 0
+           && p_eco_screw_pair_offset() + p_m5_hole_d() / 2 < bl_core_w() / 2,
+           "ballast: M5 hole pair runs off the core slat edges.");
+    assert(bl_mount_hole_from_top() > p_m5_hole_d() / 2
+           && bl_mount_hole_from_top() < p_bottle_d() - p_m5_hole_d() / 2,
+           "ballast: mount holes miss the upper slat end.");
     assert(p_fin_board_w() > max(4.5 * t, p_bottle_d() / 2), "ballast: fin board too narrow.");
     assert(bl_core_w() == p_port_height() - 2 * t,
            "ballast: slat width must use the shared bottle diameter.");
@@ -994,8 +1102,10 @@ module ballast_core_slat_part(colored = true)
     wood_color([0.12, 0.38, 0.20], colored, p_wood_shade_ballast())
         linear_extrude(height = bl_t()) difference() {
             bl_core_profile_2d();
-            translate([bl_mount_hole_x(), bl_mount_hole_y()])
-                circle(d = p_m6_clearance_d(), $fn = 48);
+            // M5 pair, matching the Little John's clamp pair (v5.0.0)
+            for (dx = [-p_eco_screw_pair_offset(), p_eco_screw_pair_offset()])
+                translate([bl_mount_hole_x() + dx, bl_mount_hole_y()])
+                    circle(d = p_m5_hole_d(), $fn = 16);
         }
 
 module ballast_bottom_board_part(colored = true) {
@@ -1087,7 +1197,7 @@ module local_ballast_assembly(inspection_pullout = 0, colored = true) {
 
     echo("BALLAST: slat w/len/t = ", bl_core_w(), bl_core_h(), bl_t(),
          " | inner-face gap = ", bl_slat_spacing() - bl_t(),
-         " | M6 from slat top = ", bl_mount_hole_from_top());
+         " | M5 pair from slat top = ", bl_mount_hole_from_top());
 }
 // [bundle] end   <../lib/ballast_fin.scad>
 // [bundle] begin use <../lib/rear_fin.scad>
@@ -1101,7 +1211,7 @@ module local_ballast_assembly(inspection_pullout = 0, colored = true) {
 //  Shaft length keeps the approved formula 305 + (2/3)(93-24) - 17 = 334.
 //  Half-lap and solar-joint clearances are 0.2 mm TOTAL, centred on the
 //  12 mm board (slot opening 12.2 mm, not 12.4). TB-07: the green-slat
-//  mounting hole is p_rear_shaft_hole_from_front() (103 mm at defaults),
+//  M5 mounting-hole pair is p_rear_shaft_hole_from_front() (113 mm at defaults),
 //  matching the assembled Turtle -- not the old fixed 50 mm.
 //
 //  Definitions only. Geometry is emitted by rear_fin_assembly() or the
@@ -1148,7 +1258,9 @@ module rf_assert_valid(half_lap, solar_clear, hole_from_front, hole_d) {
     assert(solar_clear < t && rf_solar_notch_x0() > solar_clear / 2);
     assert(2 * rf_solar_chamfer() + t + solar_clear < rf_solar_holder_len(),
            "rear_fin: panel width leaves too little red-board material beside the slot.");
-    assert(hole_d > 0 && rf_shaft_width() > hole_d);
+    assert(hole_d > 0
+           && 2 * p_eco_screw_pair_offset() + hole_d < rf_shaft_width(),
+           "rear_fin: M5 hole pair runs off the shaft edges.");
     assert(hole_from_front > hole_d / 2
            && rf_shaft_front_x() + hole_from_front + hole_d / 2 < 0,
            "rear_fin: shaft hole must stay in the forward, unjointed portion.");
@@ -1181,12 +1293,14 @@ module bottle_holder_shaft(z0 = 0, half_lap = p_fit_clearance(),
     t = rf_t(); eps = p_eps();
     nn  = fn == undef ? p_fn_wood() : fn;
     hff = hole_from_front == undef ? p_rear_shaft_hole_from_front() : hole_from_front;
-    hd  = hole_d == undef ? p_m6_clearance_d() : hole_d;
+    hd  = hole_d == undef ? p_m5_hole_d() : hole_d;
     wood_color([0.2, 0.38, 0.05], colored, p_wood_shade_rear_fin()) difference() {
         translate([rf_shaft_front_x(), -rf_shaft_width() / 2, z0])
             cube([rf_shaft_length(), rf_shaft_width(), t]);
-        translate([rf_shaft_front_x() + hff, 0, z0 - eps])
-            cylinder(d = hd, h = t + 2 * eps, $fn = nn);
+        // M5 pair across the shaft width, matching the John clamp pair (v5.0.0)
+        for (dy = [-p_eco_screw_pair_offset(), p_eco_screw_pair_offset()])
+            translate([rf_shaft_front_x() + hff, dy, z0 - eps])
+                cylinder(d = hd, h = t + 2 * eps, $fn = 16);
         translate([rf_joint_meet_x() - half_lap / 2, -(t + half_lap) / 2, z0 - eps])
             cube([rf_shaft_rear_x() - rf_joint_meet_x() + half_lap / 2 + eps,
                   t + half_lap, t + 2 * eps]);
@@ -1213,7 +1327,7 @@ module solar_panel_holder(solar_clear = p_fit_clearance(), fn = undef,
 module rear_fin_assembly(half_lap = p_fit_clearance(), solar_clear = p_fit_clearance(),
                          exploded = 0, fn = undef, colored = true) {
     rf_assert_valid(half_lap, solar_clear,
-                    p_rear_shaft_hole_from_front(), p_m6_clearance_d());
+                    p_rear_shaft_hole_from_front(), p_m5_hole_d());
     rear_fin(half_lap, solar_clear, fn, colored);
     translate([-exploded, 0,  exploded]) bottle_holder_shaft(rf_upper_shaft_z0(), half_lap, fn = fn, colored = colored);
     translate([-exploded, 0, -exploded]) bottle_holder_shaft(rf_lower_shaft_z0(), half_lap, fn = fn, colored = colored);
@@ -3264,8 +3378,11 @@ port_length = 82.000;
 port_height = bottle_diameter;
 ecojoiner_bottle_height = bottle_height;
 ecojoiner_cap_diameter = cap_diameter;
-m6_clearance_diameter = 6.4;
-screw_diameter = m6_clearance_diameter;
+// v5.0.0: the Ecojoiner John / rear-fin shaft / ballast slat holes are an M5
+// bite-fit pair (p_m5_hole_d(), p_eco_screw_pair_offset()); this alias
+// only feeds the alignment asserts + echoes below.
+screw_diameter = p_m5_hole_d();
+m6_clearance_diameter = p_m6_clearance_d();   // sail-batten <-> cage bolts (unchanged)
 fit_clearance = 0.200;
 
 
@@ -3301,7 +3418,7 @@ little_end_span =
     port_length + slat_thickness;
 
 screw_side_offset =
-    25;
+    p_screw_side_offset();   // was a stale literal 25 after v4.2.0
 
 screw_y_center =
     john_height / 2;
@@ -3315,12 +3432,6 @@ final_key_width =
     2 * slat_thickness;
 
 
-// Presser dimensions restored from the original Ecojoiner source.
-presser_diameter =
-    max(1, ecojoiner_cap_diameter - 1);
-
-presser_through_hole_diameter =
-    screw_diameter;
 
 
 // ============================================================================
@@ -3388,21 +3499,12 @@ assert(collar_diameter < john_height,
 
 
 // ============================================================================
-// PRESSER
+// BOTTLE CLAMP (v5.0.0)
 // ============================================================================
 //
-// Original Ecojoiner Presser:
-//   diameter  = ecojoiner_cap_diameter - 1
-//   thickness = slat_thickness
-//   through hole = screw_diameter
-//
-// Pressers use their diagnostic color or the shared light-wood finish.
-
-// [M7] module presser() -> lib
-
-// m6_bolt_placeholder(): see lib/util.scad
-
-// [M7] module presser_with_m6_bolt() -> lib
+// The 12 mm presser disk + M6 bolt is gone. Each Little / Master John port
+// end now carries two black M5 cap screws (biting into the wood) + acorn nuts -- all in
+// lib/ecojoiner.scad (eco_m5_clamp()).
 
 
 // ============================================================================
@@ -3608,11 +3710,8 @@ echo("Frame step spin = ", frame_step_spin, " deg");
 echo("Rectangle count = 3");
 echo("Final Key count = 4");
 echo("Little John count across 3 rectangles = 6");
-echo("Presser count before port exclusions = 12; active pressers carry M6 bolts");
-echo("Presser diameter = ", presser_diameter, " mm");
-echo("Presser thickness = ", slat_thickness, " mm");
-echo("Presser through-hole diameter = ",
-     presser_through_hole_diameter, " mm");
+echo("M5 clamp bolts = 24 (2 per Little/Master John port end); acorn-capped except where a fin/ballast slat fills the port");
+eco_echo_clamp();
 echo("Final Key length = ", final_key_length, " mm");
 echo("Final Key width = ", final_key_width, " mm");
 echo("Final Key thickness = ", slat_thickness, " mm");
@@ -3813,7 +3912,7 @@ echo("Verified ballast bottle insertion relative to outer face = ",
 //   cap dimensions  = canonical bottle values
 //
 // The ballast is rotated so its two long green slats run along the +Y bottle.
-// The two +Y-port Pressers have been removed above to clear these slats.
+// The two +Y-port clamp pairs run through these slats (no acorn nuts).
 
 ballast_fin_board_width = fin_board_width;
 
@@ -3906,7 +4005,7 @@ ballast_lower_neck_start =
     ballast_lower_full_return + ballast_shoulder_step;
 
 
-// M6 mounting hole.
+// M5 mounting-hole pair (centre of the pair; holes at +-p_eco_screw_pair_offset()).
 //
 // The adjacent Little John hole is `screw_side_offset` from the OUTER end
 // of the John. The seated ballast-slat top is farther inward by:
@@ -4165,7 +4264,7 @@ ballast_target_john_face_y =
     ballast_port_entrance_y - port_length;
 
 
-// Exact M6 alignment datum.
+// Exact M5-pair alignment datum.
 // The John hole is measured from its outer end.
 // The ballast hole is measured downward from its fully seated top.
 john_m6_hole_y =
@@ -4177,7 +4276,7 @@ ballast_m6_hole_after_insertion_y =
 
 assert(
     abs(ballast_m6_hole_after_insertion_y - john_m6_hole_y) < 0.001,
-    "Ballast M6 hole must be coaxial with adjacent John M6 hole."
+    "Ballast M5 hole pair must be coaxial with the adjacent John M5 pair."
 );
 
 ballast_x_shift =
@@ -4232,7 +4331,7 @@ module installed_ballast_on_positive_y_port() {
 
 echo("Ballast added around +Y bottle");
 echo("Ballast spin around bottle/port axis = ", ballast_port_spin, " deg");
-echo("Removed Pressers on +Y port = 2");
+echo("Through-bolted (no acorn) clamp pairs on +Y port = 2");
 echo("Ballast wood thickness = ", slat_thickness, " mm");
 echo("Ballast shared port_height basis = ", port_height, " mm");
 echo("Ballast green slat centre spacing = ",
@@ -4248,11 +4347,11 @@ echo("Ballast moved inward by = ",
      ballast_core_slot_z0, " mm");
 echo("Ballast green mount-hole diameter = ",
      ballast_core_mount_hole_diameter, " mm");
-echo("Ballast M6 hole from slat top = ",
+echo("Ballast M5 pair from slat top = ",
      ballast_core_mount_hole_from_top, " mm");
-echo("John M6 hole Y = ",
+echo("John M5 pair Y = ",
      john_m6_hole_y, " mm");
-echo("Ballast M6 hole after insertion Y = ",
+echo("Ballast M5 pair after insertion Y = ",
      ballast_m6_hole_after_insertion_y, " mm");
 
 
@@ -4644,7 +4743,7 @@ assert(rear_shaft_rear_x - rear_shaft_length + rear_shaft_hole_from_front
 // board extent from lib/ecojoiner.scad (eco_slat_t(), eco_rectangle_y()),
 // versus each shaft's own board Z-extent pushed through the real install
 // transform. ecojoiner_and_bottles() suppresses exactly these two Little
-// John holes -- "the two Pressers on the physical 3-o'clock port ... for
+// John hole pairs -- "the two Pressers on the physical 3-o'clock port ... for
 // the rear-fin green shafts" -- so these are the correct targets.
 //
 // Each shaft's board occupies local Z in [z0, z0+t]; the installed
@@ -5600,14 +5699,14 @@ ballast_vertical_lift =
 module ecojoiner_and_bottles() {
     ecc = enable_color_coding;
 
-    // Frame 1: suppress the two Pressers on the physical 3-o'clock port
+    // Frame 1: through-bolt (no acorns) the two clamp pairs on the physical 3-o'clock port
     // (pre-orientation +X) for the rear-fin green shafts.
     eco_centered_rectangle([0, 0, 0], true, false, ecc);
 
     eco_centered_rectangle([0, frame_step_tilt, frame_step_spin],
                            false, false, ecc);
 
-    // Frame 3: suppress only the physical DOWN ballast-port Pressers
+    // Frame 3: through-bolt only the physical DOWN ballast-port clamp pairs
     // (pre-orientation +Y).
     eco_centered_rectangle([frame_step_tilt, 0, frame_step_spin],
                            true, false, ecc);
@@ -5749,7 +5848,7 @@ echo("Top 45-degree cut begins below slat top = ",
      ballast_core_height - ballast_upper_diagonal_start, " mm");
 echo("Top shoulder inward step = ",
      ballast_shoulder_step, " mm");
-echo("Ballast M6 hole down from slat top = ",
+echo("Ballast M5 pair down from slat top = ",
      ballast_core_mount_hole_from_top, " mm");
 echo("Green ballast slat height = ", ballast_core_height, " mm");
 echo("  formula: bottle_height - cap_height + 6.0 * slat_thickness");
@@ -5767,8 +5866,8 @@ echo("  bottle diameter = ", ballast_bottle_diameter, " mm");
 echo("  extra clearance removed = one slat_thickness = ",
      ballast_fin_bottle_clearance_extra, " mm");
 
-echo("Pressers removed on physical DOWN ballast port = 2");
-echo("Pressers removed on physical 3-o’clock rear-fin port = 2");
+echo("Through-bolted clamp pairs on physical DOWN ballast port = 2");
+echo("Through-bolted clamp pairs on physical 3-o’clock rear-fin port = 2");
 
 echo("Ballast orange center-slot depth = ",
      ballast_center_slot_depth, " mm");

@@ -1,6 +1,6 @@
 {
-  "version": "4.1.2",
-  "updated": "2026-09-29",
+  "version": "5.2.0",
+  "updated": "2026-10-09",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
     "patch": "+0.0.1  component-scoped change (one lib/<subsystem>.scad or one src/components/*.scad)",
@@ -8,6 +8,77 @@
     "major": "+1.0.0  bottle / board / hardware interface break (existing builds no longer fit)"
   },
   "changelog": [
+    {
+      "version": "5.2.0",
+      "date": "2026-10-10",
+      "files": [
+        "lib/params.scad",
+        "lib/ecojoiner.scad",
+        "build/params.json",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad",
+        "CLAUDE.md"
+      ],
+      "note": "p_eco_screw_edge_inset() 10 -> 12 mm: each M5 hole of a John-end pair now sits 12 mm in from the John long edge (pair at +-18 instead of +-20 mm from the centreline). Mating holes follow automatically: rear-fin shaft pair (+-18 across the 59 mm width) and ballast core-slat pair (12 mm from each long edge). Acorn reach 17.07 -> 16.05 mm, open-port head stand-off 3.93 -> 4.95 mm; fin/ballast-port bare-tip reach 5.07 -> 4.05 mm, head stand-off 0.93 -> 1.95 mm. Moves a mating interface -> minor. Propagated to the HopeTurtles.org 6fc/fin/ballast generators (with PDF tweaks: white screw drawing, no screw end view, 'Bottle Clamp Bolts x 24', no box round the board-thickness line, two-line credit box). build/test.py not run."
+    },
+    {
+      "version": "5.1.1",
+      "date": "2026-10-09",
+      "files": [
+        "lib/params.scad",
+        "lib/ecojoiner.scad",
+        "lib/rear_fin.scad",
+        "lib/ballast_fin.scad",
+        "build/params.json",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad"
+      ],
+      "note": "Render speed: M5 cap screw is now a plain shank cylinder ($fn 12) + plain head cylinder ($fn 16) -- the cosmetic twist-extrude thread, head chamfers and hex socket are removed (p_m5_bolt_pitch()/p_m5_socket_af() deleted). Acorn dome $fn 24 -> 12. M5 holes in Johns, rear-fin shafts and ballast slats rendered at $fn 16. No dimension changed. Mirrored the hole $fn in the HopeTurtles.org generator SCAD templates."
+    },
+    {
+      "version": "5.1.0",
+      "date": "2026-10-09",
+      "files": [
+        "lib/params.scad",
+        "lib/ecojoiner.scad",
+        "lib/rear_fin.scad",
+        "lib/ballast_fin.scad",
+        "src/Full_Turtle.scad",
+        "src/components/Turtle_Core_Ecojoiner.scad",
+        "build/params.json",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad"
+      ],
+      "note": "Ecojoiner clamp hardware: wing bolt + washer + jam nut replaced by a black M5x30 socket-head cap screw (visual twist thread + hex socket) that BITES into the wood; black acorn nuts. Holes 5.5 clearance -> 5.2 bite hole (p_m5_clearance_d() renamed p_m5_hole_d(); builder's research, slightly over the 5 mm nominal so the hold relies on fibre springback -- unverified) in the Johns, rear-fin shafts and ballast core slats. Open ports: acorn reach 17.07, head stands off 3.93 mm. Fin/ballast ports: no acorn, bare tip set to just meet the bottle (5.07 past the slat), head stands off 0.93 -- this resolves the v5.0.0 35 mm-bolt interference. Moves a mating hole size -> minor. Propagated to the HopeTurtles.org 6fc/fin/ballast generators. build/test.py not run."
+    },
+    {
+      "version": "5.0.0",
+      "date": "2026-10-09",
+      "files": [
+        "lib/params.scad",
+        "lib/ecojoiner.scad",
+        "lib/rear_fin.scad",
+        "lib/ballast_fin.scad",
+        "src/Full_Turtle.scad",
+        "src/components/Turtle_Core_Ecojoiner.scad",
+        "build/params.json",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad"
+      ],
+      "note": "Ecojoiner bottle clamp: the 12 mm presser disk + single M6 bolt per John port end is replaced by TWO M5 wing bolts (35 mm) stacked across the John height (+-20 mm from the centreline, 10 mm in from each long edge, still 17 mm from the John end), each through a 5.5 mm clearance hole, held by a washer + jam nut on the port face, with an acorn nut whose dome bears on the bottle (reach 17.07 mm, wing head stands off ~8.9 mm). Little/Master Johns now have 4 holes; rear-fin shafts and ballast core slats get the matching M5 pair (they are through-bolted, no acorn). Hardware interface break -> major. Known conflict, flagged not fixed: on the rear-fin/ballast ports a 35 mm bolt pokes 11 mm past the slat where the bottle is only 5.07 mm away. Full_Turtle's stale local screw_side_offset literal (25) now reads p_screw_side_offset(). build/test.py not run."
+    },
+    {
+      "version": "4.2.0",
+      "date": "2026-10-03",
+      "files": [
+        "lib/params.scad",
+        "lib/ballast_fin.scad",
+        "build/params.json",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad"
+      ],
+      "note": "p_screw_side_offset() 25 -> 17 mm: the two M6 clearance holes on the Little John and Master John now sit 17 mm in from each John end (Long Johns have none). Mating holes derived from it follow automatically: pressers/bolts in the assembly, the ballast core-slat M6 hole from top 69 -> 77 mm (bl_mount_hole_from_top), and the rear bottle-holder shaft hole from front 105 -> 113 mm (p_rear_shaft_hole_from_front, TB-07). Moves a mating interface -> minor bump; Johns cut to the old 25 mm inset will not line up with ballast/rear-fin slats cut to the new values. Propagated to HopeTurtles.org generators (6fc, fin, ballast) incl. the 6FC PDF 'from side' label, which was hard-coded '25mm'. build/test.py not run (shared-contract change: recommended to the maintainer)."
+    },
     {
       "version": "4.1.2",
       "date": "2026-09-29",
