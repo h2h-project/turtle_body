@@ -5,8 +5,9 @@
 //  crossbar. In the standalone the panel + bottle are %-reference only and
 //  excluded from F6/STL. See CLAUDE.md s11.
 //
-//  Shaft length = 305 + (2/3)(93-24) - 17 + 84 = 418 (v5.3.0: + the 84 mm
-//  fin overlap, so the bottle base abuts the fin's front edge at X = 0).
+//  Shaft length = 305 + (2/3)(93-24) - 17 + 69 = 403 (v5.3.0: + the fin
+//  overlap, so the bottle base abuts the fin's front edge at X = 0; v5.7.0:
+//  the fin is one board wide, so that overlap is 93 - 24 = 69, was 84).
 //  Half-lap and solar-joint clearances are 0.2 mm TOTAL, centred on the
 //  12 mm board (slot opening 12.2 mm, not 12.4). TB-07: the green-slat
 //  M5 mounting-hole pair is p_rear_shaft_hole_from_front() (113 mm at defaults),
@@ -20,17 +21,17 @@ use <params.scad>
 use <util.scad>
 
 function rf_t()             = p_wood_t();
-function rf_fin_width()     = p_fin_board_w() + p_rear_fin_tab_width();          // 108
+function rf_fin_width()     = p_fin_board_w();   // 93 -- one board wide (v5.7.0; was +15 mm tab = 108)
 function rf_fin_height()    = 3 * p_bottle_d();                                  // 246
 function rf_diag()          = (2/3) * p_bottle_d();                              // 54.667
-function rf_shaft_length()  = p_rear_shaft_len();                               // 418 (334 until v5.3.0)
+function rf_shaft_length()  = p_rear_shaft_len();                               // 403 (418 v5.3.0-v5.6.0)
 function rf_shaft_width()   = p_rear_shaft_width();                             // 60 (== John height)
 function rf_solar_holder_len() = p_solar_panel_w();                            // 148
 function rf_solar_holder_h()   = 3 * rf_t();                                    // 36
 function rf_solar_chamfer()    = 1.5 * rf_t();                                  // 18
 function rf_solar_slot_depth() = rf_solar_holder_h() / 2;                       // 18
-function rf_solar_notch_x0()   = rf_fin_width() - 2 * rf_t();                    // 84 == p_rear_shaft_rear_x()
-function rf_shaft_rear_x()     = rf_solar_notch_x0();                            // 84
+function rf_solar_notch_x0()   = rf_fin_width() - 2 * rf_t();                    // 69 == p_rear_shaft_rear_x()
+function rf_shaft_rear_x()     = rf_solar_notch_x0();                            // 69
 function rf_shaft_front_x()    = rf_shaft_rear_x() - rf_shaft_length();
 function rf_joint_meet_x()     = rf_shaft_rear_x() / 2;
 function rf_upper_shaft_z0()   = rf_fin_height() - 3 * rf_t();
@@ -40,7 +41,7 @@ function rf_solar_meet_z()     = rf_upper_shaft_z0() + rf_solar_slot_depth();
 module rf_assert_valid(half_lap, solar_clear, hole_from_front, hole_d) {
     t = rf_t();
     assert(t > 0 && p_bottle_h() > p_bottle_cap_h() && p_bottle_cap_d() > 0);
-    assert(p_bottle_d() > 0 && p_fin_board_w() > 2 * t && p_rear_fin_tab_width() > 0);
+    assert(p_bottle_d() > 0 && p_fin_board_w() > 2 * t);
     assert(p_solar_panel_w() > 0 && p_solar_panel_h() > 0 && p_solar_panel_t() > 0);
     assert(half_lap >= 0 && solar_clear >= 0);
     assert(rf_shaft_front_x() < 0 && rf_joint_meet_x() > half_lap / 2);

@@ -47,6 +47,7 @@ button_angle = 90; // [0:0.5:359.5]
 /* [Shaft hub, lock screw and clip pocket] */
 shaft_hole_diameter = 8.2;  // TB-08: round bore, shaft dia + running clearance (was a hex bore)
 cage_hub_d = 29;
+setscrew = false;               // v6.0.0: hub M3 set screw + recess OFF (the sail crossbar connector clamps the shaft)
 setscrew_pilot_diameter = 2.5;  // self-tapping M3 grub-screw pilot, untested thread engagement
 setscrew_recess_width = 5;      // key-access recess around the screw (tangential)
 setscrew_recess_depth = 3;      //   "  radial, inward from the opening edge (0 = none)
@@ -69,6 +70,7 @@ module _cage()
                  bump_d = bump_d,
                  hub_d = cage_hub_d,
                  shaft_hole_d = shaft_hole_diameter,
+                 setscrew = setscrew,
                  setscrew_pilot_d = setscrew_pilot_diameter,
                  setscrew_recess_w = setscrew_recess_width,
                  setscrew_recess_depth = setscrew_recess_depth,

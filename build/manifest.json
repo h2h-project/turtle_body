@@ -70,12 +70,23 @@
       ]
     },
     {
+      "id": "head_fin",
+      "src": "src/components/Turtle_Head_Fin.scad",
+      "out": "scads_v1/Turtle_Head_Fin.scad",
+      "renders": [
+        { "name": "assembly", "defines": { "part": "assembly", "show_bottle_mockup": false } },
+        { "name": "fin", "defines": { "part": "fin" } },
+        { "name": "slat", "defines": { "part": "slat" } }
+      ]
+    },
+    {
       "id": "sail_apparatus",
       "src": "src/components/Turtle_Sail_Apparatus.scad",
       "out": "scads_v1/Turtle_Sail_Apparatus.scad",
       "renders": [
         { "name": "assembly", "defines": { "part": "assembly", "show_hardware": false } },
-        { "name": "top_bar", "defines": { "part": "top_bar" } },
+        { "name": "top_bar_half", "defines": { "part": "top_bar_half" } },
+        { "name": "top_bar_connector", "defines": { "part": "top_bar_connector" } },
         { "name": "sail_batten", "defines": { "part": "sail_batten" } },
         { "name": "non_sail_batten", "defines": { "part": "non_sail_batten" } },
         { "name": "bottom_bars", "defines": { "part": "bottom_bars" } },

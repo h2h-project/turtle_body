@@ -33,7 +33,7 @@ water_transparency = 0.63; // 63% transparent = alpha 0.37; increase for a clear
 // 0 preserves the installed pose; positive = counterclockwise viewed from above.
 // This is the input for future animation or control code (for example 360*$t).
 cage_rotation_angle = 0; // [0:1:360]
-side_batten_height = 205;
+side_batten_height = p_side_batten_h();  // 217 sail battens (v6.1.0: 205 + t); non-sail battens are cage-roof flush
 cage_vertical_position = 0;
 sail_frame_rotation_angle = 90;
 cage_exploded_view = 0;
@@ -213,6 +213,7 @@ use <../lib/bottle_mockup.scad>
 use <../lib/ecojoiner.scad>
 use <../lib/ballast_fin.scad>
 use <../lib/rear_fin.scad>      // wooden parts; the visible solar panel + screws stay embedded below
+use <../lib/head_fin.scad>      // v5.8.0 EXPERIMENTAL: front (head) fin on the -X port
 use <../lib/control_cap.scad>   // TB-03: 5 mm roof + 2 mm boss + twin 2x2 grooves
 use <../lib/sail_shaft.scad>    // TB-04/TB-08: 59 mm uniform round shaft + magnet recess
 use <../lib/control_cage.scad>
@@ -864,10 +865,12 @@ ballast_shoulder_step =
 
 // Top shoulder geometry.
 //
-// The 45-degree cut STARTS on the outer edge exactly one shared port_height
-// below the top of the green slat.
+// The 45-degree cut STARTS on the outer edge at or below the outer John's
+// port end (port_length + t below the seated slat top), and at least one
+// board width below the old one-port_height start (v5.6.0) -- see
+// bl_upper_diag_from_top() in lib/ballast_fin.scad.
 ballast_upper_diagonal_start =
-    ballast_core_height - port_height;
+    ballast_core_height - (max(port_height, port_length) + slat_thickness);
 
 // Because this is a 45-degree cut, moving inward by ballast_shoulder_step
 // also moves downward by the same amount.
@@ -875,11 +878,10 @@ ballast_upper_neck_start =
     ballast_upper_diagonal_start - ballast_shoulder_step;
 
 assert(
-    abs(
-        (ballast_core_height - ballast_upper_diagonal_start)
-        - port_height
-    ) < 0.001,
-    "Top ballast shoulder cut must begin exactly one port_height below the slat top."
+    abs(ballast_upper_diagonal_start - bl_upper_diag_start()) < 0.001
+    && ballast_core_height - ballast_upper_diagonal_start
+       >= port_length + slat_thickness - 0.001,
+    "Top ballast shoulder cut must match lib and begin at or below the John's port end."
 );
 
 ballast_core_slot_z0 =
@@ -925,7 +927,7 @@ ballast_core_mount_hole_y =
 // --------------------------------------------------------------------------
 
 ballast_board_length =
-    3.5 * ballast_bottle_diameter;
+    p_ballast_board_len();   // v5.5.0: 3.5 * bottle_diameter + 2 * t
 
 ballast_board_width =
     ballast_fin_board_width;
@@ -982,7 +984,11 @@ assert(abs(ballast_bottle_height - bottle_height) < 0.001,
        "Ballast bottle height must equal canonical bottle_height.");
 
 ballast_end_slot_offset =
-    2 * slat_thickness;
+    3 * slat_thickness;      // v5.5.0: was 2 * t
+
+assert(abs(ballast_board_length - bl_board_len()) < 0.001
+       && abs(ballast_end_slot_offset - bl_end_slot_offset()) < 0.001,
+       "Full-turtle ballast board aliases must match lib/ballast_fin.scad.");
 
 ballast_left_end_slot_x0 =
     ballast_end_slot_offset;
@@ -1308,11 +1314,9 @@ rear_shaft_gap =
 // YELLOW REAR FIN
 // --------------------------------------------------------------------------
 
-rear_fin_tab_width =
-    15;
-
+// v5.7.0: one board wide (was board + a 15 mm rear tab, wider than the board).
 rear_fin_width =
-    fin_board_width + rear_fin_tab_width;
+    fin_board_width;
 
 rear_fin_height =
     3 * rear_bottle_diameter;
@@ -1623,6 +1627,9 @@ assert(rear_shaft_hole_from_front > rear_shaft_hole_diameter / 2
 assert(abs(rear_install_pre_x + rear_shaft_rear_x - rear_shaft_length
            + rear_shaft_hole_from_front - rear_mount_hole_pre_x) < 0.001,
        "Rear-fin and John mounting-hole axes must coincide.");
+// Likewise the ballast's green core slats bolt flush against Little Johns.
+assert(abs(bl_core_w() - eco_john_height()) < 0.001,
+       "Ballast core slat width must equal the Ecojoiner John height.");
 // The green shaft bolts flush against a Little John: same width, so their
 // edges and M5 pairs line up (v5.4.0; the shaft was a fixed 59 before).
 assert(abs(rear_shaft_width - eco_john_height()) < 0.001,
@@ -1710,6 +1717,67 @@ module installed_rear_fin_on_3oclock_port() {
 }
 
 
+
+// ============================================================================
+// HEAD FIN (v5.8.0, EXPERIMENTAL) -- PHYSICAL 9-O'CLOCK / FRONT PORT
+// ============================================================================
+//
+// lib/head_fin.scad is the rear fin's mirror on the pre -X port: two flat
+// slats above and below the front bottle, bolted to frame 1's Little John M5
+// pairs on that port, and a vertical triangular fin abutting the bottle base.
+// Head-local frame: X = 0 at the fin rear edge / bottle base, +X outward;
+// bottle axis on local Y = Z = 0; slats stacked in local Z.
+//
+// Right-handed axis mapping (v6.3.0: the fin is no longer up/down symmetric,
+// so head local +Z must be physically UP):
+//   head local +X -> pre -X -> physical 9 o'clock / outward
+//   head local +Y -> pre -Z
+//   head local +Z -> pre -Y -> physical UP (12 o'clock)
+
+head_install_pre = [assembly_center[0] - bottle_origin_offset,
+                    assembly_center[1],
+                    assembly_center[2]];
+
+// M5-pair alignment (X): the slat hole, pushed through the install, must hit
+// the -X John hole pair (screw_side_offset in from that John's outer end).
+head_mount_hole_pre_x =
+    assembly_center[0] - john_length / 2 + screw_side_offset;
+head_slat_hole_pre_x =
+    head_install_pre[0] - (hf_slat_front_x() + p_head_slat_hole_from_front());
+assert(abs(head_slat_hole_pre_x - head_mount_hole_pre_x) < 0.001,
+       "Head-fin slat and -X John mounting-hole axes must coincide.");
+assert(abs(hf_slat_width() - eco_john_height()) < 0.001,
+       "Head slat width must equal the Ecojoiner John height.");
+
+// Flush check (Y): local Z maps to pre Y = assembly_center[1] - local_z. Each
+// slat's board must touch the inner face of the Little John it bolts to --
+// the same targets as the rear-fin shafts, since both ports belong to frame 1.
+head_upper_slat_y = [assembly_center[1] - hf_upper_slat_z0(),
+                     assembly_center[1] - hf_upper_slat_z0() - slat_thickness];
+head_lower_slat_y = [assembly_center[1] - hf_lower_slat_z0(),
+                     assembly_center[1] - hf_lower_slat_z0() - slat_thickness];
+head_john_target_a_y = 0 + eco_slat_t() / 2;
+head_john_target_b_y = eco_rectangle_y() - eco_slat_t() / 2;
+assert(min([for (y = head_upper_slat_y) for (j = [head_john_target_a_y, head_john_target_b_y])
+            abs(y - j)]) < 0.001
+       && min([for (y = head_lower_slat_y) for (j = [head_john_target_a_y, head_john_target_b_y])
+               abs(y - j)]) < 0.001,
+       "Head-fin slat boards must sit flush against their Little John holes (Y axis).");
+
+module installed_head_fin_on_9oclock_port() {
+    multmatrix([
+        [-1,  0,  0, head_install_pre[0]],
+        [ 0,  0, -1, head_install_pre[1]],
+        [ 0, -1,  0, head_install_pre[2]],
+        [ 0, 0, 0, 1]
+    ])
+        head_fin_assembly(half_lap = rear_half_lap_clearance,
+                          colored = enable_color_coding);
+}
+
+echo("Head fin: rear edge abuts the -X bottle base; slat length = ",
+     hf_slat_length(), " | hole pair from slat front = ", p_head_slat_hole_from_front());
+
 // --------------------------------------------------------------------------
 // Rear-fin diagnostics
 // --------------------------------------------------------------------------
@@ -1762,7 +1830,7 @@ module hope_turtle_sail_apparatus(
     cage_peak_extension = 20,
     cage_lower_hole_from_tip = 10,
     cage_button_angle = 0,
-    side_batten_height = 205,
+    side_batten_height = p_side_batten_h(),
     cage_vertical_position = 0,
     cage_rotation_angle = 0,
     sail_frame_rotation_angle = 90,
@@ -1804,14 +1872,15 @@ module hope_turtle_sail_apparatus(
     // ============================================================
     // TOP SAIL BAR
     // ============================================================
-    top_sail_bar_length = 6 * bottle_diameter;
+    top_sail_bar_length = p_top_crossbar_len();   // 504 tip to tip (split into halves + connector)
     top_sail_bar_width = 22;
     top_sail_bar_thickness = board_width;
 
     top_sail_bar_slot_depth = 11;
     top_sail_bar_slot_width = 10;
     // TB-08: round shaft + running clearance (was Ø12 for the hex corners).
-    top_sail_bar_axle_hole_diameter = p_sail_bar_axle_hole_d();
+    // v6.0.0: the shaft now passes the split crossbar's centre connector.
+    top_sail_bar_axle_hole_diameter = p_sail_connector_axle_hole_d();
 
     // ============================================================
     // SIDE BATTENS
@@ -1823,11 +1892,13 @@ module hope_turtle_sail_apparatus(
     side_batten_notch_height = board_width;
     side_batten_notch_depth = side_batten_width / 2;
     side_batten_end_margin = 15;
+    side_batten_upper_notch_height = 2 * top_sail_bar_thickness;   // v6.0.0: connector + half
+    side_batten_top_margin = side_batten_end_margin;   // v6.1.0
 
     // ============================================================
     // BOTTOM SAIL BARS
     // ============================================================
-    bottom_sail_bar_length = 3 * bottle_diameter;
+    bottom_sail_bar_length = p_bottom_rail_len();   // 264 (v6.3.0: 3 x bottle_d + t)
     bottom_sail_bar_width = top_sail_bar_width;
     bottom_sail_bar_thickness = board_width;
 
@@ -2153,9 +2224,8 @@ module hope_turtle_sail_apparatus(
             * (1 - cos(4*a)) / 2;
     side_batten_top_native_z =
         cage_total_height
-        + top_sail_bar_thickness
-        + (side_batten_notch_height - top_sail_bar_thickness) / 2
-        + side_batten_end_margin;
+        + side_batten_upper_notch_height
+        + side_batten_top_margin;
     side_batten_bottom_native_z =
         side_batten_top_native_z - side_batten_height;
     side_batten_cage_hole_z_local =
@@ -2498,7 +2568,8 @@ module hope_turtle_sail_apparatus(
     else if (part == "cage_side_walls") {
         control_cage();
     }
-    else if (part == "top_sail_bar")   { sail_frame(part = "top_bar", board_width = board_width); }
+    else if (part == "top_sail_bar")   { sail_frame(part = "top_bar_half", board_width = board_width);
+                                         sail_frame(part = "top_bar_connector", board_width = board_width); }
     else if (part == "side_battens")   { sail_frame(part = "sail_batten", board_width = board_width); }
     else if (part == "bottom_sail_bars") { sail_frame(part = "bottom_bars", board_width = board_width); }
     else if (part == "joint_strengtheners") { sail_frame(part = "strengtheners", board_width = board_width); }
@@ -2603,8 +2674,9 @@ module ecojoiner_and_bottles() {
     ecc = enable_color_coding;
 
     // Frame 1: through-bolt (no acorns) the two clamp pairs on the physical 3-o'clock port
-    // (pre-orientation +X) for the rear-fin green shafts.
-    eco_centered_rectangle([0, 0, 0], true, false, ecc);
+    // (pre-orientation +X) for the rear-fin green shafts, and the two on the physical
+    // 9-o'clock port (pre-orientation -X) for the head-fin slats (v5.8.0).
+    eco_centered_rectangle([0, 0, 0], true, true, ecc);
 
     eco_centered_rectangle([0, frame_step_tilt, frame_step_spin],
                            false, false, ecc);
@@ -2670,6 +2742,9 @@ module full_turtle_scene(include_top_sail = true) {
 
         // Rear apparatus around / behind the physical rear bottle.
         installed_rear_fin_on_3oclock_port();
+
+        // Head fin around / ahead of the physical front bottle (v5.8.0).
+        installed_head_fin_on_9oclock_port();
     }
     water_preview();
 }
@@ -2771,6 +2846,7 @@ echo("  extra clearance removed = one slat_thickness = ",
 
 echo("Through-bolted clamp pairs on physical DOWN ballast port = 2");
 echo("Through-bolted clamp pairs on physical 3-o’clock rear-fin port = 2");
+echo("Through-bolted clamp pairs on physical 9-o’clock head-fin port = 2");
 
 echo("Ballast orange center-slot depth = ",
      ballast_center_slot_depth, " mm");

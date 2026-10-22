@@ -33,6 +33,9 @@
 //  (setscrew_pilot_d/setscrew_angle) presses on the shaft to lock it to the
 //  rotating cage. The pilot is a self-tapping hole into the printed PLA hub,
 //  not a clearance hole for a separate nut -- untested thread engagement.
+//  v6.0.0: OFF by default (`setscrew = false`, which also drops its access
+//  recess) -- the shaft is now clamped by the M3 in the sail crossbar
+//  connector instead (lib/sail_frame.scad). Set true to bring it back.
 //
 //  Definitions only. Geometry is emitted by control_cage(); the wrapper /
 //  full assembly applies the print-pose or installed transform.
@@ -74,6 +77,7 @@ module control_cage(inner_d       = p_cage_inner_d(),
                     scallops      = true,
                     roof_bevel    = p_cage_roof_bevel(),
                     wave_segments = p_cage_wave_segments(),
+                    setscrew         = p_cage_setscrew_enabled(),  // v6.0.0: off; the sail connector clamps the shaft
                     setscrew_pilot_d = p_cage_setscrew_pilot_d(),  // TB-08: locks the shaft to the cage
                     setscrew_angle   = undef,  // undef = aim at the button opening (button_angle)
                     setscrew_recess_w     = p_cage_setscrew_recess_w(),
@@ -226,14 +230,15 @@ module control_cage(inner_d       = p_cage_inner_d(),
         // TB-08: single radial set screw, drilled from the hub's outer
         // surface in past the centre so it always reaches the shaft hole
         // regardless of shaft_hole_d.
-        rotate([0, 0, ss_angle])
-            translate([-eps, 0, setscrew_z])
-                rotate([0, 90, 0])
-                    cylinder(d = setscrew_pilot_d, h = hub_d / 2 + 2 * eps, $fn = 32);
+        if (setscrew)
+            rotate([0, 0, ss_angle])
+                translate([-eps, 0, setscrew_z])
+                    rotate([0, 90, 0])
+                        cylinder(d = setscrew_pilot_d, h = hub_d / 2 + 2 * eps, $fn = 32);
         // Flat-floored key-access recess around the screw, running the full
         // hub height (roof top through the hub bottom). Open end to end, so
         // the roof-down print has no overhang here.
-        if (setscrew_recess_depth > 0)
+        if (setscrew && setscrew_recess_depth > 0)
             rotate([0, 0, ss_angle])
                 translate([recess_floor_r, -setscrew_recess_w / 2, cage_hub_bottom - eps])
                     cube([setscrew_recess_depth + 2, setscrew_recess_w,
@@ -253,7 +258,7 @@ module control_cage(inner_d       = p_cage_inner_d(),
     echo("CAGE: OD / ID / roof-to-tip = ", outer_d, inner_d, cage_top - wall_tip_z);
     echo("CAGE: groove w / d = ", notch_w, notch_depth,
          " | M3 dia / pitch = ", m3_d, mount_hole_z - lower_hole_z);
-    echo("CAGE: shaft hole = ", shaft_hole_d,
+    echo("CAGE: shaft hole = ", shaft_hole_d, " | set screw on = ", setscrew,
          " | set-screw pilot dia / angle = ", setscrew_pilot_d, ss_angle,
          " | recess w / depth / floor r = ", setscrew_recess_w, setscrew_recess_depth, recess_floor_r);
     echo("CAGE: prints ROOF-FACE-DOWN (flat top on the bed). roof_bevel = ",

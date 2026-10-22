@@ -1,7 +1,8 @@
 // ==========================================================================
 //  Turtle Body -- sail apparatus frame  (lib module)
 // --------------------------------------------------------------------------
-//  Wooden frame only: top crossbar, four battens (two sail, two non-sail),
+//  Wooden frame only: top crossbar (v6.0.0: two halves + a centre
+//  connector that clamps the shaft with an M3), four battens (two sail, two non-sail),
 //  bottom sail bars, joint strengtheners, orange C ends and the sail
 //  membranes. Emits no axle. Emits no bottle/cap/cage either unless
 //  show_control_bottle=true, which adds reference-only cut_bottle +
@@ -90,14 +91,21 @@ module sail_frame(
     // ============================================================
     // TOP SAIL BAR
     // ============================================================
-    top_sail_bar_length = 6 * bottle_diameter;
+    top_sail_bar_length = p_top_crossbar_len();   // 504 tip to tip
     top_sail_bar_width = 22;
     top_sail_bar_thickness = board_width;
 
     top_sail_bar_slot_depth = 11;
     top_sail_bar_slot_width = 10;
-    // TB-08: round shaft + running clearance (was Ø12 for the hex corners).
-    top_sail_bar_axle_hole_diameter = p_sail_bar_axle_hole_d();
+    // v6.0.0: the one-piece bar is split. A centre CONNECTOR on the cage
+    // roof spans the two sail battens and carries the shaft hole (generous
+    // clearance) + a side M3 clamp screw; a LEFT and RIGHT HALF sit on top of
+    // it and run out to the tips. Both layers share the batten notch.
+    top_bar_connector_axle_hole_d = p_sail_connector_axle_hole_d();   // 9
+    top_bar_m3_pilot_d = p_sail_m3_pilot_d();                          // 2.8 self-tap
+    top_bar_m3_clear_d = p_sail_m3_clear_d();                          // 3.2
+    top_bar_m3_screw_len = 20;   // visual: half-to-connector screws
+    top_bar_clamp_screw_len = 10; // visual: side clamp screw (6.5 mm of wood to the bore)
 
     // ============================================================
     // SIDE BATTENS
@@ -109,11 +117,16 @@ module sail_frame(
     side_batten_notch_height = board_width;
     side_batten_notch_depth = side_batten_width / 2;
     side_batten_end_margin = 15;
+    // v6.0.0: the sail battens' UPPER notch holds two stacked layers
+    // (connector + crossbar half), and the batten grew by 2t with the spare
+    // stock thickness going above the notch.
+    side_batten_upper_notch_height = 2 * top_sail_bar_thickness;     // 24
+    side_batten_top_margin = side_batten_end_margin;                 // 15 (v6.1.0; was 27)
 
     // ============================================================
     // BOTTOM SAIL BARS
     // ============================================================
-    bottom_sail_bar_length = 3 * bottle_diameter;
+    bottom_sail_bar_length = p_bottom_rail_len();   // 264 (v6.3.0: 3 x bottle_d + t)
     bottom_sail_bar_width = top_sail_bar_width;
     bottom_sail_bar_thickness = board_width;
 
@@ -399,6 +412,17 @@ module sail_frame(
     // with the inner/root surface of the corresponding cage notch.
     top_sail_bar_slot_centre_radius =
         cage_notch_root_radius + top_sail_bar_slot_width / 2;
+
+    // Split-crossbar layout (v6.0.0), all measured from the shaft axis.
+    top_bar_connector_length = 2 * (top_sail_bar_slot_centre_radius
+        + top_sail_bar_slot_width / 2 + p_sail_connector_overhang());
+    top_bar_half_inner_x = top_sail_bar_slot_centre_radius
+        - top_sail_bar_slot_width / 2 - p_sail_bar_half_inboard();
+    top_bar_half_length = top_sail_bar_length / 2 - top_bar_half_inner_x;   // 212.2
+    // One M3 per side through the half into the connector, centred in the
+    // connector's overhang outboard of the batten.
+    top_bar_joint_screw_x = top_sail_bar_slot_centre_radius
+        + top_sail_bar_slot_width / 2 + p_sail_connector_overhang() / 2;
     cage_surface_under_z =
         cage_total_height - cage_surface_thickness;
     cage_side_wall_height =
@@ -415,11 +439,13 @@ module sail_frame(
             * (1 - cos(4*a)) / 2;
     side_batten_top_native_z =
         cage_total_height
-        + top_sail_bar_thickness
-        + (side_batten_notch_height - top_sail_bar_thickness) / 2
-        + side_batten_end_margin;
+        + side_batten_upper_notch_height
+        + side_batten_top_margin;
     side_batten_bottom_native_z =
         side_batten_top_native_z - side_batten_height;
+    // v6.1.0: non-sail battens stop flush with the cage roof top.
+    non_sail_batten_height =
+        cage_total_height - side_batten_bottom_native_z;   // 178
     side_batten_cage_hole_z_local =
         cage_slot_vertical_centre_z - side_batten_bottom_native_z;
 
@@ -496,8 +522,22 @@ module sail_frame(
     );
     assert(cage_shaft_hole_diameter < top_sail_bar_width,
         "The shaft opening does not fit within the top sail bar.");
-    assert(round_shaft_diameter < top_sail_bar_axle_hole_diameter,
-        "The sail shaft does not fit through the sail bar axle hole.");
+    assert(round_shaft_diameter < top_bar_connector_axle_hole_d,
+        "The sail shaft does not fit through the connector axle hole.");
+    assert(top_bar_connector_axle_hole_d < top_sail_bar_width - 2 * top_bar_m3_pilot_d,
+        "Connector: too little wood around the shaft hole for the M3 clamp.");
+    assert(top_bar_half_inner_x > top_bar_connector_axle_hole_d / 2
+           && top_bar_half_inner_x > 0,
+        "Crossbar halves must stop short of the shaft.");
+    assert(p_sail_connector_overhang() > top_bar_m3_clear_d + 4
+           && p_sail_bar_half_inboard() > 0,
+        "Connector overhang too short for the half-to-connector M3.");
+    assert(top_bar_connector_length / 2 < top_sail_bar_length / 2,
+        "Connector longer than the crossbar span.");
+    assert(non_sail_batten_height
+           > max(cage_mount_z_positions) - side_batten_bottom_native_z
+             + cage_mount_hole_diameter / 2 + 2,
+        "Non-sail batten too short for its upper cage M3 hole.");
     assert(
         top_sail_bar_slot_centre_radius + top_sail_bar_slot_width / 2
             < top_sail_bar_length / 2,
@@ -509,6 +549,8 @@ module sail_frame(
         "The side battens are too thick for the sail-bar slots.");
     assert(side_batten_notch_height == top_sail_bar_thickness,
         "The batten slots must exactly match the sail-bar board width.");
+    assert(side_batten_upper_notch_height == 2 * top_sail_bar_thickness,
+        "The upper sail-batten notch must hold the connector + crossbar half.");
     assert(bottom_sail_bar_thickness == side_batten_notch_height,
         "The bottom sail bars must match the lower batten slots.");
     assert(bottom_sail_bar_slot_width == side_batten_thickness,
@@ -576,7 +618,9 @@ module sail_frame(
     // ============================================================
     // TOP SAIL BAR
     // ============================================================
-    module top_sail_bar_profile_2d() {
+    module top_sail_bar_profile_2d(hole_d = 0) {
+        // Full tip-to-tip outline with both batten slots; the parts below
+        // cut their own spans from it (v6.0.0).
         difference() {
             square([
                 top_sail_bar_length,
@@ -603,20 +647,77 @@ module sail_frame(
                     top_sail_bar_slot_depth + cage_epsilon
                 ]);
 
-            // The sail-bar opening is a hard-limited Ø12 mm round hole.
-            circle(d = top_sail_bar_axle_hole_diameter);
+            if (hole_d > 0) circle(d = hole_d);
         }
     }
 
-    module top_sail_bar_part() {
-        linear_extrude(height = top_sail_bar_thickness)
-            top_sail_bar_profile_2d();
+    // Centre connector, on the cage roof (local Z 0..t). Shaft passes with
+    // clearance; the side M3 self-taps from the +Y face into the shaft hole.
+    module top_bar_connector_part() {
+        difference() {
+            linear_extrude(height = top_sail_bar_thickness)
+                intersection() {
+                    top_sail_bar_profile_2d(top_bar_connector_axle_hole_d);
+                    square([top_bar_connector_length, top_sail_bar_width + 2 * cage_epsilon],
+                           center = true);
+                }
+            translate([0, 0, top_sail_bar_thickness / 2])
+                rotate([-90, 0, 0])
+                    cylinder(d = top_bar_m3_pilot_d,
+                             h = top_sail_bar_width / 2 + cage_epsilon, $fn = 32);
+            for (sx = [-1, 1])
+                translate([sx * top_bar_joint_screw_x, 0, -cage_epsilon])
+                    cylinder(d = top_bar_m3_pilot_d,
+                             h = top_sail_bar_thickness + 2 * cage_epsilon, $fn = 32);
+        }
+    }
+
+    // Right crossbar half (+X), local Z 0..t. The left half is the same
+    // part turned 180 deg about Z (its slot then opens from the other edge).
+    module top_bar_half_part() {
+        difference() {
+            linear_extrude(height = top_sail_bar_thickness)
+                intersection() {
+                    top_sail_bar_profile_2d();
+                    translate([top_bar_half_inner_x,
+                               -top_sail_bar_width / 2 - cage_epsilon])
+                        square([top_bar_half_length,
+                                top_sail_bar_width + 2 * cage_epsilon]);
+                }
+            translate([top_bar_joint_screw_x, 0, -cage_epsilon])
+                cylinder(d = top_bar_m3_clear_d,
+                         h = top_sail_bar_thickness + 2 * cage_epsilon, $fn = 32);
+        }
     }
 
     module top_sail_bar_native_assembly() {
-        sf_wood([0.56, 0.39, 0.39], colored)
+        sf_wood([0.42, 0.27, 0.27], colored)
             translate([0, 0, cage_total_height])
-                top_sail_bar_part();
+                top_bar_connector_part();
+        sf_wood([0.56, 0.39, 0.39], colored)
+            translate([0, 0, cage_total_height + top_sail_bar_thickness])
+                for (a = [0, 180]) rotate([0, 0, a]) top_bar_half_part();
+    }
+
+    module top_bar_screws_native() {
+        color([0.15, 0.15, 0.15]) {
+            // half -> connector, heads on top of each half
+            for (sx = [-1, 1])
+                translate([sx * top_bar_joint_screw_x, 0,
+                           cage_total_height + 2 * top_sail_bar_thickness]) {
+                    cylinder(d = 5.5, h = 3, $fn = 24);
+                    translate([0, 0, -top_bar_m3_screw_len])
+                        cylinder(d = 3, h = top_bar_m3_screw_len, $fn = 16);
+                }
+            // side clamp screw, head on the connector's +Y face
+            translate([0, top_sail_bar_width / 2,
+                       cage_total_height + top_sail_bar_thickness / 2])
+                rotate([-90, 0, 0]) {
+                    cylinder(d = 5.5, h = 3, $fn = 24);
+                    translate([0, 0, -top_bar_clamp_screw_len])
+                        cylinder(d = 3, h = top_bar_clamp_screw_len, $fn = 16);
+                }
+        }
     }
 
 
@@ -634,13 +735,14 @@ module sail_frame(
         include_upper_slot = true,
         include_lower_slot = true,
         include_non_sail_joint_hole = false,
-        include_strengthener_joint_hole = false
+        include_strengthener_joint_hole = false,
+        batten_height = side_batten_height
     ) {
         difference() {
             cube([
                 side_batten_thickness,
                 side_batten_width,
-                side_batten_height
+                batten_height
             ]);
 
             notch_y = notch_from_positive_y
@@ -649,17 +751,18 @@ module sail_frame(
 
             if (include_upper_slot) {
                 // Upper notch: interlocks with the top sail crossbar.
+                // v6.0.0: two layers tall (connector + crossbar half).
                 translate([
                     -cage_epsilon,
                     notch_y,
-                    side_batten_height
-                        - side_batten_end_margin
-                        - side_batten_notch_height
+                    batten_height
+                        - side_batten_top_margin
+                        - side_batten_upper_notch_height
                 ])
                     cube([
                         side_batten_thickness + 2 * cage_epsilon,
                         side_batten_notch_depth + cage_epsilon,
-                        side_batten_notch_height
+                        side_batten_upper_notch_height
                     ]);
 
             }
@@ -718,14 +821,11 @@ module sail_frame(
         include_upper_slot = true,
         include_lower_slot = true,
         include_non_sail_joint_hole = false,
-        include_strengthener_joint_hole = false
+        include_strengthener_joint_hole = false,
+        batten_height = side_batten_height
     ) {
-        // The upper batten notch is exactly flush with the sail bar.
-        batten_top_z =
-            cage_total_height
-            + top_sail_bar_thickness
-            + (side_batten_notch_height - top_sail_bar_thickness) / 2
-            + side_batten_end_margin;
+        // The upper batten notch spans the connector + crossbar half.
+        batten_top_z = side_batten_top_native_z;
 
         batten_bottom_z = batten_top_z - side_batten_height;
 
@@ -744,7 +844,8 @@ module sail_frame(
                     include_non_sail_joint_hole =
                         include_non_sail_joint_hole,
                     include_strengthener_joint_hole =
-                        include_strengthener_joint_hole
+                        include_strengthener_joint_hole,
+                    batten_height = batten_height
                 );
 
             // Right batten: mirrored to fill the upper-half slot.
@@ -761,7 +862,8 @@ module sail_frame(
                     include_non_sail_joint_hole =
                         include_non_sail_joint_hole,
                     include_strengthener_joint_hole =
-                        include_strengthener_joint_hole
+                        include_strengthener_joint_hole,
+                    batten_height = batten_height
                 );
         }
     }
@@ -776,11 +878,13 @@ module sail_frame(
         );
 
         // Perpendicular pair: no top-bar joint, but keep lower slots.
+        // v6.1.0: top flush with the cage roof (same bottom datum).
         rotate([0, 0, 90])
             opposing_side_batten_pair_native(
                 include_upper_slot = false,
                 include_lower_slot = true,
-                include_non_sail_joint_hole = false
+                include_non_sail_joint_hole = false,
+                batten_height = non_sail_batten_height
             );
     }
 
@@ -821,11 +925,7 @@ module sail_frame(
     }
 
     module bottom_sail_bars_native_assembly() {
-        batten_top_z =
-            cage_total_height
-            + top_sail_bar_thickness
-            + (side_batten_notch_height - top_sail_bar_thickness) / 2
-            + side_batten_end_margin;
+        batten_top_z = side_batten_top_native_z;
 
         batten_bottom_z = batten_top_z - side_batten_height;
         bottom_bar_z = batten_bottom_z + side_batten_end_margin;
@@ -885,11 +985,7 @@ module sail_frame(
     }
 
     module joint_strengtheners_native_assembly() {
-        batten_top_z =
-            cage_total_height
-            + top_sail_bar_thickness
-            + (side_batten_notch_height - top_sail_bar_thickness) / 2
-            + side_batten_end_margin;
+        batten_top_z = side_batten_top_native_z;
 
         batten_bottom_z = batten_top_z - side_batten_height;
         bottom_bar_z = batten_bottom_z + side_batten_end_margin;
@@ -928,18 +1024,14 @@ module sail_frame(
     // ============================================================
 
     module right_sail_native() {
-        batten_top_z =
-            cage_total_height
-            + top_sail_bar_thickness
-            + (side_batten_notch_height - top_sail_bar_thickness) / 2
-            + side_batten_end_margin;
+        batten_top_z = side_batten_top_native_z;
 
         batten_bottom_z = batten_top_z - side_batten_height;
         bottom_bar_z = batten_bottom_z + side_batten_end_margin;
 
         sail_bottom_z =
             bottom_bar_z + bottom_sail_bar_thickness;
-        sail_top_z = cage_total_height;
+        sail_top_z = cage_total_height + top_sail_bar_thickness;   // half underside (v6.0.0: +t)
 
         // Begin immediately beyond the outer face of the joint
         // strengthener and follow the two rail endpoints outward.
@@ -1021,11 +1113,7 @@ module sail_frame(
     }
 
     module c_end_piece_pair_native() {
-        batten_top_z =
-            cage_total_height
-            + top_sail_bar_thickness
-            + (side_batten_notch_height - top_sail_bar_thickness) / 2
-            + side_batten_end_margin;
+        batten_top_z = side_batten_top_native_z;
 
         batten_bottom_z = batten_top_z - side_batten_height;
         c_piece_z = batten_bottom_z + side_batten_end_margin;
@@ -1168,6 +1256,7 @@ module sail_frame(
         if(show_hardware) {
             cage_batten_bolts_native_assembly();
             sail_strengthener_bolts_native();
+            top_bar_screws_native();
         }
         if(show_control_bottle)
             control_reference_native();
@@ -1181,11 +1270,13 @@ module sail_frame(
         translate([0,0,-side_batten_bottom_native_z]) sail_frame_native_group();
     else if(part=="native_assembly")
         sail_frame_native_group();
-    else if(part=="top_bar") top_sail_bar_part();
+    else if(part=="top_bar_half") top_bar_half_part();
+    else if(part=="top_bar_connector") top_bar_connector_part();
     else if(part=="sail_batten")
         side_batten_part(include_strengthener_joint_hole=true);
     else if(part=="non_sail_batten")
-        side_batten_part(include_upper_slot=false,include_non_sail_joint_hole=false);
+        side_batten_part(include_upper_slot=false,include_non_sail_joint_hole=false,
+                         batten_height=non_sail_batten_height);
     else if(part=="bottom_bars") bottom_sail_bars_native_assembly();
     else if(part=="strengtheners") joint_strengtheners_native_assembly();
     else if(part=="c_end_pieces") c_end_pieces_native_assembly();
@@ -1193,6 +1284,12 @@ module sail_frame(
     else assert(false,str("Unknown part: ",part));
     echo("Cage mount hole diameter / vertical pitch = ",
          cage_mount_hole_diameter,cage_slot_vertical_centre_z-cage_lower_mount_z);
+    echo("SAIL CROSSBAR: halves 2 x ", top_bar_half_length,
+         " | connector ", top_bar_connector_length,
+         " | connector shaft hole / M3 pilot = ", top_bar_connector_axle_hole_d, top_bar_m3_pilot_d,
+         " | span ", top_sail_bar_length, " | bottom rails 2 x ", bottom_sail_bar_length,
+         " | sail / non-sail batten h = ", side_batten_height, non_sail_batten_height,
+         " | upper notch = ", side_batten_upper_notch_height);
     echo("Cage mount centres from batten bottom = ",
          [for(z=cage_mount_z_positions) z-side_batten_bottom_native_z]);
 }

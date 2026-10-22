@@ -18,15 +18,27 @@ use <params.scad>
 use <util.scad>
 
 function bl_t()            = p_wood_t();
-function bl_core_w()       = p_bottle_d() - 2 * bl_t();                          // 58
+// The green core slats bolt flush against the Ecojoiner's Little Johns and
+// clamp the bottle between them, so they follow the PORT height (== bottle
+// diameter here; the HopeTurtles.org generator adds the form's fit offset):
+// width == John height, inner-face gap == port height. v5.4.1: written in
+// p_port_height() terms (same values) to make that tie explicit.
+function bl_core_w()       = p_port_height() - 2 * bl_t();                       // 60 == John height
 function bl_core_h()       = p_bottle_h() - p_bottle_cap_h() + 6.0 * bl_t();     // 360
 function bl_lower_lobe()   = 2 * bl_t();
 function bl_upper_lobe()   = 2 * bl_t();
 function bl_core_slot_h()  = bl_t();
 function bl_core_slot_depth() = bl_core_w() / 2;
-function bl_neck_w()       = p_bottle_d() - 3 * bl_t();                          // 46
+function bl_neck_w()       = p_port_height() - 3 * bl_t();                       // 48
 function bl_shoulder_step()   = bl_core_w() - bl_neck_w();                       // 12
-function bl_upper_diag_start() = bl_core_h() - p_port_height();
+// Distance from the slat top down to where the upper 45-degree shoulder cut
+// begins. The seated slat top is port_length + t inside the outer John's
+// port end, so the cut must start at least that far down or it bites into
+// the slat while still inside the John. v5.6.0: was one port_height (84,
+// 10 mm inside the John); now one board width lower and never above the
+// John end -- max(port_height, port_length) + t (96 at defaults).
+function bl_upper_diag_from_top() = max(p_port_height(), p_port_length()) + bl_t();
+function bl_upper_diag_start() = bl_core_h() - bl_upper_diag_from_top();
 function bl_upper_neck_start() = bl_upper_diag_start() - bl_shoulder_step();
 function bl_core_slot_z0() = bl_lower_lobe();
 function bl_core_slot_z1() = bl_core_slot_z0() + bl_core_slot_h();
@@ -36,18 +48,25 @@ function bl_mount_hole_from_top() = p_port_length() + bl_t() - p_screw_side_offs
 function bl_mount_hole_x()  = bl_core_w() / 2;
 function bl_mount_hole_y()  = bl_core_h() - bl_mount_hole_from_top();
 
-function bl_board_len()    = 3.5 * p_bottle_d();                                 // 287
+function bl_board_len()    = p_ballast_board_len();                              // 318
 function bl_board_w()      = p_fin_board_w();                                    // 93
 function bl_board_slot_w() = bl_t();
 function bl_board_slot_depth()  = p_fin_board_w() / 3;
 function bl_center_slot_depth() = p_bottle_d() / 2;
 function bl_center_slot()  = bl_board_len() / 2;
-function bl_slat_spacing() = p_bottle_d() + bl_t();                             // 94
+function bl_slat_spacing() = p_port_height() + bl_t();                          // 96
 function bl_left_slot()    = bl_center_slot() - bl_slat_spacing() / 2;
 function bl_right_slot()   = bl_center_slot() + bl_slat_spacing() / 2;
-function bl_end_slot_offset() = 2 * bl_t();
+// Solid wood outboard of each red-foot slot. v5.5.0: 2 -> 3 board thicknesses
+// (the board grew by 2*t to keep every slot where it was relative to centre)
+// so the ends past the foot slots are less likely to split off.
+function bl_end_slot_offset() = 3 * bl_t();                                      // 36
 function bl_left_end_slot_x0()  = bl_end_slot_offset();
 function bl_right_end_slot_x0() = bl_board_len() - bl_end_slot_offset() - bl_board_slot_w();
+// 45-degree plan-view chamfer on both corners of the FRONT edge (y = board
+// width, the red-foot-slot edge; the yellow fin trails aft from y = 0 in the
+// full turtle). Legs are this long along each edge. v5.5.0.
+function bl_board_front_chamfer() = 20;
 
 function bl_lock_w()       = 5 * bl_t();                                         // 60
 function bl_lock_h()       = 5 * bl_t();
@@ -83,10 +102,16 @@ module bl_assert_valid() {
     assert(p_fin_board_w() > max(4.5 * t, p_bottle_d() / 2), "ballast: fin board too narrow.");
     assert(bl_core_w() == p_port_height() - 2 * t,
            "ballast: slat width must use the shared bottle diameter.");
-    assert(abs((bl_core_h() - bl_upper_diag_start()) - p_port_height()) < 0.001,
-           "ballast: top shoulder cut must begin one port_height below the slat top.");
+    assert(bl_core_h() - bl_upper_diag_start() >= p_port_length() + t - 0.001,
+           "ballast: top shoulder cut must begin at or below the John's port end.");
+    assert(bl_upper_neck_start() > bl_lower_neck_start(),
+           "ballast: upper and lower shoulder cuts overlap.");
     assert(abs((bl_slat_spacing() - bl_t()) - p_bottle_d()) < 0.001,
            "ballast: slat inner-face gap must equal the shared bottle diameter.");
+    assert(bl_board_front_chamfer() >= 0
+           && bl_board_front_chamfer() < bl_end_slot_offset()
+           && bl_board_front_chamfer() < bl_board_slot_depth(),
+           "ballast: board front chamfer would cut into a red-foot slot.");
     assert(abs(bl_center_slot_depth() - bl_fin_slot_depth()) < 0.001,
            "ballast: orange-base and yellow-fin slots must have equal depth.");
 }
@@ -118,7 +143,9 @@ module ballast_bottom_board_part(colored = true) {
     e = 0.01;
     wood_color([0.90, 0.38, 0.06], colored, p_wood_shade_ballast())
     linear_extrude(height = bl_t()) difference() {
-        square([bl_board_len(), bl_board_w()]);
+        let(L = bl_board_len(), W = bl_board_w(), ch = bl_board_front_chamfer())
+            polygon([[0, 0], [L, 0], [L, W - ch], [L - ch, W],
+                     [ch, W], [0, W - ch]]);
         translate([bl_left_slot() - bl_board_slot_w() / 2, -e])
             square([bl_board_slot_w(), bl_board_slot_depth() + e]);
         translate([bl_center_slot() - bl_board_slot_w() / 2, -e])

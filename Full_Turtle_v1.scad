@@ -1,7 +1,7 @@
 // ==========================================================================
 //  GENERATED FILE -- DO NOT EDIT.
 //  Produced by build/build.py from src/Full_Turtle.scad
-//  Turtle Body version 5.4.0
+//  Turtle Body version 6.3.4
 //  Edit lib/ and src/ instead, then run: python3 build/build.py
 // ==========================================================================
 /*
@@ -39,7 +39,7 @@ water_transparency = 0.63; // 63% transparent = alpha 0.37; increase for a clear
 // 0 preserves the installed pose; positive = counterclockwise viewed from above.
 // This is the input for future animation or control code (for example 360*$t).
 cage_rotation_angle = 0; // [0:1:360]
-side_batten_height = 205;
+side_batten_height = p_side_batten_h();  // 217 sail battens (v6.1.0: 205 + t); non-sail battens are cage-roof flush
 cage_vertical_position = 0;
 sail_frame_rotation_angle = 90;
 cage_exploded_view = 0;
@@ -323,7 +323,7 @@ function p_eco_screw_pair_offset() =
 // ---- control cap (large stationary disk; see CLAUDE.md s7) ----------
 //  TB-03 resolution: repository 5 mm roof / 2 mm boss is authoritative;
 //  the axle (below) is derived to this datum.
-function p_cap_disk_d()      = 100;   // control-cap disk (independent of p_bottle_cap_d)
+function p_cap_disk_d()      = 102;   // control-cap disk (independent of p_bottle_cap_d; was 100, +2 mm)
 function p_cap_roof_t()      = 5;     // disk / roof thickness
 function p_cap_boss_depth()  = 1.5;   // extra projection of the centre boss into the hollow cap
                                        // (was 2; lowered 0.5 mm -> 6.5 mm axle bearing length)
@@ -429,6 +429,10 @@ function p_cage_lower_hole_from_tip() = 10;
 // point (typical M3-into-rigid-plastic self-tap pilots run 2.5-2.8 mm) --
 // verify real thread engagement and tapping torque before relying on it.
 function p_cage_setscrew_pilot_d() = 2.5;
+// v6.0.0: the hub set screw (and its access recess) is switched OFF -- the
+// M3 in the sail crossbar connector now clamps the shaft. Kept, not deleted,
+// so it can be turned back on.
+function p_cage_setscrew_enabled() = false;
 // Flat-floored access recess around the set screw, cut into the hub face the
 // roof button opening uncovers, running the hub's full height (roof top down
 // through the hub bottom). Width is tangential, depth is radial (inward from
@@ -445,15 +449,35 @@ function p_cage_setscrew_recess_depth() = 3;
 function p_cage_roof_bevel() = 3;
 
 // ---- sail apparatus (CLAUDE.md s10) ---------------------------
-function p_side_batten_h()   = 205;
+// SAIL battens. v6.0.0: the upper notch holds two stacked layers (connector
+// below, crossbar half above), so the batten grew by the extra layer: 205 +
+// 2t (229) at first, trimmed back by t to 205 + t (217) in v6.1.0 so 15 mm of
+// batten stands above the notch again. Batten bottom, cage M3 holes and the
+// lower rails do not move. The NON-sail battens are shorter: their top is
+// flush with the cage roof top (derived in lib/sail_frame.scad, 178 mm).
+function p_side_batten_h()   = 205 + p_wood_t();       // 217
 function p_side_batten_w()   = 20;
 function p_side_batten_radial_t() = 10;
-function p_top_crossbar_len() = 6 * p_bottle_d();   // 492
+// Top crossbar span, tip to tip: 6 x bottle_d (504). v6.1.0 briefly made each
+// half a head-fin-slat length (span 843.6); v6.2.0 reverted it -- the sails
+// came out too big. The halves are derived from this span.
+function p_top_crossbar_len() = 6 * p_bottle_d();   // 504 (halves 212.2 each)
 function p_top_crossbar_w()  = 22;
 function p_top_crossbar_t()  = p_wood_t();          // 12
-function p_sail_bar_axle_hole_d() = p_axle_shaft_hole_d();  // TB-08: Ø8.2, same running
-                                                              // clearance as the cage hub bore (was Ø12 for the hex corners)
-function p_bottom_rail_len() = 3 * p_bottle_d();    // 246
+// v6.0.0: the top crossbar is split into a LEFT and RIGHT half plus a
+// centre "sail crossbar connector". The connector lies on the cage roof and
+// spans between the two sail battens; each half lies on top of it and runs
+// out to its tip. Both layers half-lap into the same (now 2t tall) sail-batten
+// notch, and one M3 per side screws the half down into the connector.
+// The shaft passes the connector with generous clearance (no bearing), and an
+// M3 self-tapped in from the connector's side face clamps it, locking frame,
+// cage and shaft together (replaces the cage hub set screw).
+function p_sail_connector_axle_hole_d()  = 9;     // Ø8 shaft, 0.5 mm radial clearance (was Ø8.2 in the one-piece bar)
+function p_sail_m3_pilot_d()             = 2.8;   // self-tap pilot: clamp screw + the half-to-connector screws
+function p_sail_m3_clear_d()             = p_cage_mount_hole_d();   // 3.2, through the top (half) layer
+function p_sail_connector_overhang()     = 15;    // connector past each sail batten's outer face
+function p_sail_bar_half_inboard()       = 15;    // each half runs this far inboard of its batten
+function p_bottom_rail_len() = 3 * p_bottle_d() + p_wood_t();   // 264 (v6.3.0: +t; 252 in v6.2.0, 360 in v6.1.0)
 function p_bottom_rail_bottle_clearance() = 1;
 function p_sail_rail_color()  = [0.56, 0.39, 0.39]; // brown (top AND bottom rails)
 function p_c_piece_color()    = [1.0, 0.52, 0.20];  // orange, retained
@@ -469,14 +493,15 @@ function p_solar_panel_t() = 2.5;    // real panel, independent of wood thicknes
 // first 84 mm of the fin inside the bottle. The shaft front (and its John
 // hole pair) stays where it was, so the shafts grow by exactly that overlap:
 //   334 (old approved formula) + 84 = 418.
-function p_rear_shaft_rear_x() = p_fin_board_w() + p_rear_fin_tab_width()
-                               - 2 * p_wood_t();                               // 84
+// v5.7.0: the yellow fin is exactly one board wide (it was board + a 15 mm
+// "rear tab", 108 mm -- wider than the 93 mm board it is cut from), so the
+// overlap is board width - 2t: 84 -> 69, shaft 418 -> 403, half-lap 42 -> 34.5.
+function p_rear_shaft_rear_x() = p_fin_board_w() - 2 * p_wood_t();             // 69
 function p_rear_shaft_len() = p_bottle_h()
                             + (2/3) * (p_fin_board_w() - 2 * p_wood_t())
                             - p_bottle_cap_h()
-                            + p_rear_shaft_rear_x();                            // 418 (334 until v5.3.0)
-function p_rear_half_lap_engagement() = 42;   // green/yellow interlock depth
-function p_rear_fin_tab_width() = 15;
+                            + p_rear_shaft_rear_x();                            // 403 (418 v5.3.0-v5.6.0)
+function p_rear_half_lap_engagement() = p_rear_shaft_rear_x() / 2;  // 34.5 green/yellow interlock depth
 // v5.4.0: the green shaft is as wide as the Ecojoiner John it bolts flush
 // against (John height = port height - 2 x stock), so their edges and M5 pair
 // line up. Was a fixed 59 -- 1 mm narrower than the 60 mm John, and the M5
@@ -492,12 +517,42 @@ function p_rear_shaft_hole_from_front() =
     p_rear_shaft_len() - p_rear_shaft_rear_x() - p_screw_side_offset()
     - p_bottle_h() + p_bottle_cap_h() + p_port_height();
 
+// ---- head fin: front fin (v5.8.0, EXPERIMENTAL; triangle since v6.3.0) ---------
+// The rear fin's mirror on the front (-X / physical 9 o'clock) port: two
+// flat slats above and below the front bottle bolt to the same Little John
+// M5 pairs and run the length of the bottle; a vertical triangular fin
+// half-laps into their outer ends and abuts the bottle base. Not built or
+// tested. See lib/head_fin.scad.
+//  * fin width (forward, along the bottle axis) = the widest board, so the
+//    fin is cut across one board (its height runs along the board's length)
+//  * the slats reach exactly as far into the Ecojoiner as the rear shafts,
+//    so their M5 pair lands at the same distance from the slat front
+function p_head_fin_w()       = p_fin_board_w();                         // 93
+function p_head_fin_h()       = p_bottle_d() + 6 * p_wood_t();           // 156: 2t of fin beyond each slat
+function p_head_slat_overlap() = 4 * p_wood_t();                         // 48: slat run into the fin
+// v6.3.1 profile (v6.3.0 had the slope the other way): the TOP edge runs
+// out only to this X (where the slats end); the leading edge slopes down and
+// FORWARD from there to a vertical flat "toe" at the full fin width, which
+// meets the bottom edge. Full width along the BOTTOM edge.
+function p_head_fin_heel_x()  = p_head_slat_overlap();                   // 48: top-edge length
+function p_head_fin_toe_h()   = 3 * p_wood_t();                          // 36: vertical flat nose at the bottom front (v6.3.4; was 2t)
+// v6.3.2: the fin extends DOWN below p_head_fin_h()'s bottom by this much (top
+// unchanged), and its new bottom-front corner is set back, giving a raked
+// forefoot below the toe flat.
+function p_head_fin_drop()    = 3 * p_wood_t();                          // 36
+function p_head_fin_forefoot_setback() = p_head_fin_drop();             // 36: = drop -> 45 deg cut (v6.3.3; was 18)
+function p_head_half_lap_engagement() = p_head_slat_overlap() / 2;       // 24
+function p_head_slat_reach()  = p_rear_shaft_len() - p_rear_shaft_rear_x();   // 334: bottle base -> slat front
+function p_head_slat_len()    = p_head_slat_reach() + p_head_slat_overlap();  // 382
+function p_head_slat_width()  = p_rear_shaft_width();                    // 60 == John height
+function p_head_slat_hole_from_front() = p_rear_shaft_hole_from_front(); // 113: same reach -> same John pair
+
 // ---- ballast attachment (CLAUDE.md s12) ---------------------
-function p_ballast_core_w()   = p_bottle_d() - 2 * p_wood_t();                  // 58
+function p_ballast_core_w()   = p_port_height() - 2 * p_wood_t();               // 60 == John height
 function p_ballast_core_len() = p_bottle_h() - p_bottle_cap_h() + 6 * p_wood_t();  // 360
-function p_ballast_slat_gap() = p_bottle_d();          // clear inner-face gap
-function p_ballast_slat_spacing() = p_bottle_d() + p_wood_t();                  // 94
-function p_ballast_board_len() = 3.5 * p_bottle_d();   // 287
+function p_ballast_slat_gap() = p_port_height();       // clear inner-face gap
+function p_ballast_slat_spacing() = p_port_height() + p_wood_t();               // 96
+function p_ballast_board_len() = 3.5 * p_bottle_d() + 2 * p_wood_t();   // 318 (v5.5.0: +2t, 3t ends past the foot slots)
 function p_ballast_fin_len()   = 3 * p_bottle_d();     // 246
 function p_ballast_lock_w()    = 5 * p_wood_t();       // 60
 
@@ -1029,15 +1084,27 @@ module eco_echo_clamp() {
 // [bundle] end   <util.scad>
 
 function bl_t()            = p_wood_t();
-function bl_core_w()       = p_bottle_d() - 2 * bl_t();                          // 58
+// The green core slats bolt flush against the Ecojoiner's Little Johns and
+// clamp the bottle between them, so they follow the PORT height (== bottle
+// diameter here; the HopeTurtles.org generator adds the form's fit offset):
+// width == John height, inner-face gap == port height. v5.4.1: written in
+// p_port_height() terms (same values) to make that tie explicit.
+function bl_core_w()       = p_port_height() - 2 * bl_t();                       // 60 == John height
 function bl_core_h()       = p_bottle_h() - p_bottle_cap_h() + 6.0 * bl_t();     // 360
 function bl_lower_lobe()   = 2 * bl_t();
 function bl_upper_lobe()   = 2 * bl_t();
 function bl_core_slot_h()  = bl_t();
 function bl_core_slot_depth() = bl_core_w() / 2;
-function bl_neck_w()       = p_bottle_d() - 3 * bl_t();                          // 46
+function bl_neck_w()       = p_port_height() - 3 * bl_t();                       // 48
 function bl_shoulder_step()   = bl_core_w() - bl_neck_w();                       // 12
-function bl_upper_diag_start() = bl_core_h() - p_port_height();
+// Distance from the slat top down to where the upper 45-degree shoulder cut
+// begins. The seated slat top is port_length + t inside the outer John's
+// port end, so the cut must start at least that far down or it bites into
+// the slat while still inside the John. v5.6.0: was one port_height (84,
+// 10 mm inside the John); now one board width lower and never above the
+// John end -- max(port_height, port_length) + t (96 at defaults).
+function bl_upper_diag_from_top() = max(p_port_height(), p_port_length()) + bl_t();
+function bl_upper_diag_start() = bl_core_h() - bl_upper_diag_from_top();
 function bl_upper_neck_start() = bl_upper_diag_start() - bl_shoulder_step();
 function bl_core_slot_z0() = bl_lower_lobe();
 function bl_core_slot_z1() = bl_core_slot_z0() + bl_core_slot_h();
@@ -1047,18 +1114,25 @@ function bl_mount_hole_from_top() = p_port_length() + bl_t() - p_screw_side_offs
 function bl_mount_hole_x()  = bl_core_w() / 2;
 function bl_mount_hole_y()  = bl_core_h() - bl_mount_hole_from_top();
 
-function bl_board_len()    = 3.5 * p_bottle_d();                                 // 287
+function bl_board_len()    = p_ballast_board_len();                              // 318
 function bl_board_w()      = p_fin_board_w();                                    // 93
 function bl_board_slot_w() = bl_t();
 function bl_board_slot_depth()  = p_fin_board_w() / 3;
 function bl_center_slot_depth() = p_bottle_d() / 2;
 function bl_center_slot()  = bl_board_len() / 2;
-function bl_slat_spacing() = p_bottle_d() + bl_t();                             // 94
+function bl_slat_spacing() = p_port_height() + bl_t();                          // 96
 function bl_left_slot()    = bl_center_slot() - bl_slat_spacing() / 2;
 function bl_right_slot()   = bl_center_slot() + bl_slat_spacing() / 2;
-function bl_end_slot_offset() = 2 * bl_t();
+// Solid wood outboard of each red-foot slot. v5.5.0: 2 -> 3 board thicknesses
+// (the board grew by 2*t to keep every slot where it was relative to centre)
+// so the ends past the foot slots are less likely to split off.
+function bl_end_slot_offset() = 3 * bl_t();                                      // 36
 function bl_left_end_slot_x0()  = bl_end_slot_offset();
 function bl_right_end_slot_x0() = bl_board_len() - bl_end_slot_offset() - bl_board_slot_w();
+// 45-degree plan-view chamfer on both corners of the FRONT edge (y = board
+// width, the red-foot-slot edge; the yellow fin trails aft from y = 0 in the
+// full turtle). Legs are this long along each edge. v5.5.0.
+function bl_board_front_chamfer() = 20;
 
 function bl_lock_w()       = 5 * bl_t();                                         // 60
 function bl_lock_h()       = 5 * bl_t();
@@ -1094,10 +1168,16 @@ module bl_assert_valid() {
     assert(p_fin_board_w() > max(4.5 * t, p_bottle_d() / 2), "ballast: fin board too narrow.");
     assert(bl_core_w() == p_port_height() - 2 * t,
            "ballast: slat width must use the shared bottle diameter.");
-    assert(abs((bl_core_h() - bl_upper_diag_start()) - p_port_height()) < 0.001,
-           "ballast: top shoulder cut must begin one port_height below the slat top.");
+    assert(bl_core_h() - bl_upper_diag_start() >= p_port_length() + t - 0.001,
+           "ballast: top shoulder cut must begin at or below the John's port end.");
+    assert(bl_upper_neck_start() > bl_lower_neck_start(),
+           "ballast: upper and lower shoulder cuts overlap.");
     assert(abs((bl_slat_spacing() - bl_t()) - p_bottle_d()) < 0.001,
            "ballast: slat inner-face gap must equal the shared bottle diameter.");
+    assert(bl_board_front_chamfer() >= 0
+           && bl_board_front_chamfer() < bl_end_slot_offset()
+           && bl_board_front_chamfer() < bl_board_slot_depth(),
+           "ballast: board front chamfer would cut into a red-foot slot.");
     assert(abs(bl_center_slot_depth() - bl_fin_slot_depth()) < 0.001,
            "ballast: orange-base and yellow-fin slots must have equal depth.");
 }
@@ -1129,7 +1209,9 @@ module ballast_bottom_board_part(colored = true) {
     e = 0.01;
     wood_color([0.90, 0.38, 0.06], colored, p_wood_shade_ballast())
     linear_extrude(height = bl_t()) difference() {
-        square([bl_board_len(), bl_board_w()]);
+        let(L = bl_board_len(), W = bl_board_w(), ch = bl_board_front_chamfer())
+            polygon([[0, 0], [L, 0], [L, W - ch], [L - ch, W],
+                     [ch, W], [0, W - ch]]);
         translate([bl_left_slot() - bl_board_slot_w() / 2, -e])
             square([bl_board_slot_w(), bl_board_slot_depth() + e]);
         translate([bl_center_slot() - bl_board_slot_w() / 2, -e])
@@ -1225,8 +1307,9 @@ module local_ballast_assembly(inspection_pullout = 0, colored = true) {
 //  crossbar. In the standalone the panel + bottle are %-reference only and
 //  excluded from F6/STL. See CLAUDE.md s11.
 //
-//  Shaft length = 305 + (2/3)(93-24) - 17 + 84 = 418 (v5.3.0: + the 84 mm
-//  fin overlap, so the bottle base abuts the fin's front edge at X = 0).
+//  Shaft length = 305 + (2/3)(93-24) - 17 + 69 = 403 (v5.3.0: + the fin
+//  overlap, so the bottle base abuts the fin's front edge at X = 0; v5.7.0:
+//  the fin is one board wide, so that overlap is 93 - 24 = 69, was 84).
 //  Half-lap and solar-joint clearances are 0.2 mm TOTAL, centred on the
 //  12 mm board (slot opening 12.2 mm, not 12.4). TB-07: the green-slat
 //  M5 mounting-hole pair is p_rear_shaft_hole_from_front() (113 mm at defaults),
@@ -1244,17 +1327,17 @@ module local_ballast_assembly(inspection_pullout = 0, colored = true) {
 // [bundle] end   <util.scad>
 
 function rf_t()             = p_wood_t();
-function rf_fin_width()     = p_fin_board_w() + p_rear_fin_tab_width();          // 108
+function rf_fin_width()     = p_fin_board_w();   // 93 -- one board wide (v5.7.0; was +15 mm tab = 108)
 function rf_fin_height()    = 3 * p_bottle_d();                                  // 246
 function rf_diag()          = (2/3) * p_bottle_d();                              // 54.667
-function rf_shaft_length()  = p_rear_shaft_len();                               // 418 (334 until v5.3.0)
+function rf_shaft_length()  = p_rear_shaft_len();                               // 403 (418 v5.3.0-v5.6.0)
 function rf_shaft_width()   = p_rear_shaft_width();                             // 60 (== John height)
 function rf_solar_holder_len() = p_solar_panel_w();                            // 148
 function rf_solar_holder_h()   = 3 * rf_t();                                    // 36
 function rf_solar_chamfer()    = 1.5 * rf_t();                                  // 18
 function rf_solar_slot_depth() = rf_solar_holder_h() / 2;                       // 18
-function rf_solar_notch_x0()   = rf_fin_width() - 2 * rf_t();                    // 84 == p_rear_shaft_rear_x()
-function rf_shaft_rear_x()     = rf_solar_notch_x0();                            // 84
+function rf_solar_notch_x0()   = rf_fin_width() - 2 * rf_t();                    // 69 == p_rear_shaft_rear_x()
+function rf_shaft_rear_x()     = rf_solar_notch_x0();                            // 69
 function rf_shaft_front_x()    = rf_shaft_rear_x() - rf_shaft_length();
 function rf_joint_meet_x()     = rf_shaft_rear_x() / 2;
 function rf_upper_shaft_z0()   = rf_fin_height() - 3 * rf_t();
@@ -1264,7 +1347,7 @@ function rf_solar_meet_z()     = rf_upper_shaft_z0() + rf_solar_slot_depth();
 module rf_assert_valid(half_lap, solar_clear, hole_from_front, hole_d) {
     t = rf_t();
     assert(t > 0 && p_bottle_h() > p_bottle_cap_h() && p_bottle_cap_d() > 0);
-    assert(p_bottle_d() > 0 && p_fin_board_w() > 2 * t && p_rear_fin_tab_width() > 0);
+    assert(p_bottle_d() > 0 && p_fin_board_w() > 2 * t);
     assert(p_solar_panel_w() > 0 && p_solar_panel_h() > 0 && p_solar_panel_t() > 0);
     assert(half_lap >= 0 && solar_clear >= 0);
     assert(rf_shaft_front_x() < 0 && rf_joint_meet_x() > half_lap / 2);
@@ -1356,6 +1439,146 @@ module rear_fin_assembly(half_lap = p_fit_clearance(), solar_clear = p_fit_clear
          " | slot opening = ", rf_t() + half_lap);
 }
 // [bundle] end   <../lib/rear_fin.scad>
+// [bundle] begin use <../lib/head_fin.scad>
+// ==========================================================================
+//  Turtle Body -- head fin: front fin  (lib module, EXPERIMENTAL)
+// --------------------------------------------------------------------------
+//  The rear fin's counterpart on the front (-X) port. Three wooden pieces:
+//  one vertical triangular fin and two flat bottle-holder slats, one above
+//  and one below the front bottle. The slats bolt to the front port's Little
+//  John M5 pairs exactly like the rear-fin shafts, run the length of the
+//  bottle, and half-lap into the fin, whose rear edge abuts the bottle base.
+//
+//  Local frame (installed by the full turtle):
+//    X = along the bottle axis, outward. X = 0 is the fin's rear edge = the
+//        bottle base. Slats run X = -reach .. overlap; fin X = 0 .. width.
+//    Y = across (slat width, fin thickness), centred on the bottle axis.
+//    Z = vertical, centred on the bottle axis, +Z = physically UP (v6.3.0).
+//        Slats at Z = +-(d/2 .. d/2+t).
+//
+//  Fin width (X) = the widest board, p_fin_board_w(): the fin is cut across
+//  one board. v6.3.1 profile: the top edge runs out to p_head_fin_heel_x()
+//  (where the slats end); the leading edge slopes down and FORWARD to a
+//  vertical flat toe, p_head_fin_toe_h() tall, at the full width; the bottom
+//  edge is full width. v6.3.2: the fin also drops p_head_fin_drop() below
+//  that, with a raked forefoot (bottom-front corner set back by
+//  p_head_fin_forefoot_setback()); the rear edge runs straight down. Earlier: v5.8.0 symmetric spear head (both corners cut
+//  to a flat nose); v6.3.0 the mirror slope (full width along the top).
+//
+//  Half-laps split the X = 0..overlap common zone at overlap/2: fin slots
+//  open from its rear edge, slat slots open from their outer ends. Clearance
+//  is 0.2 mm TOTAL, centred on the 12 mm board (opening 12.2), as the rear
+//  fin. Not built, fitted or tested.
+//
+//  Definitions only. Geometry is emitted by head_fin_assembly() or the
+//  individual part modules.
+// ==========================================================================
+
+// [bundle] begin use <params.scad>
+// [bundle] already inlined: params.scad
+// [bundle] end   <params.scad>
+// [bundle] begin use <util.scad>
+// [bundle] already inlined: util.scad
+// [bundle] end   <util.scad>
+
+function hf_t()            = p_wood_t();
+function hf_fin_width()    = p_head_fin_w();          // 93
+function hf_fin_height()   = p_head_fin_h();          // 156
+function hf_heel_x()       = p_head_fin_heel_x();     // 48: top-edge length
+function hf_toe_h()        = p_head_fin_toe_h();      // 24: bottom-front flat
+function hf_drop()         = p_head_fin_drop();       // 36: extension below the toe
+function hf_setback()      = p_head_fin_forefoot_setback();   // 18
+function hf_bottom_z()     = -hf_fin_height() / 2 - hf_drop();  // -114
+// leading-edge X at height z (top heel -> top of the toe flat)
+function hf_leading_x(z)   = hf_heel_x()
+    + (hf_fin_width() - hf_heel_x())
+      * (hf_fin_height() / 2 - z) / (hf_fin_height() - hf_toe_h());
+function hf_overlap()      = p_head_slat_overlap();   // 48
+function hf_joint_meet_x() = hf_overlap() / 2;        // 24
+function hf_slat_length()  = p_head_slat_len();       // 382
+function hf_slat_width()   = p_head_slat_width();     // 60
+function hf_slat_rear_x()  = hf_overlap();
+function hf_slat_front_x() = hf_slat_rear_x() - hf_slat_length();   // -334
+function hf_upper_slat_z0() = p_bottle_d() / 2;                     // 42
+function hf_lower_slat_z0() = -p_bottle_d() / 2 - hf_t();           // -54
+
+module hf_assert_valid(half_lap, hole_from_front, hole_d) {
+    t = hf_t();
+    assert(t > 0 && p_bottle_d() > 0 && p_fin_board_w() > 2 * t);
+    assert(half_lap >= 0 && half_lap < t);
+    assert(hf_overlap() > half_lap && hf_overlap() < hf_fin_width(),
+           "head_fin: slat overlap must sit inside the fin width.");
+    assert(hf_heel_x() >= hf_overlap() && hf_heel_x() < hf_fin_width(),
+           "head_fin: the top edge must reach at or beyond the slat ends.");
+    assert(hf_toe_h() >= 0 && hf_toe_h() < hf_fin_height(),
+           "head_fin: the bottom-front flat must be shorter than the fin.");
+    assert(hf_drop() >= 0 && hf_setback() >= 0
+           && hf_setback() < hf_fin_width() - hf_heel_x(),
+           "head_fin: forefoot setback leaves no bottom edge.");
+    // every slat end (both faces) must stay behind the sloping leading edge
+    for (z = [hf_lower_slat_z0(), hf_lower_slat_z0() + t,
+              hf_upper_slat_z0(), hf_upper_slat_z0() + t])
+        assert(hf_leading_x(z) > hf_overlap(),
+               "head_fin: a slat end pokes through the fin's leading edge.");
+    assert(hf_upper_slat_z0() + t + half_lap / 2 < hf_fin_height() / 2,
+           "head_fin: upper slat slot breaks out of the fin's top edge.");
+    assert(hf_slat_width() > t + half_lap);
+    assert(hole_d > 0 && 2 * p_eco_screw_pair_offset() + hole_d < hf_slat_width(),
+           "head_fin: M5 hole pair runs off the slat edges.");
+    assert(hole_from_front > hole_d / 2
+           && hf_slat_front_x() + hole_from_front + hole_d / 2 < 0,
+           "head_fin: slat hole must stay in the unjointed portion, behind the bottle base.");
+}
+
+module head_fin(half_lap = p_fit_clearance(), fn = undef, colored = true) {
+    t = hf_t(); eps = p_eps();
+    nn = fn == undef ? p_fn_wood() : fn;
+    W = hf_fin_width(); H2 = hf_fin_height() / 2;
+    // colour code: blue fin. Neutral: p_wood_shade_fin(), shared with the
+    // rear and ballast fins.
+    wood_color([0.15, 0.45, 0.85], colored, p_wood_shade_fin()) rotate([90, 0, 0])
+        linear_extrude(height = t, center = true, $fn = nn) difference() {
+            polygon([[0, hf_bottom_z()], [W - hf_setback(), hf_bottom_z()],
+                     [W, -H2], [W, -H2 + hf_toe_h()],
+                     [hf_heel_x(), H2], [0, H2]]);
+            for (z = [hf_upper_slat_z0(), hf_lower_slat_z0()])
+                translate([-eps, z - half_lap / 2])
+                    square([hf_joint_meet_x() + half_lap / 2 + eps, t + half_lap]);
+        }
+}
+
+module head_slat(z0 = 0, half_lap = p_fit_clearance(),
+                 hole_from_front = undef, hole_d = undef, colored = true) {
+    t = hf_t(); eps = p_eps();
+    hff = hole_from_front == undef ? p_head_slat_hole_from_front() : hole_from_front;
+    hd  = hole_d == undef ? p_m5_hole_d() : hole_d;
+    wood_color([0.55, 0.2, 0.7], colored, p_wood_shade_rear_fin()) difference() {
+        translate([hf_slat_front_x(), -hf_slat_width() / 2, z0])
+            cube([hf_slat_length(), hf_slat_width(), t]);
+        // M5 pair across the slat width, matching the John clamp pair
+        for (dy = [-p_eco_screw_pair_offset(), p_eco_screw_pair_offset()])
+            translate([hf_slat_front_x() + hff, dy, z0 - eps])
+                cylinder(d = hd, h = t + 2 * eps, $fn = 16);
+        translate([hf_joint_meet_x() - half_lap / 2, -(t + half_lap) / 2, z0 - eps])
+            cube([hf_slat_rear_x() - hf_joint_meet_x() + half_lap / 2 + eps,
+                  t + half_lap, t + 2 * eps]);
+    }
+}
+
+module head_fin_assembly(half_lap = p_fit_clearance(), exploded = 0,
+                         fn = undef, colored = true) {
+    hf_assert_valid(half_lap, p_head_slat_hole_from_front(), p_m5_hole_d());
+    translate([exploded, 0, 0]) head_fin(half_lap, fn, colored);
+    translate([0, 0,  exploded]) head_slat(hf_upper_slat_z0(), half_lap, colored = colored);
+    translate([0, 0, -exploded]) head_slat(hf_lower_slat_z0(), half_lap, colored = colored);
+
+    echo("HEAD FIN: fin = ", hf_fin_width(), " x ", hf_fin_height() + hf_drop(),
+         " | slat length = ", hf_slat_length(),
+         " | hole from front = ", p_head_slat_hole_from_front(),
+         " | half-lap engagement = ", p_head_half_lap_engagement(),
+         " | slot opening = ", hf_t() + half_lap);
+}
+// [bundle] end   <../lib/head_fin.scad>
 // [bundle] begin use <../lib/control_cap.scad>
 // ==========================================================================
 //  Turtle Body -- control cap  (lib module)
@@ -1377,14 +1600,35 @@ module rear_fin_assembly(half_lap = p_fit_clearance(), solar_clear = p_fit_clear
 //  Optional SIDE TABS (`side_tabs`, off by default in this module but ON in
 //  the wrapper): two internal ribs on the hollow insert cavity's inner wall,
 //  rooted at the cavity floor, that continue past the top lip as a free
-//  full-wall-thickness post with a gradual inward taper. See cap_side_tabs()
-//  below. Not validated -- a fit/registration experiment.
+//  full-wall-thickness post with a gradual inward taper near the free tip.
+//  Both tabs slide sideways together by `tab_side_offset_p` (the same
+//  real-world direction, not mirrored) instead of rotating about the cap
+//  axis; the flat inner face sits at `r_inner`, measured INWARD from the
+//  insert's TRUE outer wall by `tab_wall_inset_p` (not from the cavity
+//  wall the rib's outer face clips to). See cap_side_tabs() below. Not
+//  validated -- a fit/registration experiment.
 //
 //  Optional TAB WIRE HOLE (`tab_wire_hole`, off by default, ON in the
 //  wrapper alongside side_tabs): a round channel drilled down each side
 //  tab from its exposed free tip to a point inside the cap body, breaking
 //  through the tab's inner face into the hollow cavity -- for routing
 //  button wires from outside, down through the tab, into the cap interior.
+//
+//  Optional REFERENCE ETCH LINE (`etch_line`, off by default): a shallow,
+//  narrow groove recessed into the cavity ceiling marking the diameter
+//  axis that runs through the centre bore and both button centres --
+//  a visual alignment mark only, no structural role. See
+//  cap_axis_etch_line() below.
+//
+//  Button holes can carry an off-axis slide (`button_offset`, 0 by
+//  default) -- both holes move the same real-world direction, mirroring
+//  the tab slide convention -- so they can sit off the etched axle line.
+//  See cap_button_holes_cut() below.
+//
+//  Optional USB-C PORT HOLE (`usbc_hole`, off by default): a single round
+//  through-hole on the same circle as the two button holes, centred on
+//  the short arc between them (off button_axis entirely). See
+//  cap_usbc_hole_cut() below.
 //
 //  Definitions only. Geometry is emitted by control_cap().
 // ==========================================================================
@@ -1462,11 +1706,16 @@ module cap_cavity_cut(roof_t, insert_len, insert_od, insert_wall_t,
     }
 }
 
-module cap_button_holes_cut(roof_t, button_d, axis, radius) {
+// Button holes can carry an off-axis slide (`offset`, 0 by default): both
+// holes move the same real-world direction and magnitude, off the nominal
+// button axis -- mirrors the tab-pair slide convention in cap_side_tabs(),
+// so holes and tabs can be slid off the same etched reference line
+// together.
+module cap_button_holes_cut(roof_t, button_d, axis, radius, offset = 0) {
     module hole(x, y)
         translate([x, y, -p_eps()]) cylinder(h = roof_t + 2 * p_eps(), d = button_d);
-    if (axis == "x") { hole(radius, 0); hole(-radius, 0); }
-    else             { hole(0, radius); hole(0, -radius); }
+    if (axis == "x") { hole(radius, offset); hole(-radius, offset); }
+    else             { hole(offset, radius); hole(offset, -radius); }
 }
 
 // Two internal ribs ("side tabs") on the hollow insert cavity's inner
@@ -1477,19 +1726,22 @@ module cap_button_holes_cut(roof_t, button_d, axis, radius) {
 // exactly as in the original flat-cube tab:
 //   - RIB (Z = roof_t .. roof_t + lip_h): rooted at the cavity floor (the
 //     "inside bottom" where the hollow meets the solid roof/boss), thin --
-//     spans from (cavity wall radius - tab_depth) out to the cavity wall
-//     radius, i.e. filling in the sides of the circular interior locally.
-//     Built as a flat tab_width x tab_depth block, then INTERSECTED with a
+//     spans from the flat inner face (r_inner) out to the cavity wall
+//     radius (r_outer), i.e. filling in the sides of the circular interior
+//     locally. r_inner is measured INWARD from the insert's TRUE outer
+//     wall (r_wall) by tab_wall_inset -- not from the cavity wall r_outer
+//     the rib's own outer face clips to. Built as a flat
+//     tab_width x (r_outer - r_inner) block, then INTERSECTED with a
 //     cylinder at the cavity-wall radius -- this only clips the block's
 //     far outer corners back onto the wall's arc; the flat inner face and
 //     flat parallel sides are untouched (the intersection doesn't reach
 //     them).
 //   - LIP EXTENSION (Z = roof_t + lip_h .. + tab_overhang): above the top
 //     lip (chamfer tip) there is no cap material at all, so this segment
-//     is widened to run the FULL insert wall thickness -- same flat
-//     parallel sides as the rib -- then intersected with a cylinder at the
-//     insert's own outer wall radius, so only ITS outer corners get clipped
-//     onto that (larger) arc.
+//     is widened to run out to the insert's own TRUE outer wall (r_wall)
+//     -- same flat parallel sides as the rib -- then intersected with a
+//     cylinder at that radius, so only ITS outer corners get clipped onto
+//     that (larger) arc.
 // Above tab_taper_start_offset mm BELOW the lip, the INNER face stops being
 // flat: from that Z up to the free tip it leans inward (radially), gaining
 // tab_taper_gain (total, radially) by the tip, as ONE continuous linear
@@ -1504,10 +1756,15 @@ module cap_button_holes_cut(roof_t, button_d, axis, radius) {
 // cavity floor) are rounded with a tab_fillet_r quarter-round, cut with a
 // corner-sliver subtraction (only the floor-facing edges; the lip
 // extension doesn't touch the floor, so it stays unrounded).
-// The finished pair is placed along the button axis (axis "x"/"y") and then
-// rotated an extra tab_rotate_deg about Z -- positive = counter-clockwise,
-// negative = clockwise, viewed from above (+Z looking down at the boss/
-// insert side) -- to swing both tabs off that axis together.
+// The finished pair is placed along the button axis (axis "x"/"y") and
+// then BOTH slid sideways together by tab_side_offset (the same real-world
+// direction and magnitude -- not mirrored, and NOT a rotation about the
+// cap axis). Because the outer-face clip cylinders stay centred on the
+// true cap axis while the tab's own flat footprint moves off that centre,
+// the curved outer face naturally sits a little closer to the true wall
+// on the side nearer the slide direction and a little farther on the
+// other -- that asymmetry is "matching the curve of a wall you're not
+// centred on," not a defect.
 // Not a cut: this ADDS material into the cavity (and, above the lip, past
 // the cap's normal outer profile).
 //
@@ -1523,10 +1780,11 @@ module cap_button_holes_cut(roof_t, button_d, axis, radius) {
 // between two off-axis points. Only ever removes tab material (the
 // breakout point is already inside the cavity's own empty radius, so nothing
 // else needs cutting).
-module cap_side_tabs(wall_d, outer_wall_d, roof_t, lip_h, tab_width, tab_depth, tab_overhang, axis, tab_fillet_r = 0, tab_taper_gain = 0, tab_taper_start_offset = 0, tab_rotate_deg = 0, wire_hole = false, wire_hole_d = 5, wire_hole_exit_from_lip = 15, fn = 48) {
-    r_outer = wall_d / 2;        // cavity wall radius -- rib's outer clip radius
-    r_wall  = outer_wall_d / 2;  // insert's outer wall radius -- lip-extension's outer clip radius
-    r_inner = r_outer - tab_depth; // rib's flat inner face at/below the taper start
+module cap_side_tabs(wall_d, outer_wall_d, roof_t, lip_h, tab_width, tab_wall_inset, tab_overhang, axis, tab_fillet_r = 0, tab_taper_gain = 0, tab_taper_start_offset = 0, tab_side_offset = 0, wire_hole = false, wire_hole_d = 5, wire_hole_exit_from_lip = 15, fn = 48) {
+    r_outer = wall_d / 2;         // cavity wall radius -- rib's outer clip radius
+    r_wall  = outer_wall_d / 2;   // insert's TRUE outer wall radius -- lip-extension's outer clip radius
+    r_inner = r_wall - tab_wall_inset; // rib's flat inner face, measured INWARD from the true outer wall
+    x_off   = tab_side_offset;    // same real-world slide for both tabs -- not mirrored, not a rotation
 
     lip_z    = roof_t + lip_h;                                   // top of the rooted rib
     tip_z    = lip_z + tab_overhang;                              // free tip
@@ -1544,12 +1802,12 @@ module cap_side_tabs(wall_d, outer_wall_d, roof_t, lip_h, tab_width, tab_depth, 
     wire_inner_r_at_exit = (wire_exit_z >= taper0_z) ? r_at(wire_exit_z) : r_inner;
     wire_exit_r    = max(0, wire_inner_r_at_exit - wire_hole_d);  // a full diameter past the inner face
 
-    // flat, parallel-sided block: X in [-tab_width/2, tab_width/2],
+    // flat, parallel-sided block: X in [-tab_width/2 + x_off, tab_width/2 + x_off],
     // radial coordinate (named Y here) in [r0,r1], axial in [z0,z1].
     // Built along the local +Y axis; one_tab() places it at +/-Y (or, for
     // axis="x", the whole pair is rotated 90 deg afterwards).
     module raw_block(sign, r0, r1, z0, z1) {
-        translate([-tab_width / 2, sign > 0 ? r0 : -r1, z0])
+        translate([-tab_width / 2 + x_off, sign > 0 ? r0 : -r1, z0])
             cube([tab_width, r1 - r0, z1 - z0]);
     }
 
@@ -1559,9 +1817,9 @@ module cap_side_tabs(wall_d, outer_wall_d, roof_t, lip_h, tab_width, tab_depth, 
     // end slices so it stays a plain linear taper (no bulge).
     module raw_block_tapered(sign, r0_bot, r0_top, r1, z0, z1) {
         hull() {
-            translate([-tab_width / 2, sign > 0 ? r0_bot : -r1, z0])
+            translate([-tab_width / 2 + x_off, sign > 0 ? r0_bot : -r1, z0])
                 cube([tab_width, max(p_eps(), r1 - r0_bot), p_eps()]);
-            translate([-tab_width / 2, sign > 0 ? r0_top : -r1, z1 - p_eps()])
+            translate([-tab_width / 2 + x_off, sign > 0 ? r0_top : -r1, z1 - p_eps()])
                 cube([tab_width, max(p_eps(), r1 - r0_top), p_eps()]);
         }
     }
@@ -1569,6 +1827,9 @@ module cap_side_tabs(wall_d, outer_wall_d, roof_t, lip_h, tab_width, tab_depth, 
     // clips a solid to a circle of radius r_clip (only trims material that
     // sticks out past that radius -- flat faces already inside it are
     // untouched, so this only rounds the far/outer corners of raw_block).
+    // Always centred on the true cap axis (never offset) -- this is what
+    // makes the outer face follow the wall's own curvature even though the
+    // tab's own footprint is slid off-centre by x_off.
     module curved_clip(r_clip, z0, z1) {
         translate([0, 0, z0])
             cylinder(r = r_clip, h = z1 - z0);
@@ -1587,13 +1848,14 @@ module cap_side_tabs(wall_d, outer_wall_d, roof_t, lip_h, tab_width, tab_depth, 
     }
 
     // capsule-shaped wire channel: a hull of two spheres between the tip
-    // entry point and the cavity-breakout exit point, both at local X=0,
-    // Y = sign * radius (matching the raw_block sign convention above).
+    // entry point and the cavity-breakout exit point, both at local
+    // X = x_off, Y = sign * radius (matching the raw_block sign convention
+    // above, slid the same x_off as the rest of the tab).
     module wire_channel(sign) {
         hull() {
-            translate([0, sign * wire_entry_r, tip_z])
+            translate([x_off, sign * wire_entry_r, tip_z])
                 sphere(d = wire_hole_d, $fn = fn);
-            translate([0, sign * wire_exit_r, wire_exit_z])
+            translate([x_off, sign * wire_exit_r, wire_exit_z])
                 sphere(d = wire_hole_d, $fn = fn);
         }
     }
@@ -1618,19 +1880,19 @@ module cap_side_tabs(wall_d, outer_wall_d, roof_t, lip_h, tab_width, tab_depth, 
                         curved_clip(r_outer, taper0_z - p_eps(), lip_z + 2 * p_eps());
                     }
                 // C: lip extension proper -- outer face widens to the
-                // insert's own outer wall (r_wall); taper continues from
-                // r_lip (whatever it reached at the lip) to r_tip.
+                // insert's own true outer wall (r_wall); taper continues
+                // from r_lip (whatever it reached at the lip) to r_tip.
                 intersection() {
                     raw_block_tapered(sign, r_lip, r_tip, r_wall, lip_z, tip_z);
                     curved_clip(r_wall, lip_z - p_eps(), tip_z + p_eps());
                 }
             }
             if (tab_fillet_r > 0) {
-                // left side (X = -tab_width/2): material at X > -tab_width/2
-                translate([-tab_width / 2, rib_y0, roof_t])
+                // left side (X = -tab_width/2 + x_off): material at X > that
+                translate([-tab_width / 2 + x_off, rib_y0, roof_t])
                     side_sliver(r_outer - r_inner, tab_fillet_r);
-                // right side (X = +tab_width/2): material at X < +tab_width/2 -> mirror
-                translate([tab_width / 2, rib_y0, roof_t])
+                // right side (X = +tab_width/2 + x_off): material at X < that -> mirror
+                translate([tab_width / 2 + x_off, rib_y0, roof_t])
                     mirror([1, 0, 0])
                         side_sliver(r_outer - r_inner, tab_fillet_r);
             }
@@ -1640,7 +1902,39 @@ module cap_side_tabs(wall_d, outer_wall_d, roof_t, lip_h, tab_width, tab_depth, 
     }
 
     base_rot = (axis == "x") ? 90 : 0;
-    rotate([0, 0, base_rot + tab_rotate_deg]) { one_tab(1); one_tab(-1); }
+    rotate([0, 0, base_rot]) { one_tab(1); one_tab(-1); }
+}
+
+// USB-C port hole: a single round through-hole in the roof, automatically
+// positioned on the SAME circle as the two button holes (radius =
+// hypot(radius, offset), i.e. the button holes' own true centre distance)
+// and centred on the SHORT arc between them -- i.e. on the axis
+// PERPENDICULAR to button_axis, on the same side as the sign of `offset`
+// (offset == 0 defaults to the positive side, where both arcs are equal).
+// This keeps it off the button_axis entirely, clear of the side tabs
+// which run along that axis.
+module cap_usbc_hole_cut(roof_t, hole_d, axis, radius, offset) {
+    r = sqrt(radius * radius + offset * offset);
+    s = offset < 0 ? -1 : 1;
+    pos = (axis == "x") ? [0, s * r] : [s * r, 0];
+    translate([pos[0], pos[1], -p_eps()])
+        cylinder(h = roof_t + 2 * p_eps(), d = hole_d);
+}
+
+// Reference etch line: a shallow groove recessed into the cavity ceiling
+// (roof underside, z = roof_t), running the full cavity diameter along the
+// given axis and centred on the cap axis -- i.e. it passes through the
+// centre bore and (for axis == button_axis) both button centres. Purely a
+// faint alignment mark for assembly, not a functional/structural feature.
+module cap_axis_etch_line(span_r, roof_t, width, depth, axis) {
+    len = 2 * span_r;
+    translate([0, 0, roof_t - depth])
+        if (axis == "x")
+            translate([-len / 2, -width / 2, 0])
+                cube([len, width, depth + p_eps()]);
+        else
+            translate([-width / 2, -len / 2, 0])
+                cube([width, len, depth + p_eps()]);
 }
 
 module control_cap(disk_od       = p_cap_disk_d(),
@@ -1656,6 +1950,7 @@ module control_cap(disk_od       = p_cap_disk_d(),
                    button_d      = p_button_upper_d(),
                    button_axis   = p_button_axis(),
                    button_radius = p_button_radius(),
+                   button_offset = 0,      // off-axis slide, both holes, same direction (0 = on-axis)
                    band_enable   = true,
                    band_count    = undef,
                    band_z1       = p_seal_groove1_from_shoulder(),
@@ -1668,22 +1963,34 @@ module control_cap(disk_od       = p_cap_disk_d(),
                    oring_gland_z  = p_cap_oring_gland_from_face(),
                    side_tabs      = false,  // two internal cavity ribs + lip extension
                    tab_width_p    = 22,
-                   tab_depth_p    = 2,
+                   tab_wall_inset_p = 6,   // tab's inner face, measured INWARD from the insert's
+                                           // TRUE outer wall (r_wall) -- not from the cavity wall
                    tab_overhang_p = 14,    // how far the lip extension runs past the top lip
                    tab_fillet_p   = 0,     // rounds the rib's two bottom (floor) edges
                    tab_taper_gain_p = 0,   // total inward (radial) lean of the inner face by
                                            // the free tip, vs. the plain rib thickness
                    tab_taper_start_p = 0,  // taper begins this far BELOW the lip (0 = at the lip)
-                   tab_rotate_p     = 0,   // extra rotation of the tab pair about Z, off the
-                                           // button axis (+ = CCW, - = CW, viewed from above)
+                   tab_side_offset_p = 0,  // both tabs slide this far sideways, same real-world
+                                           // direction (not mirrored, not a rotation about the axis)
                    tab_wire_hole    = false, // drill a wire-routing channel down each tab
                    tab_wire_hole_d  = 5,
                    tab_wire_hole_exit_from_lip = 15, // how far below the lip the channel breaks
                                                       // through into the hollow cavity
+                   etch_line       = false, // faint reference groove on the cavity ceiling
+                   etch_line_w     = 0.6,
+                   etch_line_d     = 0.2,
+                   usbc_hole       = false, // USB-C port hole, on the button circle, between the buttons
+                   usbc_hole_d     = 12,
                    fn            = undef) {
     bc = band_count == undef ? p_seal_groove_count() : band_count;
     nn = fn == undef ? p_fn_plastic() : fn;
     inner_top_od = max(1, insert_od - 2 * insert_wall_t);
+
+    // ---- tab / reference-line geometry (shared by the asserts and cuts below) ----
+    r_outer_true = inner_top_od / 2;           // cavity wall radius
+    r_wall_true  = insert_od / 2;               // insert's TRUE outer wall radius
+    r_inner      = r_wall_true - tab_wall_inset_p; // tab's flat inner face
+    button_center_dist = sqrt(button_radius * button_radius + button_offset * button_offset);
 
     // ---- fit / sanity asserts (kept from the standalone) ----
     assert(disk_od > insert_od && insert_od > 2 * insert_wall_t);
@@ -1692,16 +1999,19 @@ module control_cap(disk_od       = p_cap_disk_d(),
     assert(band_w > 0 && bc >= 0 && bc <= 2);
     if (band_enable)
         for (z = bc == 2 ? [band_z1, band_z2] : bc == 1 ? [band_z1] : [])
-            assert(z - band_w / 2 > 0 && z + band_w / 2 < insert_len - chamfer_h,
-                   "control_cap: seal groove must stay inside the straight insert body.");
+            assert(z - band_w / 2 >= 0 && z + band_w / 2 < insert_len - chamfer_h,
+                   "control_cap: seal groove must stay inside the straight insert body (it may start flush at the shoulder, z - band_w/2 == 0).");
     if (band_enable && bc == 2)
         assert(abs(band_z2 - band_z1) > band_w, "control_cap: seal grooves overlap.");
-    assert(axle_bore_d > 0 && button_radius - button_d / 2 > axle_bore_d / 2);
-    assert(button_radius + button_d / 2 < disk_od / 2);
+    // Button holes can carry an off-axis slide (button_offset); clearance
+    // checks use the true centre distance, not just the nominal radius.
+    assert(axle_bore_d > 0 && button_center_dist - button_d / 2 > axle_bore_d / 2,
+           "control_cap: button hole overlaps the centre axle bore -- increase button_radius/reduce button_d, or reduce button_offset.");
+    assert(button_center_dist + button_d / 2 < disk_od / 2);
     assert(button_axis == "x" || button_axis == "y");
     assert(boss_depth > 0 && boss_depth < insert_len);
     assert(boss_d > axle_bore_d && boss_d < inner_top_od);
-    assert(boss_d / 2 < button_radius - button_d / 2,
+    assert(boss_d / 2 < button_center_dist - button_d / 2,
            "control_cap: centre boss must clear the button openings.");
     if (oring_gland) {
         assert(oring_gland_od > axle_bore_d && oring_gland_od < boss_d - 1,
@@ -1711,31 +2021,42 @@ module control_cap(disk_od       = p_cap_disk_d(),
                "control_cap: O-ring gland + lands do not fit the axle bore column (deepen the boss or move the gland).");
     }
     if (side_tabs) {
-        assert(tab_depth_p > 0 && tab_depth_p < (inner_top_od - boss_d) / 2,
-               "control_cap: side tab depth must stay clear of the centre boss.");
+        assert(tab_wall_inset_p > 0 && tab_wall_inset_p < r_wall_true,
+               "control_cap: side tab wall inset must be positive and less than the insert's true outer wall radius.");
+        assert(r_inner > boss_d / 2,
+               "control_cap: side tab inner face must stay clear of the centre boss -- reduce tab_wall_inset or the boss diameter.");
         assert(tab_width_p > 0 && tab_width_p < inner_top_od,
                "control_cap: side tab width does not fit the cavity wall.");
         assert(tab_overhang_p > 0,
                "control_cap: side tab overhang must be positive.");
         assert(tab_fillet_p >= 0,
                "control_cap: side tab fillet radius cannot be negative.");
-        assert(tab_taper_gain_p >= 0
-               && tab_taper_gain_p < inner_top_od / 2 - tab_depth_p - boss_d / 2,
+        assert(tab_taper_gain_p >= 0 && tab_taper_gain_p < r_inner - boss_d / 2,
                "control_cap: side tab taper gain must stay clear of the centre boss.");
         assert(tab_taper_start_p >= 0,
                "control_cap: side tab taper start offset cannot be negative.");
         // The rib runs the full insert_len (floor to top lip); the lip
         // extension then continues tab_overhang_p further, widened to the
-        // full insert wall thickness (see cap_side_tabs). Both are
-        // deliberately outside the plain cylindrical cavity envelope. The
-        // inner face tapers inward by tab_taper_gain_p (total, by the free
-        // tip) starting tab_taper_start_p mm below the lip (0 = at the lip).
+        // insert's own true outer wall (see cap_side_tabs). Both tabs slide
+        // tab_side_offset_p mm sideways together -- no rotation about the
+        // cap axis. The inner face tapers inward by tab_taper_gain_p (total,
+        // by the free tip) starting tab_taper_start_p mm below the lip.
         if (tab_wire_hole) {
             assert(tab_wire_hole_d > 0, "control_cap: wire hole diameter must be positive.");
             assert(tab_wire_hole_exit_from_lip > 0
                    && roof_t + insert_len - tab_wire_hole_exit_from_lip > roof_t,
                    "control_cap: wire hole exit point must land inside the cap body, above the floor.");
         }
+    }
+    if (etch_line)
+        assert(etch_line_d > 0 && etch_line_d < roof_t,
+               "control_cap: etch line depth must be positive and less than the roof thickness.");
+    if (usbc_hole) {
+        assert(usbc_hole_d > 0, "control_cap: USB-C hole diameter must be positive.");
+        assert(button_center_dist - usbc_hole_d / 2 > boss_d / 2,
+               "control_cap: USB-C hole overlaps the centre boss -- increase button_radius/button_offset or reduce the hole diameter.");
+        assert(button_center_dist + usbc_hole_d / 2 < disk_od / 2,
+               "control_cap: USB-C hole runs past the disk edge.");
     }
 
     $fn = nn;
@@ -1755,8 +2076,8 @@ module control_cap(disk_od       = p_cap_disk_d(),
             // widening into a full-thickness lip extension past the top lip
             if (side_tabs)
                 cap_side_tabs(inner_top_od, insert_od, roof_t, insert_len,
-                              tab_width_p, tab_depth_p, tab_overhang_p, button_axis,
-                              tab_fillet_p, tab_taper_gain_p, tab_taper_start_p, tab_rotate_p,
+                              tab_width_p, tab_wall_inset_p, tab_overhang_p, button_axis,
+                              tab_fillet_p, tab_taper_gain_p, tab_taper_start_p, tab_side_offset_p,
                               tab_wire_hole, tab_wire_hole_d, tab_wire_hole_exit_from_lip, nn);
         }
         // central bore through roof + boss
@@ -1770,29 +2091,47 @@ module control_cap(disk_od       = p_cap_disk_d(),
                     translate([axle_bore_d / 2 - p_eps(), 0])
                         square([oring_gland_od / 2 - axle_bore_d / 2 + p_eps(),
                                 oring_gland_w]);
-        cap_button_holes_cut(roof_t, button_d, button_axis, button_radius);
+        cap_button_holes_cut(roof_t, button_d, button_axis, button_radius, button_offset);
+        if (etch_line)
+            cap_axis_etch_line(r_outer_true, roof_t, etch_line_w, etch_line_d, button_axis);
+        if (usbc_hole)
+            cap_usbc_hole_cut(roof_t, usbc_hole_d, button_axis, button_radius, button_offset);
     }
 
     echo("CAP: disk / insert dia / total height = ",
          disk_od, insert_od, roof_t + insert_len);
     echo("CAP: roof / boss depth / axle bearing length = ",
          roof_t, boss_depth, roof_t + boss_depth);
+    echo("CAP: buttons -- dia ", button_d, ", nominal radius ", button_radius,
+         ", off-axis offset ", button_offset, " (same direction, not mirrored) -> true centre dist ",
+         button_center_dist, " mm, ", 2 * button_radius,
+         " mm centre-to-centre along the axis, ", 2 * button_center_dist, " mm true straight-line.");
     if (oring_gland)
         echo("CAP: axle O-ring gland -- bore ", axle_bore_d, " -> groove OD ",
              oring_gland_od, " x ", oring_gland_w, " wide, centred ", oring_gland_z,
              " mm below the outer face. Seals a ", p_axle_oring_cs(),
              " mm-CS O-ring (ID ", p_axle_oring_id(), ") on the axle round section.");
     if (side_tabs)
-        echo("CAP: side tabs -- width ", tab_width_p, " x rib depth ", tab_depth_p,
+        echo("CAP: side tabs -- width ", tab_width_p, ", inner face r_inner=", r_inner,
+             " (= true outer wall ", r_wall_true, " - tab_wall_inset_p ", tab_wall_inset_p, ")",
              ", rib height ", insert_len, " (floor to lip) + ", tab_overhang_p,
              " mm full-thickness lip extension, inner face tapers +", tab_taper_gain_p,
              " mm radially starting ", tab_taper_start_p, " mm below the lip, ",
              tab_fillet_p, " mm bottom-edge fillet, on the ", button_axis,
-             " axis rotated ", tab_rotate_p, " deg.");
+             " axis, both tabs slid ", tab_side_offset_p, " mm the same direction (no rotation).");
     if (side_tabs && tab_wire_hole)
         echo("CAP: tab wire hole -- ", tab_wire_hole_d,
              " mm dia, from the tip down to ", tab_wire_hole_exit_from_lip,
              " mm below the lip, where it breaks into the cavity.");
+    if (etch_line)
+        echo("CAP: reference etch line -- ", etch_line_w, " x ", etch_line_d,
+             " mm groove on the cavity ceiling, spanning the full ", 2 * r_outer_true,
+             " mm cavity diameter along the ", button_axis,
+             " axis -- passes through the centre bore and both button centres.");
+    if (usbc_hole)
+        echo("CAP: USB-C hole -- ", usbc_hole_d,
+             " mm dia, on the button circle (r=", button_center_dist,
+             " mm), centred on the SHORT arc between the two button holes.");
 }
 // [bundle] end   <../lib/control_cap.scad>
 // [bundle] begin use <../lib/sail_shaft.scad>
@@ -1902,6 +2241,9 @@ module sail_shaft(round_d          = p_axle_round_d(),
 //  (setscrew_pilot_d/setscrew_angle) presses on the shaft to lock it to the
 //  rotating cage. The pilot is a self-tapping hole into the printed PLA hub,
 //  not a clearance hole for a separate nut -- untested thread engagement.
+//  v6.0.0: OFF by default (`setscrew = false`, which also drops its access
+//  recess) -- the shaft is now clamped by the M3 in the sail crossbar
+//  connector instead (lib/sail_frame.scad). Set true to bring it back.
 //
 //  Definitions only. Geometry is emitted by control_cage(); the wrapper /
 //  full assembly applies the print-pose or installed transform.
@@ -1945,6 +2287,7 @@ module control_cage(inner_d       = p_cage_inner_d(),
                     scallops      = true,
                     roof_bevel    = p_cage_roof_bevel(),
                     wave_segments = p_cage_wave_segments(),
+                    setscrew         = p_cage_setscrew_enabled(),  // v6.0.0: off; the sail connector clamps the shaft
                     setscrew_pilot_d = p_cage_setscrew_pilot_d(),  // TB-08: locks the shaft to the cage
                     setscrew_angle   = undef,  // undef = aim at the button opening (button_angle)
                     setscrew_recess_w     = p_cage_setscrew_recess_w(),
@@ -2097,14 +2440,15 @@ module control_cage(inner_d       = p_cage_inner_d(),
         // TB-08: single radial set screw, drilled from the hub's outer
         // surface in past the centre so it always reaches the shaft hole
         // regardless of shaft_hole_d.
-        rotate([0, 0, ss_angle])
-            translate([-eps, 0, setscrew_z])
-                rotate([0, 90, 0])
-                    cylinder(d = setscrew_pilot_d, h = hub_d / 2 + 2 * eps, $fn = 32);
+        if (setscrew)
+            rotate([0, 0, ss_angle])
+                translate([-eps, 0, setscrew_z])
+                    rotate([0, 90, 0])
+                        cylinder(d = setscrew_pilot_d, h = hub_d / 2 + 2 * eps, $fn = 32);
         // Flat-floored key-access recess around the screw, running the full
         // hub height (roof top through the hub bottom). Open end to end, so
         // the roof-down print has no overhang here.
-        if (setscrew_recess_depth > 0)
+        if (setscrew && setscrew_recess_depth > 0)
             rotate([0, 0, ss_angle])
                 translate([recess_floor_r, -setscrew_recess_w / 2, cage_hub_bottom - eps])
                     cube([setscrew_recess_depth + 2, setscrew_recess_w,
@@ -2124,7 +2468,7 @@ module control_cage(inner_d       = p_cage_inner_d(),
     echo("CAGE: OD / ID / roof-to-tip = ", outer_d, inner_d, cage_top - wall_tip_z);
     echo("CAGE: groove w / d = ", notch_w, notch_depth,
          " | M3 dia / pitch = ", m3_d, mount_hole_z - lower_hole_z);
-    echo("CAGE: shaft hole = ", shaft_hole_d,
+    echo("CAGE: shaft hole = ", shaft_hole_d, " | set screw on = ", setscrew,
          " | set-screw pilot dia / angle = ", setscrew_pilot_d, ss_angle,
          " | recess w / depth / floor r = ", setscrew_recess_w, setscrew_recess_depth, recess_floor_r);
     echo("CAGE: prints ROOF-FACE-DOWN (flat top on the bed). roof_bevel = ",
@@ -2137,7 +2481,8 @@ module control_cage(inner_d       = p_cage_inner_d(),
 // ==========================================================================
 //  Turtle Body -- sail apparatus frame  (lib module)
 // --------------------------------------------------------------------------
-//  Wooden frame only: top crossbar, four battens (two sail, two non-sail),
+//  Wooden frame only: top crossbar (v6.0.0: two halves + a centre
+//  connector that clamps the shaft with an M3), four battens (two sail, two non-sail),
 //  bottom sail bars, joint strengtheners, orange C ends and the sail
 //  membranes. Emits no axle. Emits no bottle/cap/cage either unless
 //  show_control_bottle=true, which adds reference-only cut_bottle +
@@ -2236,14 +2581,21 @@ module sail_frame(
     // ============================================================
     // TOP SAIL BAR
     // ============================================================
-    top_sail_bar_length = 6 * bottle_diameter;
+    top_sail_bar_length = p_top_crossbar_len();   // 504 tip to tip
     top_sail_bar_width = 22;
     top_sail_bar_thickness = board_width;
 
     top_sail_bar_slot_depth = 11;
     top_sail_bar_slot_width = 10;
-    // TB-08: round shaft + running clearance (was Ø12 for the hex corners).
-    top_sail_bar_axle_hole_diameter = p_sail_bar_axle_hole_d();
+    // v6.0.0: the one-piece bar is split. A centre CONNECTOR on the cage
+    // roof spans the two sail battens and carries the shaft hole (generous
+    // clearance) + a side M3 clamp screw; a LEFT and RIGHT HALF sit on top of
+    // it and run out to the tips. Both layers share the batten notch.
+    top_bar_connector_axle_hole_d = p_sail_connector_axle_hole_d();   // 9
+    top_bar_m3_pilot_d = p_sail_m3_pilot_d();                          // 2.8 self-tap
+    top_bar_m3_clear_d = p_sail_m3_clear_d();                          // 3.2
+    top_bar_m3_screw_len = 20;   // visual: half-to-connector screws
+    top_bar_clamp_screw_len = 10; // visual: side clamp screw (6.5 mm of wood to the bore)
 
     // ============================================================
     // SIDE BATTENS
@@ -2255,11 +2607,16 @@ module sail_frame(
     side_batten_notch_height = board_width;
     side_batten_notch_depth = side_batten_width / 2;
     side_batten_end_margin = 15;
+    // v6.0.0: the sail battens' UPPER notch holds two stacked layers
+    // (connector + crossbar half), and the batten grew by 2t with the spare
+    // stock thickness going above the notch.
+    side_batten_upper_notch_height = 2 * top_sail_bar_thickness;     // 24
+    side_batten_top_margin = side_batten_end_margin;                 // 15 (v6.1.0; was 27)
 
     // ============================================================
     // BOTTOM SAIL BARS
     // ============================================================
-    bottom_sail_bar_length = 3 * bottle_diameter;
+    bottom_sail_bar_length = p_bottom_rail_len();   // 264 (v6.3.0: 3 x bottle_d + t)
     bottom_sail_bar_width = top_sail_bar_width;
     bottom_sail_bar_thickness = board_width;
 
@@ -2545,6 +2902,17 @@ module sail_frame(
     // with the inner/root surface of the corresponding cage notch.
     top_sail_bar_slot_centre_radius =
         cage_notch_root_radius + top_sail_bar_slot_width / 2;
+
+    // Split-crossbar layout (v6.0.0), all measured from the shaft axis.
+    top_bar_connector_length = 2 * (top_sail_bar_slot_centre_radius
+        + top_sail_bar_slot_width / 2 + p_sail_connector_overhang());
+    top_bar_half_inner_x = top_sail_bar_slot_centre_radius
+        - top_sail_bar_slot_width / 2 - p_sail_bar_half_inboard();
+    top_bar_half_length = top_sail_bar_length / 2 - top_bar_half_inner_x;   // 212.2
+    // One M3 per side through the half into the connector, centred in the
+    // connector's overhang outboard of the batten.
+    top_bar_joint_screw_x = top_sail_bar_slot_centre_radius
+        + top_sail_bar_slot_width / 2 + p_sail_connector_overhang() / 2;
     cage_surface_under_z =
         cage_total_height - cage_surface_thickness;
     cage_side_wall_height =
@@ -2561,11 +2929,13 @@ module sail_frame(
             * (1 - cos(4*a)) / 2;
     side_batten_top_native_z =
         cage_total_height
-        + top_sail_bar_thickness
-        + (side_batten_notch_height - top_sail_bar_thickness) / 2
-        + side_batten_end_margin;
+        + side_batten_upper_notch_height
+        + side_batten_top_margin;
     side_batten_bottom_native_z =
         side_batten_top_native_z - side_batten_height;
+    // v6.1.0: non-sail battens stop flush with the cage roof top.
+    non_sail_batten_height =
+        cage_total_height - side_batten_bottom_native_z;   // 178
     side_batten_cage_hole_z_local =
         cage_slot_vertical_centre_z - side_batten_bottom_native_z;
 
@@ -2642,8 +3012,22 @@ module sail_frame(
     );
     assert(cage_shaft_hole_diameter < top_sail_bar_width,
         "The shaft opening does not fit within the top sail bar.");
-    assert(round_shaft_diameter < top_sail_bar_axle_hole_diameter,
-        "The sail shaft does not fit through the sail bar axle hole.");
+    assert(round_shaft_diameter < top_bar_connector_axle_hole_d,
+        "The sail shaft does not fit through the connector axle hole.");
+    assert(top_bar_connector_axle_hole_d < top_sail_bar_width - 2 * top_bar_m3_pilot_d,
+        "Connector: too little wood around the shaft hole for the M3 clamp.");
+    assert(top_bar_half_inner_x > top_bar_connector_axle_hole_d / 2
+           && top_bar_half_inner_x > 0,
+        "Crossbar halves must stop short of the shaft.");
+    assert(p_sail_connector_overhang() > top_bar_m3_clear_d + 4
+           && p_sail_bar_half_inboard() > 0,
+        "Connector overhang too short for the half-to-connector M3.");
+    assert(top_bar_connector_length / 2 < top_sail_bar_length / 2,
+        "Connector longer than the crossbar span.");
+    assert(non_sail_batten_height
+           > max(cage_mount_z_positions) - side_batten_bottom_native_z
+             + cage_mount_hole_diameter / 2 + 2,
+        "Non-sail batten too short for its upper cage M3 hole.");
     assert(
         top_sail_bar_slot_centre_radius + top_sail_bar_slot_width / 2
             < top_sail_bar_length / 2,
@@ -2655,6 +3039,8 @@ module sail_frame(
         "The side battens are too thick for the sail-bar slots.");
     assert(side_batten_notch_height == top_sail_bar_thickness,
         "The batten slots must exactly match the sail-bar board width.");
+    assert(side_batten_upper_notch_height == 2 * top_sail_bar_thickness,
+        "The upper sail-batten notch must hold the connector + crossbar half.");
     assert(bottom_sail_bar_thickness == side_batten_notch_height,
         "The bottom sail bars must match the lower batten slots.");
     assert(bottom_sail_bar_slot_width == side_batten_thickness,
@@ -2722,7 +3108,9 @@ module sail_frame(
     // ============================================================
     // TOP SAIL BAR
     // ============================================================
-    module top_sail_bar_profile_2d() {
+    module top_sail_bar_profile_2d(hole_d = 0) {
+        // Full tip-to-tip outline with both batten slots; the parts below
+        // cut their own spans from it (v6.0.0).
         difference() {
             square([
                 top_sail_bar_length,
@@ -2749,20 +3137,77 @@ module sail_frame(
                     top_sail_bar_slot_depth + cage_epsilon
                 ]);
 
-            // The sail-bar opening is a hard-limited Ø12 mm round hole.
-            circle(d = top_sail_bar_axle_hole_diameter);
+            if (hole_d > 0) circle(d = hole_d);
         }
     }
 
-    module top_sail_bar_part() {
-        linear_extrude(height = top_sail_bar_thickness)
-            top_sail_bar_profile_2d();
+    // Centre connector, on the cage roof (local Z 0..t). Shaft passes with
+    // clearance; the side M3 self-taps from the +Y face into the shaft hole.
+    module top_bar_connector_part() {
+        difference() {
+            linear_extrude(height = top_sail_bar_thickness)
+                intersection() {
+                    top_sail_bar_profile_2d(top_bar_connector_axle_hole_d);
+                    square([top_bar_connector_length, top_sail_bar_width + 2 * cage_epsilon],
+                           center = true);
+                }
+            translate([0, 0, top_sail_bar_thickness / 2])
+                rotate([-90, 0, 0])
+                    cylinder(d = top_bar_m3_pilot_d,
+                             h = top_sail_bar_width / 2 + cage_epsilon, $fn = 32);
+            for (sx = [-1, 1])
+                translate([sx * top_bar_joint_screw_x, 0, -cage_epsilon])
+                    cylinder(d = top_bar_m3_pilot_d,
+                             h = top_sail_bar_thickness + 2 * cage_epsilon, $fn = 32);
+        }
+    }
+
+    // Right crossbar half (+X), local Z 0..t. The left half is the same
+    // part turned 180 deg about Z (its slot then opens from the other edge).
+    module top_bar_half_part() {
+        difference() {
+            linear_extrude(height = top_sail_bar_thickness)
+                intersection() {
+                    top_sail_bar_profile_2d();
+                    translate([top_bar_half_inner_x,
+                               -top_sail_bar_width / 2 - cage_epsilon])
+                        square([top_bar_half_length,
+                                top_sail_bar_width + 2 * cage_epsilon]);
+                }
+            translate([top_bar_joint_screw_x, 0, -cage_epsilon])
+                cylinder(d = top_bar_m3_clear_d,
+                         h = top_sail_bar_thickness + 2 * cage_epsilon, $fn = 32);
+        }
     }
 
     module top_sail_bar_native_assembly() {
-        sf_wood([0.56, 0.39, 0.39], colored)
+        sf_wood([0.42, 0.27, 0.27], colored)
             translate([0, 0, cage_total_height])
-                top_sail_bar_part();
+                top_bar_connector_part();
+        sf_wood([0.56, 0.39, 0.39], colored)
+            translate([0, 0, cage_total_height + top_sail_bar_thickness])
+                for (a = [0, 180]) rotate([0, 0, a]) top_bar_half_part();
+    }
+
+    module top_bar_screws_native() {
+        color([0.15, 0.15, 0.15]) {
+            // half -> connector, heads on top of each half
+            for (sx = [-1, 1])
+                translate([sx * top_bar_joint_screw_x, 0,
+                           cage_total_height + 2 * top_sail_bar_thickness]) {
+                    cylinder(d = 5.5, h = 3, $fn = 24);
+                    translate([0, 0, -top_bar_m3_screw_len])
+                        cylinder(d = 3, h = top_bar_m3_screw_len, $fn = 16);
+                }
+            // side clamp screw, head on the connector's +Y face
+            translate([0, top_sail_bar_width / 2,
+                       cage_total_height + top_sail_bar_thickness / 2])
+                rotate([-90, 0, 0]) {
+                    cylinder(d = 5.5, h = 3, $fn = 24);
+                    translate([0, 0, -top_bar_clamp_screw_len])
+                        cylinder(d = 3, h = top_bar_clamp_screw_len, $fn = 16);
+                }
+        }
     }
 
 
@@ -2780,13 +3225,14 @@ module sail_frame(
         include_upper_slot = true,
         include_lower_slot = true,
         include_non_sail_joint_hole = false,
-        include_strengthener_joint_hole = false
+        include_strengthener_joint_hole = false,
+        batten_height = side_batten_height
     ) {
         difference() {
             cube([
                 side_batten_thickness,
                 side_batten_width,
-                side_batten_height
+                batten_height
             ]);
 
             notch_y = notch_from_positive_y
@@ -2795,17 +3241,18 @@ module sail_frame(
 
             if (include_upper_slot) {
                 // Upper notch: interlocks with the top sail crossbar.
+                // v6.0.0: two layers tall (connector + crossbar half).
                 translate([
                     -cage_epsilon,
                     notch_y,
-                    side_batten_height
-                        - side_batten_end_margin
-                        - side_batten_notch_height
+                    batten_height
+                        - side_batten_top_margin
+                        - side_batten_upper_notch_height
                 ])
                     cube([
                         side_batten_thickness + 2 * cage_epsilon,
                         side_batten_notch_depth + cage_epsilon,
-                        side_batten_notch_height
+                        side_batten_upper_notch_height
                     ]);
 
             }
@@ -2864,14 +3311,11 @@ module sail_frame(
         include_upper_slot = true,
         include_lower_slot = true,
         include_non_sail_joint_hole = false,
-        include_strengthener_joint_hole = false
+        include_strengthener_joint_hole = false,
+        batten_height = side_batten_height
     ) {
-        // The upper batten notch is exactly flush with the sail bar.
-        batten_top_z =
-            cage_total_height
-            + top_sail_bar_thickness
-            + (side_batten_notch_height - top_sail_bar_thickness) / 2
-            + side_batten_end_margin;
+        // The upper batten notch spans the connector + crossbar half.
+        batten_top_z = side_batten_top_native_z;
 
         batten_bottom_z = batten_top_z - side_batten_height;
 
@@ -2890,7 +3334,8 @@ module sail_frame(
                     include_non_sail_joint_hole =
                         include_non_sail_joint_hole,
                     include_strengthener_joint_hole =
-                        include_strengthener_joint_hole
+                        include_strengthener_joint_hole,
+                    batten_height = batten_height
                 );
 
             // Right batten: mirrored to fill the upper-half slot.
@@ -2907,7 +3352,8 @@ module sail_frame(
                     include_non_sail_joint_hole =
                         include_non_sail_joint_hole,
                     include_strengthener_joint_hole =
-                        include_strengthener_joint_hole
+                        include_strengthener_joint_hole,
+                    batten_height = batten_height
                 );
         }
     }
@@ -2922,11 +3368,13 @@ module sail_frame(
         );
 
         // Perpendicular pair: no top-bar joint, but keep lower slots.
+        // v6.1.0: top flush with the cage roof (same bottom datum).
         rotate([0, 0, 90])
             opposing_side_batten_pair_native(
                 include_upper_slot = false,
                 include_lower_slot = true,
-                include_non_sail_joint_hole = false
+                include_non_sail_joint_hole = false,
+                batten_height = non_sail_batten_height
             );
     }
 
@@ -2967,11 +3415,7 @@ module sail_frame(
     }
 
     module bottom_sail_bars_native_assembly() {
-        batten_top_z =
-            cage_total_height
-            + top_sail_bar_thickness
-            + (side_batten_notch_height - top_sail_bar_thickness) / 2
-            + side_batten_end_margin;
+        batten_top_z = side_batten_top_native_z;
 
         batten_bottom_z = batten_top_z - side_batten_height;
         bottom_bar_z = batten_bottom_z + side_batten_end_margin;
@@ -3031,11 +3475,7 @@ module sail_frame(
     }
 
     module joint_strengtheners_native_assembly() {
-        batten_top_z =
-            cage_total_height
-            + top_sail_bar_thickness
-            + (side_batten_notch_height - top_sail_bar_thickness) / 2
-            + side_batten_end_margin;
+        batten_top_z = side_batten_top_native_z;
 
         batten_bottom_z = batten_top_z - side_batten_height;
         bottom_bar_z = batten_bottom_z + side_batten_end_margin;
@@ -3074,18 +3514,14 @@ module sail_frame(
     // ============================================================
 
     module right_sail_native() {
-        batten_top_z =
-            cage_total_height
-            + top_sail_bar_thickness
-            + (side_batten_notch_height - top_sail_bar_thickness) / 2
-            + side_batten_end_margin;
+        batten_top_z = side_batten_top_native_z;
 
         batten_bottom_z = batten_top_z - side_batten_height;
         bottom_bar_z = batten_bottom_z + side_batten_end_margin;
 
         sail_bottom_z =
             bottom_bar_z + bottom_sail_bar_thickness;
-        sail_top_z = cage_total_height;
+        sail_top_z = cage_total_height + top_sail_bar_thickness;   // half underside (v6.0.0: +t)
 
         // Begin immediately beyond the outer face of the joint
         // strengthener and follow the two rail endpoints outward.
@@ -3167,11 +3603,7 @@ module sail_frame(
     }
 
     module c_end_piece_pair_native() {
-        batten_top_z =
-            cage_total_height
-            + top_sail_bar_thickness
-            + (side_batten_notch_height - top_sail_bar_thickness) / 2
-            + side_batten_end_margin;
+        batten_top_z = side_batten_top_native_z;
 
         batten_bottom_z = batten_top_z - side_batten_height;
         c_piece_z = batten_bottom_z + side_batten_end_margin;
@@ -3314,6 +3746,7 @@ module sail_frame(
         if(show_hardware) {
             cage_batten_bolts_native_assembly();
             sail_strengthener_bolts_native();
+            top_bar_screws_native();
         }
         if(show_control_bottle)
             control_reference_native();
@@ -3327,11 +3760,13 @@ module sail_frame(
         translate([0,0,-side_batten_bottom_native_z]) sail_frame_native_group();
     else if(part=="native_assembly")
         sail_frame_native_group();
-    else if(part=="top_bar") top_sail_bar_part();
+    else if(part=="top_bar_half") top_bar_half_part();
+    else if(part=="top_bar_connector") top_bar_connector_part();
     else if(part=="sail_batten")
         side_batten_part(include_strengthener_joint_hole=true);
     else if(part=="non_sail_batten")
-        side_batten_part(include_upper_slot=false,include_non_sail_joint_hole=false);
+        side_batten_part(include_upper_slot=false,include_non_sail_joint_hole=false,
+                         batten_height=non_sail_batten_height);
     else if(part=="bottom_bars") bottom_sail_bars_native_assembly();
     else if(part=="strengtheners") joint_strengtheners_native_assembly();
     else if(part=="c_end_pieces") c_end_pieces_native_assembly();
@@ -3339,6 +3774,12 @@ module sail_frame(
     else assert(false,str("Unknown part: ",part));
     echo("Cage mount hole diameter / vertical pitch = ",
          cage_mount_hole_diameter,cage_slot_vertical_centre_z-cage_lower_mount_z);
+    echo("SAIL CROSSBAR: halves 2 x ", top_bar_half_length,
+         " | connector ", top_bar_connector_length,
+         " | connector shaft hole / M3 pilot = ", top_bar_connector_axle_hole_d, top_bar_m3_pilot_d,
+         " | span ", top_sail_bar_length, " | bottom rails 2 x ", bottom_sail_bar_length,
+         " | sail / non-sail batten h = ", side_batten_height, non_sail_batten_height,
+         " | upper notch = ", side_batten_upper_notch_height);
     echo("Cage mount centres from batten bottom = ",
          [for(z=cage_mount_z_positions) z-side_batten_bottom_native_z]);
 }
@@ -3992,10 +4433,12 @@ ballast_shoulder_step =
 
 // Top shoulder geometry.
 //
-// The 45-degree cut STARTS on the outer edge exactly one shared port_height
-// below the top of the green slat.
+// The 45-degree cut STARTS on the outer edge at or below the outer John's
+// port end (port_length + t below the seated slat top), and at least one
+// board width below the old one-port_height start (v5.6.0) -- see
+// bl_upper_diag_from_top() in lib/ballast_fin.scad.
 ballast_upper_diagonal_start =
-    ballast_core_height - port_height;
+    ballast_core_height - (max(port_height, port_length) + slat_thickness);
 
 // Because this is a 45-degree cut, moving inward by ballast_shoulder_step
 // also moves downward by the same amount.
@@ -4003,11 +4446,10 @@ ballast_upper_neck_start =
     ballast_upper_diagonal_start - ballast_shoulder_step;
 
 assert(
-    abs(
-        (ballast_core_height - ballast_upper_diagonal_start)
-        - port_height
-    ) < 0.001,
-    "Top ballast shoulder cut must begin exactly one port_height below the slat top."
+    abs(ballast_upper_diagonal_start - bl_upper_diag_start()) < 0.001
+    && ballast_core_height - ballast_upper_diagonal_start
+       >= port_length + slat_thickness - 0.001,
+    "Top ballast shoulder cut must match lib and begin at or below the John's port end."
 );
 
 ballast_core_slot_z0 =
@@ -4053,7 +4495,7 @@ ballast_core_mount_hole_y =
 // --------------------------------------------------------------------------
 
 ballast_board_length =
-    3.5 * ballast_bottle_diameter;
+    p_ballast_board_len();   // v5.5.0: 3.5 * bottle_diameter + 2 * t
 
 ballast_board_width =
     ballast_fin_board_width;
@@ -4110,7 +4552,11 @@ assert(abs(ballast_bottle_height - bottle_height) < 0.001,
        "Ballast bottle height must equal canonical bottle_height.");
 
 ballast_end_slot_offset =
-    2 * slat_thickness;
+    3 * slat_thickness;      // v5.5.0: was 2 * t
+
+assert(abs(ballast_board_length - bl_board_len()) < 0.001
+       && abs(ballast_end_slot_offset - bl_end_slot_offset()) < 0.001,
+       "Full-turtle ballast board aliases must match lib/ballast_fin.scad.");
 
 ballast_left_end_slot_x0 =
     ballast_end_slot_offset;
@@ -4436,11 +4882,9 @@ rear_shaft_gap =
 // YELLOW REAR FIN
 // --------------------------------------------------------------------------
 
-rear_fin_tab_width =
-    15;
-
+// v5.7.0: one board wide (was board + a 15 mm rear tab, wider than the board).
 rear_fin_width =
-    fin_board_width + rear_fin_tab_width;
+    fin_board_width;
 
 rear_fin_height =
     3 * rear_bottle_diameter;
@@ -4751,6 +5195,9 @@ assert(rear_shaft_hole_from_front > rear_shaft_hole_diameter / 2
 assert(abs(rear_install_pre_x + rear_shaft_rear_x - rear_shaft_length
            + rear_shaft_hole_from_front - rear_mount_hole_pre_x) < 0.001,
        "Rear-fin and John mounting-hole axes must coincide.");
+// Likewise the ballast's green core slats bolt flush against Little Johns.
+assert(abs(bl_core_w() - eco_john_height()) < 0.001,
+       "Ballast core slat width must equal the Ecojoiner John height.");
 // The green shaft bolts flush against a Little John: same width, so their
 // edges and M5 pairs line up (v5.4.0; the shaft was a fixed 59 before).
 assert(abs(rear_shaft_width - eco_john_height()) < 0.001,
@@ -4838,6 +5285,67 @@ module installed_rear_fin_on_3oclock_port() {
 }
 
 
+
+// ============================================================================
+// HEAD FIN (v5.8.0, EXPERIMENTAL) -- PHYSICAL 9-O'CLOCK / FRONT PORT
+// ============================================================================
+//
+// lib/head_fin.scad is the rear fin's mirror on the pre -X port: two flat
+// slats above and below the front bottle, bolted to frame 1's Little John M5
+// pairs on that port, and a vertical triangular fin abutting the bottle base.
+// Head-local frame: X = 0 at the fin rear edge / bottle base, +X outward;
+// bottle axis on local Y = Z = 0; slats stacked in local Z.
+//
+// Right-handed axis mapping (v6.3.0: the fin is no longer up/down symmetric,
+// so head local +Z must be physically UP):
+//   head local +X -> pre -X -> physical 9 o'clock / outward
+//   head local +Y -> pre -Z
+//   head local +Z -> pre -Y -> physical UP (12 o'clock)
+
+head_install_pre = [assembly_center[0] - bottle_origin_offset,
+                    assembly_center[1],
+                    assembly_center[2]];
+
+// M5-pair alignment (X): the slat hole, pushed through the install, must hit
+// the -X John hole pair (screw_side_offset in from that John's outer end).
+head_mount_hole_pre_x =
+    assembly_center[0] - john_length / 2 + screw_side_offset;
+head_slat_hole_pre_x =
+    head_install_pre[0] - (hf_slat_front_x() + p_head_slat_hole_from_front());
+assert(abs(head_slat_hole_pre_x - head_mount_hole_pre_x) < 0.001,
+       "Head-fin slat and -X John mounting-hole axes must coincide.");
+assert(abs(hf_slat_width() - eco_john_height()) < 0.001,
+       "Head slat width must equal the Ecojoiner John height.");
+
+// Flush check (Y): local Z maps to pre Y = assembly_center[1] - local_z. Each
+// slat's board must touch the inner face of the Little John it bolts to --
+// the same targets as the rear-fin shafts, since both ports belong to frame 1.
+head_upper_slat_y = [assembly_center[1] - hf_upper_slat_z0(),
+                     assembly_center[1] - hf_upper_slat_z0() - slat_thickness];
+head_lower_slat_y = [assembly_center[1] - hf_lower_slat_z0(),
+                     assembly_center[1] - hf_lower_slat_z0() - slat_thickness];
+head_john_target_a_y = 0 + eco_slat_t() / 2;
+head_john_target_b_y = eco_rectangle_y() - eco_slat_t() / 2;
+assert(min([for (y = head_upper_slat_y) for (j = [head_john_target_a_y, head_john_target_b_y])
+            abs(y - j)]) < 0.001
+       && min([for (y = head_lower_slat_y) for (j = [head_john_target_a_y, head_john_target_b_y])
+               abs(y - j)]) < 0.001,
+       "Head-fin slat boards must sit flush against their Little John holes (Y axis).");
+
+module installed_head_fin_on_9oclock_port() {
+    multmatrix([
+        [-1,  0,  0, head_install_pre[0]],
+        [ 0,  0, -1, head_install_pre[1]],
+        [ 0, -1,  0, head_install_pre[2]],
+        [ 0, 0, 0, 1]
+    ])
+        head_fin_assembly(half_lap = rear_half_lap_clearance,
+                          colored = enable_color_coding);
+}
+
+echo("Head fin: rear edge abuts the -X bottle base; slat length = ",
+     hf_slat_length(), " | hole pair from slat front = ", p_head_slat_hole_from_front());
+
 // --------------------------------------------------------------------------
 // Rear-fin diagnostics
 // --------------------------------------------------------------------------
@@ -4890,7 +5398,7 @@ module hope_turtle_sail_apparatus(
     cage_peak_extension = 20,
     cage_lower_hole_from_tip = 10,
     cage_button_angle = 0,
-    side_batten_height = 205,
+    side_batten_height = p_side_batten_h(),
     cage_vertical_position = 0,
     cage_rotation_angle = 0,
     sail_frame_rotation_angle = 90,
@@ -4932,14 +5440,15 @@ module hope_turtle_sail_apparatus(
     // ============================================================
     // TOP SAIL BAR
     // ============================================================
-    top_sail_bar_length = 6 * bottle_diameter;
+    top_sail_bar_length = p_top_crossbar_len();   // 504 tip to tip (split into halves + connector)
     top_sail_bar_width = 22;
     top_sail_bar_thickness = board_width;
 
     top_sail_bar_slot_depth = 11;
     top_sail_bar_slot_width = 10;
     // TB-08: round shaft + running clearance (was Ø12 for the hex corners).
-    top_sail_bar_axle_hole_diameter = p_sail_bar_axle_hole_d();
+    // v6.0.0: the shaft now passes the split crossbar's centre connector.
+    top_sail_bar_axle_hole_diameter = p_sail_connector_axle_hole_d();
 
     // ============================================================
     // SIDE BATTENS
@@ -4951,11 +5460,13 @@ module hope_turtle_sail_apparatus(
     side_batten_notch_height = board_width;
     side_batten_notch_depth = side_batten_width / 2;
     side_batten_end_margin = 15;
+    side_batten_upper_notch_height = 2 * top_sail_bar_thickness;   // v6.0.0: connector + half
+    side_batten_top_margin = side_batten_end_margin;   // v6.1.0
 
     // ============================================================
     // BOTTOM SAIL BARS
     // ============================================================
-    bottom_sail_bar_length = 3 * bottle_diameter;
+    bottom_sail_bar_length = p_bottom_rail_len();   // 264 (v6.3.0: 3 x bottle_d + t)
     bottom_sail_bar_width = top_sail_bar_width;
     bottom_sail_bar_thickness = board_width;
 
@@ -5281,9 +5792,8 @@ module hope_turtle_sail_apparatus(
             * (1 - cos(4*a)) / 2;
     side_batten_top_native_z =
         cage_total_height
-        + top_sail_bar_thickness
-        + (side_batten_notch_height - top_sail_bar_thickness) / 2
-        + side_batten_end_margin;
+        + side_batten_upper_notch_height
+        + side_batten_top_margin;
     side_batten_bottom_native_z =
         side_batten_top_native_z - side_batten_height;
     side_batten_cage_hole_z_local =
@@ -5626,7 +6136,8 @@ module hope_turtle_sail_apparatus(
     else if (part == "cage_side_walls") {
         control_cage();
     }
-    else if (part == "top_sail_bar")   { sail_frame(part = "top_bar", board_width = board_width); }
+    else if (part == "top_sail_bar")   { sail_frame(part = "top_bar_half", board_width = board_width);
+                                         sail_frame(part = "top_bar_connector", board_width = board_width); }
     else if (part == "side_battens")   { sail_frame(part = "sail_batten", board_width = board_width); }
     else if (part == "bottom_sail_bars") { sail_frame(part = "bottom_bars", board_width = board_width); }
     else if (part == "joint_strengtheners") { sail_frame(part = "strengtheners", board_width = board_width); }
@@ -5731,8 +6242,9 @@ module ecojoiner_and_bottles() {
     ecc = enable_color_coding;
 
     // Frame 1: through-bolt (no acorns) the two clamp pairs on the physical 3-o'clock port
-    // (pre-orientation +X) for the rear-fin green shafts.
-    eco_centered_rectangle([0, 0, 0], true, false, ecc);
+    // (pre-orientation +X) for the rear-fin green shafts, and the two on the physical
+    // 9-o'clock port (pre-orientation -X) for the head-fin slats (v5.8.0).
+    eco_centered_rectangle([0, 0, 0], true, true, ecc);
 
     eco_centered_rectangle([0, frame_step_tilt, frame_step_spin],
                            false, false, ecc);
@@ -5798,6 +6310,9 @@ module full_turtle_scene(include_top_sail = true) {
 
         // Rear apparatus around / behind the physical rear bottle.
         installed_rear_fin_on_3oclock_port();
+
+        // Head fin around / ahead of the physical front bottle (v5.8.0).
+        installed_head_fin_on_9oclock_port();
     }
     water_preview();
 }
@@ -5899,6 +6414,7 @@ echo("  extra clearance removed = one slat_thickness = ",
 
 echo("Through-bolted clamp pairs on physical DOWN ballast port = 2");
 echo("Through-bolted clamp pairs on physical 3-o’clock rear-fin port = 2");
+echo("Through-bolted clamp pairs on physical 9-o’clock head-fin port = 2");
 
 echo("Ballast orange center-slot depth = ",
      ballast_center_slot_depth, " mm");

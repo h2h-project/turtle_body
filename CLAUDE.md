@@ -72,7 +72,7 @@ Paths below were verified in the inspected GitHub tree.
 | --- | --- |
 | `lib/params.scad` | **Editable.** Shared dimension contract — every cross-subsystem value as a `function p_*()`. One definition per concept; derived values are functions of other `p_*()`. |
 | `lib/util.scad` | **Editable.** `wood_color()`, `m6_bolt_placeholder()`, `clamp()`, `hex_prism_af()`. |
-| `lib/<subsystem>.scad` | **Editable.** One parametric module per subsystem: `control_cap`, `control_cage`, `sail_shaft` (`sail_shaft`, TB-08: was `hex_shaft` / `control_axle`), `silicone_ring_mold`, `ecojoiner`, `ballast_fin`, `rear_fin`, `sail_frame`, `bottle_mockup`. Module args default to `p_*()`; wrappers override individually. Definitions only — no top-level geometry or assignments. |
+| `lib/<subsystem>.scad` | **Editable.** One parametric module per subsystem: `control_cap`, `control_cage`, `sail_shaft` (`sail_shaft`, TB-08: was `hex_shaft` / `control_axle`), `silicone_ring_mold`, `ecojoiner`, `ballast_fin`, `rear_fin`, `head_fin` (v5.8.0, experimental), `sail_frame`, `bottle_mockup`. Module args default to `p_*()`; wrappers override individually. Definitions only — no top-level geometry or assignments. |
 | `src/components/*.scad` | **Editable.** Thin wrappers: customizer block + `use <../../lib/...>` + a `part=` dispatch → one lib call. |
 | `src/Full_Turtle.scad` | **Editable.** The full-assembly source (git-renamed from `Full_Turtle_v1.scad`). M7 pending: still holds embedded geometry, not yet `use`-ing lib. |
 | `Full_Turtle_v1.scad` | **GENERATED** by `build/build.py` from `src/Full_Turtle.scad`. Self-contained, committed, downloadable. Do not hand-edit (a banner says so). |
@@ -180,7 +180,7 @@ The design evolved from a continuous cylindrical skirt with four grooves to a co
 | Bearing bumps | Eight Ø9 hemispheres |
 | Bearing pitch-circle diameter | 91.5 |
 | Centre shaft hole (TB-08: round, was a 10.3 AF hex) | 8.2 |
-| Set screw (TB-08) | single radial M3, pilot Ø2.5, aimed at the centre of the roof button opening (follows `button_angle`), at the vertical centre of the access recess (Z 4.75 installed) — v4.1.2 |
+| Set screw (TB-08) | **OFF since v6.0.0** (`p_cage_setscrew_enabled()` / wrapper `setscrew`, which also drops the recess) — the sail crossbar connector's M3 clamps the shaft instead. When on: single radial M3, pilot Ø2.5, aimed at the centre of the roof button opening (follows `button_angle`), at the vertical centre of the access recess (Z 4.75 installed) — v4.1.2 |
 | Centre hub / top pocket diameter | 29 / 26 (top pocket OFF by default since v1.10.0 — `control_cage(top_pocket=false)`) |
 | Pocket depth | 4 (only when `top_pocket=true`) |
 | Button opening / centre radius | 22 / 25 (v4.1.0: was 18 / 24; the Ø22 opening bites 0.5 mm into the Ø29 hub to uncover the set-screw face) |
@@ -320,11 +320,11 @@ The earlier 100 mm hex shaft, coupler ideas and 50 mm stepped axle are historica
 | --- | ---: |
 | Diameter (uniform, whole shaft) | 8 |
 | Nominal length inside cap | 35 |
-| Upper length (through cage hub + sail bar) | 23 |
+| Upper length (through cage hub + sail crossbar connector) | 23 |
 | Overall length | 59 |
 | Magnet recess | Ø3 × 1 deep, adjustable |
 | Cage hub / sail-bar running hole | 8.2 (shaft + 0.2 mm clearance) |
-| Cage lock | single radial M3 set screw through the hub, pilot Ø2.5 (untested thread engagement) |
+| Frame / cage lock | v6.0.0: M3 through the side of the sail crossbar connector, Ø2.8 pilot, into the Ø9 connector hole (the cage hub set screw is switched off; untested) |
 
 The nominal round-in-cap length is `30 inside cap + 5 roof + 1 external extension` (TB-03/TB-04 datum). The 30 mm measurement starts at the roof underside and includes the boss; do not add the boss again. The magnet recess opens at the lower end for an AS5600 sensing magnet. Sensor-to-magnet distance and orientation remain installation checks.
 
@@ -337,16 +337,22 @@ The standalone sail apparatus emits the wooden frame, four battens, reinforcemen
 | Feature | Current value or rule |
 | --- | --- |
 | Wood thickness | 12 mm |
-| Batten height / width / radial thickness | 205 / 20 / 10 mm |
-| Top crossbar length / width / thickness | 492 / 22 / 12 mm |
-| Top crossbar axle hole | Ø12 mm |
-| Bottom rail length | 246 mm = 3 × bottle diameter |
+| Batten height / width / radial thickness | sail 217 (205 + t) · non-sail 178 (top flush with the cage roof top) — v6.1.0 / 20 / 10 mm |
+| Top crossbar span (tip to tip) / width / thickness | 504 (`p_top_crossbar_len()` = 6 × bottle d; 843.6 in v6.1.0 only) / 22 / 12 mm — **three pieces since v6.0.0**, see below |
+| Crossbar halves (×2) | 212.2 mm (derived from the span; v6.1.0's 382 reverted in v6.2.0), on top of the connector, from 15 mm inboard of each sail batten out to the tip |
+| Sail crossbar connector | 159.6 mm, on the cage roof, 15 mm past each sail batten's outer face; Ø9 shaft hole (clearance, not a bearing) |
+| Shaft clamp | one M3 self-tapped from the connector's +Y side face into a Ø2.8 pilot, pressing on the shaft (untested in wood) |
+| Half-to-connector screws | one M3 per side, Ø3.2 clearance in the half, Ø2.8 pilot in the connector, centred in the connector overhang |
+| Sail-batten upper notch | 2t = 24 mm tall (connector + half), 15 mm of batten above it (v6.1.0; 27 in v6.0.0) |
+| Bottom rail length | 264 mm = 3 × bottle diameter + t (`p_bottom_rail_len()`, v6.3.0; 252 in v6.2.0, 360 in v6.1.0) |
 | Bottom rails' bottle clearance | 1 mm nominal |
 | Cage mounting holes | Two Ø3.2 per batten, 32 mm pitch |
-| Hole centres from batten top | 55 and 87 mm at default stock thickness |
-| Hole centres from batten bottom | 150 and 118 mm at default batten height |
+| Hole centres from batten top | sail battens 65 and 97 mm; non-sail 26 and 58 mm (v6.1.0) |
+| Hole centres from batten bottom | 152 and 120 mm (unchanged by v6.0.0) |
 | Top and bottom rail colour | Brown `[0.56, 0.39, 0.39]` |
 | C-piece colour | Orange, retained |
+
+**Split crossbar (v6.0.0).** The 504 mm one-piece top bar was too long a board. It is now two halves plus a centre *sail crossbar connector*. The connector lies on the cage roof and spans the two sail battens; the halves sit on top of it, and both layers half-lap into the same 24 mm sail-batten notch. The batten bottoms, cage M3 holes and lower rails did not move — the battens grew 24 mm at the top (12 for the second layer, 12 extra above). The sails grew 12 mm taller (top edge follows the half underside). v6.1.0 tried shared cut lengths (halves 382 = head-fin slats, bottom rails 360 = ballast slats); v6.2.0 reverted them — the sails came out too big and top-heavy. Non-sail battens end flush with the cage roof top (kept from v6.1.0). The connector's side M3 is now the frame-to-shaft lock; the cage hub set screw is switched off (section 6). Sail `part` values `top_bar_half` / `top_bar_connector` replace `top_bar`. Not built or tested.
 
 The two sail battens have upper and lower interlocking slots. The perpendicular non-sail battens retain their lower slots and C retainers, but no upper sail-crossbar slot.
 
@@ -365,17 +371,22 @@ The cage and frame must use common radial and vertical datums. For the current n
 
 The rear assembly consists of one yellow vertical fin, two green bottle-holder shafts and one red solar crossbar. The separate panel is reference geometry in the standalone rear-fin file; its F5 background display is excluded from F6/STL there. The full assembly uses a visible panel and visual fasteners instead.
 
-Shaft formula (v5.3.0, user-directed — supersedes the earlier "approved" 334 mm):
+Shaft formula (v5.3.0, user-directed — supersedes the earlier "approved" 334 mm; v5.7.0 fin width):
 
 ```text
-shaft_rear_x = fin_board_width + rear_fin_tab_width - 2*wood_thickness = 93 + 15 - 24 = 84
+fin_width    = fin_board_width = 93            (v5.7.0: was board + 15 mm "rear tab" = 108,
+                                                 wider than the board it is cut from — do not restore)
+shaft_rear_x = fin_width - 2*wood_thickness = 93 - 24 = 69
 shaft_length = bottle_height + (2/3)*(fin_board_width - 2*wood_thickness) - cap_height + shaft_rear_x
-             = 305 + (2/3)*(93 - 24) - 17 + 84 = 418 mm
+             = 305 + (2/3)*(93 - 24) - 17 + 69 = 403 mm
 ```
 
-**The bottle base abuts the yellow fin's front edge (rear-local X = 0)** — the fin holds the bottle in its port. Until v5.3.0 the full turtle seated the bottle base at the shafts' rear end (X = 84), which put the first 84 mm of the fin inside the bottle; the shafts were lengthened by exactly that overlap so their front end and John hole pair did not move (`p_rear_shaft_hole_from_front()` stays 113). Do not re-seat the bottle at `rear_shaft_rear_x`. The 334 mm, 310.5 mm and other older results are superseded.
+Every sawn wooden part must fit within the builder's max board width; the HopeTurtles.org
+generators enforce this (`common.board_width_errors()`).
 
-The green/yellow common overlap is X=0..84. Split it at X=42: yellow slots open from the front, green slots open from the rear. Two slots cut into the same end do not form a functioning interlock. The corrected nominal engagement depth is 42 mm.
+**The bottle base abuts the yellow fin's front edge (rear-local X = 0)** — the fin holds the bottle in its port. Until v5.3.0 the full turtle seated the bottle base at the shafts' rear end (X = 84), which put the first 84 mm of the fin inside the bottle; the shafts were lengthened by exactly that overlap (84 then, 69 since v5.7.0) so their front end and John hole pair did not move (`p_rear_shaft_hole_from_front()` stays 113). Do not re-seat the bottle at `rear_shaft_rear_x`. The 334 mm, 310.5 mm and other older results are superseded.
+
+The green/yellow common overlap is X=0..69 (0..84 before v5.7.0). Split it at X=34.5: yellow slots open from the front, green slots open from the rear. Two slots cut into the same end do not form a functioning interlock. The nominal engagement depth is 34.5 mm (`p_rear_half_lap_engagement()`, was 42).
 
 Both half-lap clearance and solar-joint clearance are 0.2 mm **total** extra width, centred on the mating 12 mm board. Thus slot openings are 12.2 mm, not 12.4 mm. Root clearances are also symmetric. Do not add clearance to the wooden part's thickness or move the nominal installation datum.
 
@@ -386,6 +397,20 @@ The red crossbar is 148 mm long, 36 mm high and 12 mm thick. The actual panel is
 Standalone rear shafts use a 50 mm mounting-hole offset from their front. The full assembly computes the offset from the mating John, yielding 103 mm at current defaults. Preserve that distinction until the standalone/full mounting interface is deliberately unified. (Since TB-07 both use the derived value, 113 mm after v4.2.0. Since v5.0.0 that position carries an **M5 hole pair** (Ø5.2 bite holes since v5.1.0) at ±18 mm (since v5.2.0) across the 59 mm shaft width, matching the John clamp pair; see section 13.)
 
 In the full Turtle, the rear assembly belongs at the physical 3-o'clock/back port and is rotated 180° around the bottle axis so the yellow fin points downward. Earlier 9-o'clock placements were corrected. Do not infer the port from a screenshot alone.
+
+## 11a. Head fin (front fin) — EXPERIMENTAL, v5.8.0; raked profile since v6.3.1
+
+`lib/head_fin.scad` + wrapper `src/components/Turtle_Head_Fin.scad` → `scads_v1/Turtle_Head_Fin.scad` (parts `assembly` / `fin` / `slat`). The rear fin's mirror on the front port (pre-orientation −X, physical 9 o'clock): two purple flat slats above and below the front bottle and one blue vertical raked fin. Not built, fitted or tested; **no HopeTurtles.org generator yet** (deliberately — the user asked not to propagate while experimental; add a generator + `SYNC_LOG.md` entry once it settles).
+
+| Feature | Default |
+| --- | ---: |
+| Slat length × width × t | 382 × 60 (= John height) × 12 |
+| Slat reach, bottle base → slat front | 334 (`p_head_slat_reach()` = rear shaft length − rear overlap, so the M5 pair is at the same 113 mm, `p_head_slat_hole_from_front()`) |
+| Slat run into the fin / half-lap engagement | 48 (4t) / 24 |
+| Fin width (forward) × height | 93 (= `p_fin_board_w()`, cut across one board) × 192: 156 (bottle_d + 6t, 2t beyond each slat) + a 36 mm (3t, `p_head_fin_drop()`) extension below, v6.3.2 |
+| Profile (v6.3.1) | top edge runs out to X = 48 (`p_head_fin_heel_x()`, the slat ends); the leading edge slopes down and **forward** to a 36 mm (3t, `p_head_fin_toe_h()`, v6.3.4; 2t before) vertical flat nose at the full width; full-width bottom edge; below the toe the fin drops a further 36 mm with a 45° cut at the bottom front, 36 × 36 mm (`p_head_fin_forefoot_setback()` = `p_head_fin_drop()`, v6.3.3; 18 mm setback in v6.3.2). Superseded: v5.8.0 symmetric spear head, v6.3.0 the mirror slope (full width on top) — do not restore either |
+
+Head-local frame: X = 0 is the fin's rear edge = the bottle base (abutting, like the rear fin since v5.3.0), +X outward; bottle axis at Y = Z = 0; **+Z is physically up** (v6.3.0 — the fin is no longer up/down symmetric, so the full-turtle install maps local +Z to pre −Y). Fin slots open from its rear edge, slat slots from their outer ends, meeting at X = 24; 0.2 mm total clearance as the rear fin. In the full turtle, frame 1 now through-bolts (no acorn) its −X clamp pairs as well as +X, and asserts check the slat M5 pair coincides with the −X John pair and that each slat sits flush against its Little John.
 
 ## 12. Ballast attachment
 
@@ -399,7 +424,8 @@ Six wooden components: two green core slats, one orange bottom board, two red lo
 | Slat centre spacing | 82 + 12 = 94 |
 | Mount holes (v5.2.0) | M5 bite-hole pair, Ø5.2, 12 mm in from each long edge (matches the John clamp pair) |
 | Mount-pair distance from top | port_length + 12 - 17 = 77 |
-| Bottom board length × width | 287 × 93 |
+| Upper 45° shoulder cut from top (v5.6.0) | max(port_height, port_length) + 12 = 96 — starts at/below the outer John's port end (94); was port_height (84), 10 mm inside the John |
+| Bottom board length × width | 3.5 × bottle_d + 2 × 12 (318 at Ø84) × 93; 3t solid past each foot slot, 20 × 20 mm 45° chamfers on both front (foot-slot-edge) corners — v5.5.0 |
 | Lock-foot width × height | 60 × 60 |
 | Yellow fin length × height | 246 × 93 |
 
@@ -691,6 +717,7 @@ rule" precedent, applied in the generator→lib direction.
 | Ecojoiner core (Long/Little/Master Johns, Final Keys; M5 clamp holes — no Pressers since v5.0.0) | `lib/ecojoiner.scad` + `lib/params.scad` | `src/components/Turtle_Core_Ecojoiner.scad` → `scads_v1/Turtle_Core_Ecojoiner.scad` | `objects/ecojoiner_6fc.py` | `6fc` |
 | Rear fin, bottle-holder shafts, solar holder | `lib/rear_fin.scad` | `Turtle_Rear_Fin.scad` | `objects/back_fin.py` + `back_fin_generator.py` | `fin` |
 | Ballast (core slats, bottom board, lock feet, fin) | `lib/ballast_fin.scad` | `Turtle_Bottom_Ballast_Fin.scad` | `objects/ballast.py` + `bottom_ballast_fin_generator.py` | `ballast` |
+| Head fin (front slats + spear-head fin) — experimental | `lib/head_fin.scad` | `Turtle_Head_Fin.scad` | **none yet** (deliberately deferred) | — |
 | Sail frame (bars, battens, strengtheners, C pieces, sails) | `lib/sail_frame.scad` | `Turtle_Sail_Apparatus.scad` | `objects/sails.py` + `generate_sails.py` | `sails` |
 | Cap, cage, shaft, mold (printed PLA) | `lib/control_*.scad`, `lib/sail_shaft.scad`, `lib/silicone_ring_mold.scad` | — | **no generator; never needs propagation** | — |
 

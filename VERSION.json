@@ -1,6 +1,6 @@
 {
-  "version": "5.4.0",
-  "updated": "2026-10-09",
+  "version": "6.3.4",
+  "updated": "2026-10-22",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
     "patch": "+0.0.1  component-scoped change (one lib/<subsystem>.scad or one src/components/*.scad)",
@@ -8,6 +8,137 @@
     "major": "+1.0.0  bottle / board / hardware interface break (existing builds no longer fit)"
   },
   "changelog": [
+    {
+      "version": "6.3.4",
+      "date": "2026-10-22",
+      "files": ["lib/params.scad", "build/params.json", "Full_Turtle_v1.scad", "scads_v1/*.scad"],
+      "note": "Head fin flat nose 24 -> 36 mm (p_head_fin_toe_h() = 3t); the sloping leading edge steepens to meet it. Slat-end clearance assert passing (nearest ~9 mm, upper slat). build.py + lint.py clean; fin previewed."
+    },
+    {
+      "version": "6.3.3",
+      "date": "2026-10-22",
+      "files": ["lib/params.scad", "build/params.json", "Full_Turtle_v1.scad", "scads_v1/*.scad"],
+      "note": "Head fin forefoot cut is now 45 deg: p_head_fin_forefoot_setback() = p_head_fin_drop() (36 x 36; was 18 back over 36 down). Bottom edge 93 -> 57 mm. build.py + lint.py clean; fin previewed."
+    },
+    {
+      "version": "6.3.2",
+      "date": "2026-10-22",
+      "files": ["lib/params.scad", "lib/head_fin.scad", "build/params.json", "Full_Turtle_v1.scad", "scads_v1/*.scad"],
+      "note": "Head fin lowered: extends 36 mm (3t, p_head_fin_drop()) below the old bottom, top unchanged, rear edge straight down; new bottom-front corner set back 18 mm (1.5t, p_head_fin_forefoot_setback()) for a raked forefoot below the 24 mm toe flat. Fin now 93 x 192. build.py + lint.py clean; fin and full-turtle side view previewed. build/test.py NOT run."
+    },
+    {
+      "version": "6.3.1",
+      "date": "2026-10-22",
+      "files": ["lib/params.scad", "lib/head_fin.scad", "src/components/Turtle_Head_Fin.scad", "build/params.json", "Full_Turtle_v1.scad", "scads_v1/*.scad"],
+      "note": "Head fin profile flipped: the top edge now runs out only to X = 48 (p_head_fin_heel_x(), the slat ends) and the leading edge slopes down and FORWARD to a 24 mm (2t, p_head_fin_toe_h()) vertical flat at the full 93 mm width, meeting a full-width bottom edge (v6.3.0 had full width on top). Slat-end-behind-leading-edge assert re-checked and passing (nearest margin ~8 mm, upper slat). build.py + lint.py clean; fin and full-turtle side view previewed. build/test.py NOT run."
+    },
+    {
+      "version": "6.3.0",
+      "date": "2026-10-22",
+      "files": ["lib/params.scad", "lib/head_fin.scad", "lib/sail_frame.scad", "src/components/Turtle_Head_Fin.scad", "src/Full_Turtle.scad", "build/params.json", "Full_Turtle_v1.scad", "scads_v1/*.scad"],
+      "note": "Bottom sail rails +t: 252 -> 264 (p_bottom_rail_len() = 3 x bottle_d + t); sails widen at the base to follow. Head fin reshaped from a symmetric spear head to a downward triangle: full 93 mm width along the top edge, one leading edge from the top-front corner down to the bottom edge at X = 48 (p_head_fin_heel_x(), replaces p_head_fin_shoulder_x(); p_head_fin_nose_h() removed); new assert keeps every slat end behind the sloping edge. Head-fin local +Z is now physically UP (install matrix in src/Full_Turtle.scad changed; flush/M5 asserts updated and passing). build.py + lint.py clean; fin, sail and full-turtle side view previewed. build/test.py NOT run. HopeTurtles.org generators NOT updated."
+    },
+    {
+      "version": "6.2.0",
+      "date": "2026-10-21",
+      "files": ["lib/params.scad", "lib/sail_frame.scad", "src/Full_Turtle.scad", "build/params.json", "Full_Turtle_v1.scad", "scads_v1/*.scad"],
+      "note": "Reverted v6.1.0's sail crossbar lengths -- too long, sails too big. Top halves 382 -> 212.2 (span p_top_crossbar_len() = 6 x bottle_d = 504), bottom rails 360 -> 252 (p_bottom_rail_len() = 3 x bottle_d); 'lower rail extends beyond upper' assert restored. v6.1.0 batten heights (sail 217, non-sail 178 flush with the cage roof) kept. build.py + lint.py clean. build/test.py NOT run. HopeTurtles.org sails generator NOT updated."
+    },
+    {
+      "version": "6.1.0",
+      "date": "2026-10-21",
+      "files": [
+        "lib/params.scad",
+        "lib/sail_frame.scad",
+        "src/components/Turtle_Sail_Apparatus.scad",
+        "src/Full_Turtle.scad",
+        "build/params.json",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad"
+      ],
+      "note": "Sail frame cut lengths unified with the other long slats. Non-sail battens 229 -> 178, top flush with the cage roof top (derived: cage_total_height - batten bottom); sail battens 229 -> 217 (p_side_batten_h() = 205 + t, 15 mm above the 24 mm notch again); batten bottoms / cage M3 holes / lower rails unchanged. Top crossbar halves 212.2 -> 382 = p_head_slat_len() (span 504 -> 843.6, p_top_crossbar_len() now derived and asserted); bottom rails 252 -> 360 = p_ballast_core_len() (p_bottom_rail_len()). Sails are now an inverted trapezoid (top outer radius 421.8 > bottom 403) -- the 'lower rail must extend beyond the upper rail' assert was lifted. Connector unchanged (159.6). Sail sweep checked against the rear solar panel / head fin in two side elevations. build.py + lint.py clean. build/test.py NOT run. HopeTurtles.org sails generator NOT updated."
+    },
+    {
+      "version": "6.0.0",
+      "date": "2026-10-21",
+      "files": [
+        "lib/params.scad",
+        "lib/sail_frame.scad",
+        "lib/control_cage.scad",
+        "src/components/Turtle_Sail_Apparatus.scad",
+        "src/components/Bottle_Control_Cage.scad",
+        "src/Full_Turtle.scad",
+        "build/manifest.json",
+        "build/params.json",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad"
+      ],
+      "note": "BOARD INTERFACE BREAK -- split top sail crossbar. The 504 mm one-piece bar becomes two 212.2 mm halves + a 159.6 mm centre 'sail crossbar connector'. The connector lies on the cage roof spanning the two sail battens (15 mm past each batten's outer face), has a 9 mm shaft hole (p_sail_connector_axle_hole_d(); was 8.2 in the bar) and a side M3 self-tapped into a 2.8 mm pilot (p_sail_m3_pilot_d()) that clamps the shaft. The halves sit on top of it (15 mm inboard of each batten) with one M3 each through a 3.2 clearance hole into a 2.8 pilot in the connector. All four battens 205 -> 229 (p_side_batten_h() = 205 + 2t); the sail-batten upper notch is 2t (24) tall to take both layers, extra 12 mm above it (top margin 15 -> 27); batten bottoms, cage M3 holes and lower rails unchanged. Sails grow 12 mm taller (top edge follows the half underside). Cage hub M3 set screw + access recess switched OFF (p_cage_setscrew_enabled() = false / setscrew = false) -- kept in code to re-enable. Sail parts top_bar -> top_bar_half + top_bar_connector. p_sail_bar_axle_hole_d() removed. build.py + lint.py clean; assembly, parts, top_sail and cage previewed. build/test.py NOT run (sail_apparatus, full_turtle, top_sail, control_cage bounds/meshes change). HopeTurtles.org sails generator NOT updated -- now out of step."
+    },
+    {
+      "version": "5.8.0",
+      "date": "2026-10-21",
+      "files": [
+        "lib/params.scad",
+        "lib/head_fin.scad",
+        "src/components/Turtle_Head_Fin.scad",
+        "src/Full_Turtle.scad",
+        "build/manifest.json",
+        "build/params.json",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad"
+      ],
+      "note": "EXPERIMENTAL head fin: new front attachment on the -X (physical 9 o'clock) port, the rear fin's mirror. Two purple slats (382 x 60 x 12, above/below the front bottle) bolt to frame 1's Little John M5 pairs at the same 113 mm as the rear shafts (p_head_slat_reach() = rear shaft reach 334) and half-lap (24 mm engagement, 0.2 mm total clearance) into a blue vertical spear-head fin 93 (= p_fin_board_w(), one board) x 156 (bottle_d + 6t), front corners cut from the slat ends (X 48) to a 24 mm flat nose; fin rear edge abuts the bottle base. Frame 1 now through-bolts (no acorn) its -X clamp pairs too. New wrapper/bundle scads_v1/Turtle_Head_Fin.scad (parts assembly/fin/slat). Full-turtle asserts check M5-pair coincidence and slat-to-John flush. build.py + lint.py clean; fin, assembly and full turtle previewed. build/test.py NOT run -- full_turtle/core bounds grow in -X (no head_fin baseline yet). HopeTurtles.org generator NOT updated (experimental, per user)."
+    },
+    {
+      "version": "5.7.0",
+      "date": "2026-10-12",
+      "files": [
+        "lib/params.scad",
+        "lib/rear_fin.scad",
+        "src/Full_Turtle.scad",
+        "build/params.json",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad"
+      ],
+      "note": "Rear yellow fin is now exactly one board wide: rf_fin_width() = p_fin_board_w() (was board + p_rear_fin_tab_width() 15 = 108 mm, wider than the 93 mm board it is cut from -- surfaced by the HopeTurtles.org fin carpenter PDF showing a 111 mm fin for a 96 mm max board). p_rear_fin_tab_width() deleted. Cascade: p_rear_shaft_rear_x() / solar notch X 84 -> 69, p_rear_shaft_len() 418 -> 403, half-lap engagement 42 -> 34.5 (p_rear_half_lap_engagement() now derived = rear_x/2). Shaft front, John M5 hole pair and bottle-base seat at fin X=0 unchanged. build.py + lint.py clean; fin (93 x 12 x 252) and shaft (403 x 60 x 12) rendered. build/test.py NOT run -- recommended to maintainer (rear_fin + full_turtle bounds will move)."
+    },
+    {
+      "version": "5.6.0",
+      "date": "2026-10-11",
+      "files": [
+        "lib/ballast_fin.scad",
+        "src/Full_Turtle.scad",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad"
+      ],
+      "note": "Ballast green core slats: upper 45 deg shoulder cut moved down from one port_height (84) to max(port_height, port_length) + t (96) below the slat top (bl_upper_diag_from_top()), so it starts just outside the outer John's port end (94) instead of 10 mm inside it. Neck and lower shoulder unchanged."
+    },
+    {
+      "version": "5.5.0",
+      "date": "2026-10-11",
+      "files": [
+        "lib/ballast_fin.scad",
+        "lib/params.scad",
+        "src/Full_Turtle.scad",
+        "build/params.json",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad"
+      ],
+      "note": "Ballast orange bottom board: solid wood outboard of each red-foot slot 2t -> 3t (bl_end_slot_offset()), board length 294 -> 318 at the current 84 mm bottle (p_ballast_board_len() = 3.5*bottle_d + 2t) so every slot keeps its position relative to centre; both front-edge (foot-slot edge) corners chamfered 45 deg, 20 x 20 mm (bl_board_front_chamfer()). Full-turtle placement unchanged (centred on the fin slot)."
+    },
+    {
+      "version": "5.4.1",
+      "date": "2026-10-10",
+      "files": [
+        "lib/ballast_fin.scad",
+        "src/Full_Turtle.scad",
+        "build/params.json",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad"
+      ],
+      "note": "Ballast core slats: bl_core_w() / bl_neck_w() / bl_slat_spacing() rewritten in p_port_height() terms (identical values: port height == bottle diameter here) so the slat-to-John tie is explicit, plus a full-turtle assert bl_core_w() == eco_john_height(). No geometry change. Downstream, the HopeTurtles.org ballast generator now follows the fit-adjusted port height (slat width 57 at 'Very Tight', matching the 6FC John) and its bottom-board slat slots were corrected from 84 to port height + t (96) apart."
+    },
     {
       "version": "5.4.0",
       "date": "2026-10-10",
