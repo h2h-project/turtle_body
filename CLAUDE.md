@@ -400,7 +400,7 @@ In the full Turtle, the rear assembly belongs at the physical 3-o'clock/back por
 
 ## 11a. Head fin (front fin) — EXPERIMENTAL, v5.8.0; raked profile since v6.3.1
 
-`lib/head_fin.scad` + wrapper `src/components/Turtle_Head_Fin.scad` → `scads_v1/Turtle_Head_Fin.scad` (parts `assembly` / `fin` / `slat`). The rear fin's mirror on the front port (pre-orientation −X, physical 9 o'clock): two purple flat slats above and below the front bottle and one blue vertical raked fin. Not built, fitted or tested; **no HopeTurtles.org generator yet** (deliberately — the user asked not to propagate while experimental; add a generator + `SYNC_LOG.md` entry once it settles).
+`lib/head_fin.scad` + wrapper `src/components/Turtle_Head_Fin.scad` → `scads_v1/Turtle_Head_Fin.scad` (parts `assembly` / `fin` / `slat`). The rear fin's mirror on the front port (pre-orientation −X, physical 9 o'clock): two purple flat slats above and below the front bottle and one blue vertical raked fin. Not built, fitted or tested. Exported by the HopeTurtles.org generator (`object_type: "head_fin"`) since 2026-10-22, which renders this bundle with the builder's dimensions — so the slats follow `p_port_height()` (the generator adds the fit offset) and **the profile needs 7·t < board width** (4t top edge + 3t cut).
 
 | Feature | Default |
 | --- | ---: |
@@ -717,8 +717,8 @@ rule" precedent, applied in the generator→lib direction.
 | Ecojoiner core (Long/Little/Master Johns, Final Keys; M5 clamp holes — no Pressers since v5.0.0) | `lib/ecojoiner.scad` + `lib/params.scad` | `src/components/Turtle_Core_Ecojoiner.scad` → `scads_v1/Turtle_Core_Ecojoiner.scad` | `objects/ecojoiner_6fc.py` | `6fc` |
 | Rear fin, bottle-holder shafts, solar holder | `lib/rear_fin.scad` | `Turtle_Rear_Fin.scad` | `objects/back_fin.py` + `back_fin_generator.py` | `fin` |
 | Ballast (core slats, bottom board, lock feet, fin) | `lib/ballast_fin.scad` | `Turtle_Bottom_Ballast_Fin.scad` | `objects/ballast.py` + `bottom_ballast_fin_generator.py` | `ballast` |
-| Head fin (front slats + spear-head fin) — experimental | `lib/head_fin.scad` | `Turtle_Head_Fin.scad` | **none yet** (deliberately deferred) | — |
-| Sail frame (bars, battens, strengtheners, C pieces, sails) | `lib/sail_frame.scad` | `Turtle_Sail_Apparatus.scad` | `objects/sails.py` + `generate_sails.py` | `sails` |
+| Head fin (front slats + raked fin) — experimental | `lib/head_fin.scad` | `Turtle_Head_Fin.scad` | `head_fin_generator.py` + `objects/head_fin.py` (SCAD = the vendored bundle with `p_*()` overrides) | `head_fin` |
+| Sail frame (crossbar halves + connector, battens, strengtheners, C pieces, sails) | `lib/sail_frame.scad` | `Turtle_Sail_Apparatus.scad` | `objects/sails.py` + `generate_sails.py` (SCAD = the vendored bundle with `p_*()` overrides since 2026-10-22) | `sails` |
 | Cap, cage, shaft, mold (printed PLA) | `lib/control_*.scad`, `lib/sail_shaft.scad`, `lib/silicone_ring_mold.scad` | — | **no generator; never needs propagation** | — |
 
 Each generator carries three copies of every formula — the `lib/` module, its embedded

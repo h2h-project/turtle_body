@@ -60,7 +60,8 @@ module sail_frame(
     part = "assembly",
     colored = true,
     show_hardware = true,
-    show_control_bottle = false
+    show_control_bottle = false,
+    show_sails = true   // false = wooden frame only (e.g. preview drawings)
 ) {
     $fn = curve_segments;
     cage_epsilon = 0.02;
@@ -91,7 +92,10 @@ module sail_frame(
     // ============================================================
     // TOP SAIL BAR
     // ============================================================
-    top_sail_bar_length = p_top_crossbar_len();   // 504 tip to tip
+    // Same rules as p_top_crossbar_len() / p_bottom_rail_len(), but on this
+    // module's own bottle_diameter / board_width arguments so a caller's
+    // values are honoured (v6.3.5; v6.0-6.3.4 read the p_*() globals here).
+    top_sail_bar_length = 6 * bottle_diameter;   // 504 tip to tip
     top_sail_bar_width = 22;
     top_sail_bar_thickness = board_width;
 
@@ -126,7 +130,7 @@ module sail_frame(
     // ============================================================
     // BOTTOM SAIL BARS
     // ============================================================
-    bottom_sail_bar_length = p_bottom_rail_len();   // 264 (v6.3.0: 3 x bottle_d + t)
+    bottom_sail_bar_length = 3 * bottle_diameter + board_width;   // 264 (v6.3.0: 3 x bottle_d + t)
     bottom_sail_bar_width = top_sail_bar_width;
     bottom_sail_bar_thickness = board_width;
 
@@ -1252,7 +1256,7 @@ module sail_frame(
         bottom_sail_bars_native_assembly();
         joint_strengtheners_native_assembly();
         c_end_pieces_native_assembly();
-        sails_native_assembly();
+        if(show_sails) sails_native_assembly();
         if(show_hardware) {
             cage_batten_bolts_native_assembly();
             sail_strengthener_bolts_native();

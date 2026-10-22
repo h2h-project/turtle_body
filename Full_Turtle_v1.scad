@@ -1,7 +1,7 @@
 // ==========================================================================
 //  GENERATED FILE -- DO NOT EDIT.
 //  Produced by build/build.py from src/Full_Turtle.scad
-//  Turtle Body version 6.3.4
+//  Turtle Body version 6.3.5
 //  Edit lib/ and src/ instead, then run: python3 build/build.py
 // ==========================================================================
 /*
@@ -1499,8 +1499,11 @@ function hf_slat_length()  = p_head_slat_len();       // 382
 function hf_slat_width()   = p_head_slat_width();     // 60
 function hf_slat_rear_x()  = hf_overlap();
 function hf_slat_front_x() = hf_slat_rear_x() - hf_slat_length();   // -334
-function hf_upper_slat_z0() = p_bottle_d() / 2;                     // 42
-function hf_lower_slat_z0() = -p_bottle_d() / 2 - hf_t();           // -54
+// The slats sit flush against the port's Little Johns, so they follow the
+// PORT height (== bottle diameter here; the HopeTurtles.org generator adds
+// the builder's fit offset to it, v6.3.5).
+function hf_upper_slat_z0() = p_port_height() / 2;                  // 42
+function hf_lower_slat_z0() = -p_port_height() / 2 - hf_t();        // -54
 
 module hf_assert_valid(half_lap, hole_from_front, hole_d) {
     t = hf_t();
@@ -2550,7 +2553,8 @@ module sail_frame(
     part = "assembly",
     colored = true,
     show_hardware = true,
-    show_control_bottle = false
+    show_control_bottle = false,
+    show_sails = true   // false = wooden frame only (e.g. preview drawings)
 ) {
     $fn = curve_segments;
     cage_epsilon = 0.02;
@@ -2581,7 +2585,10 @@ module sail_frame(
     // ============================================================
     // TOP SAIL BAR
     // ============================================================
-    top_sail_bar_length = p_top_crossbar_len();   // 504 tip to tip
+    // Same rules as p_top_crossbar_len() / p_bottom_rail_len(), but on this
+    // module's own bottle_diameter / board_width arguments so a caller's
+    // values are honoured (v6.3.5; v6.0-6.3.4 read the p_*() globals here).
+    top_sail_bar_length = 6 * bottle_diameter;   // 504 tip to tip
     top_sail_bar_width = 22;
     top_sail_bar_thickness = board_width;
 
@@ -2616,7 +2623,7 @@ module sail_frame(
     // ============================================================
     // BOTTOM SAIL BARS
     // ============================================================
-    bottom_sail_bar_length = p_bottom_rail_len();   // 264 (v6.3.0: 3 x bottle_d + t)
+    bottom_sail_bar_length = 3 * bottle_diameter + board_width;   // 264 (v6.3.0: 3 x bottle_d + t)
     bottom_sail_bar_width = top_sail_bar_width;
     bottom_sail_bar_thickness = board_width;
 
@@ -3742,7 +3749,7 @@ module sail_frame(
         bottom_sail_bars_native_assembly();
         joint_strengtheners_native_assembly();
         c_end_pieces_native_assembly();
-        sails_native_assembly();
+        if(show_sails) sails_native_assembly();
         if(show_hardware) {
             cage_batten_bolts_native_assembly();
             sail_strengthener_bolts_native();

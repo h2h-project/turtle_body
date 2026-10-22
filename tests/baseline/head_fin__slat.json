@@ -1,0 +1,32 @@
+{
+  "target": "head_fin",
+  "render": "slat",
+  "source": "scads_v1/Turtle_Head_Fin.scad",
+  "defines": {
+    "part": "slat"
+  },
+  "returncode": 0,
+  "timed_out": false,
+  "seconds": 0.1,
+  "bounds": {
+    "min": [
+      -334.0,
+      -30.0,
+      0.0
+    ],
+    "max": [
+      48.0,
+      30.0,
+      12.0
+    ],
+    "size": [
+      382.0,
+      60.0,
+      12.0
+    ],
+    "tris": 164
+  },
+  "warnings": [],
+  "errors": [],
+  "echoes": []
+}

@@ -1,5 +1,5 @@
 {
-  "version": "6.3.4",
+  "version": "6.3.5",
   "updated": "2026-10-22",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
@@ -8,6 +8,12 @@
     "major": "+1.0.0  bottle / board / hardware interface break (existing builds no longer fit)"
   },
   "changelog": [
+    {
+      "version": "6.3.5",
+      "date": "2026-10-22",
+      "files": ["lib/head_fin.scad", "lib/sail_frame.scad", "Full_Turtle_v1.scad", "scads_v1/Turtle_Head_Fin.scad", "scads_v1/Turtle_Sail_Apparatus.scad", "tests/expected_bounds.json", "tests/baseline/*"],
+      "note": "Rule fixes found while building the HopeTurtles.org head-fin/sail generators; no geometry change at defaults. Head-fin slats now sit at +-p_port_height()/2 (the Little John they bolt to) instead of +-p_bottle_d()/2 -- equal here, but the generator adds the builder's fit offset to the port height. sail_frame() derives its crossbar span (6 x bottle_diameter) and bottom rail (3 x bottle_diameter + board_width) from its own arguments again; v6.0-6.3.4 read the p_*() globals there, ignoring a caller's bottle_diameter/board_width. Full mesh regression run (build/test.py): 14/34 passed, the 20 failures all traced to intentional changes (cap disk 100 -> 102, ballast board v5.5.0, rear fin v5.3-5.7, new head fin, sail frame v6.0-6.3, full-turtle aggregates); baselines re-recorded with notes."
+    },
     {
       "version": "6.3.4",
       "date": "2026-10-22",

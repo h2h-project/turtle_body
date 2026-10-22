@@ -15,22 +15,22 @@
       0.0
     ],
     "max": [
-      294.0,
+      318.0,
       93.0,
       360.0
     ],
     "size": [
-      294.0,
+      318.0,
       261.0,
       360.0
     ],
-    "tris": 696
+    "tris": 584
   },
   "warnings": [
     "WARNING: Object may not be a valid 2-manifold and may need repair!"
   ],
   "errors": [],
   "echoes": [
-    "ECHO: \"BALLAST: slat w/len/t = \", 60, 360, 12, \" | inner-face gap = \", 84, \" | M6 from slat top = \", 69"
+    "ECHO: \"BALLAST: slat w/len/t = \", 60, 360, 12, \" | inner-face gap = \", 84, \" | M5 pair from slat top = \", 77"
   ]
 }

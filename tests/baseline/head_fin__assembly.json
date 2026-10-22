@@ -1,0 +1,35 @@
+{
+  "target": "head_fin",
+  "render": "assembly",
+  "source": "scads_v1/Turtle_Head_Fin.scad",
+  "defines": {
+    "part": "assembly",
+    "show_bottle_mockup": false
+  },
+  "returncode": 0,
+  "timed_out": false,
+  "seconds": 0.2,
+  "bounds": {
+    "min": [
+      -334.0,
+      -30.0,
+      -114.0
+    ],
+    "max": [
+      93.0,
+      30.0,
+      78.0
+    ],
+    "size": [
+      427.0,
+      60.0,
+      192.0
+    ],
+    "tris": 380
+  },
+  "warnings": [],
+  "errors": [],
+  "echoes": [
+    "ECHO: \"HEAD FIN: fin = \", 93, \" x \", 192, \" | slat length = \", 382, \" | hole from front = \", 113, \" | half-lap engagement = \", 24, \" | slot opening = \", 12.2"
+  ]
+}

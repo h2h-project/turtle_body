@@ -8,24 +8,24 @@
   },
   "returncode": 0,
   "timed_out": false,
-  "seconds": 2.3,
+  "seconds": 3.1,
   "bounds": {
     "min": [
-      -295.0,
+      -307.0,
       -79.8,
       0.0
     ],
     "max": [
-      295.0,
+      307.0,
       79.8,
-      205.0
+      217.0
     ],
     "size": [
-      590.0,
+      614.0,
       159.6,
-      205.0
+      217.0
     ],
-    "tris": 4404
+    "tris": 5176
   },
   "warnings": [
     "WARNING: Object may not be a valid 2-manifold and may need repair!"
@@ -38,6 +38,7 @@
     "ECHO: \"Bottom sail bar inner-edge radius = \", 43, \" mm\"",
     "ECHO: \"Cage M3 mount heights / hole diameter = \", [22, -10], 3.2",
     "ECHO: \"Cage mount hole diameter / vertical pitch = \", 3.2, 32",
+    "ECHO: \"SAIL CROSSBAR: halves 2 x \", 212.2, \" | connector \", 159.6, \" | connector shaft hole / M3 pilot = \", 9, 2.8, \" | span \", 504, \" | bottom rails 2 x \", 264, \" | sail / non-sail batten h = \", 217, 178, \" | upper notch = \", 24",
     "ECHO: \"Cage mount centres from batten bottom = \", [152, 120]"
   ]
 }
