@@ -105,7 +105,7 @@ module sail_frame(
     // roof spans the two sail battens and carries the shaft hole (generous
     // clearance) + a side M3 clamp screw; a LEFT and RIGHT HALF sit on top of
     // it and run out to the tips. Both layers share the batten notch.
-    top_bar_connector_axle_hole_d = p_sail_connector_axle_hole_d();   // 9
+    top_bar_connector_axle_hole_d = p_sail_connector_axle_hole_d();   // 6
     top_bar_m3_pilot_d = p_sail_m3_pilot_d();                          // 2.8 self-tap
     top_bar_m3_clear_d = p_sail_m3_clear_d();                          // 3.2
     top_bar_m3_screw_len = 20;   // visual: half-to-connector screws
@@ -244,7 +244,7 @@ module sail_frame(
     // ============================================================
     // SAIL SHAFT (TB-08: uniform round, no hex)
     // ============================================================
-    round_shaft_diameter   = 8.0;
+    round_shaft_diameter   = p_axle_round_d();   // 5, steel rod (v6.4.0; was a literal 8.0)
     round_shaft_length     = 30.0;  // length inside the cap cavity
     round_shaft_extension_above_cap = 1.0;
     shaft_upper_length     = 23.0; // continues up through the cage hub + sail bar (was hex_shaft_length)

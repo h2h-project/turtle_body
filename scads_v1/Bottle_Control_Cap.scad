@@ -1,7 +1,7 @@
 // ==========================================================================
 //  GENERATED FILE -- DO NOT EDIT.
 //  Produced by build/build.py from components/Bottle_Control_Cap.scad
-//  Turtle Body version 6.3.5
+//  Turtle Body version 6.4.0
 //  Edit lib/ and src/ instead, then run: python3 build/build.py
 // ==========================================================================
 /*
@@ -54,18 +54,21 @@ entry_chamfer_h     = 1;
 entry_chamfer_delta = 1;
 
 /* [Axle and buttons] */
-shaft_hole_d   = 8.7;  // 0.35 mm radial clearance to the Ø8 axle (was 8.6 / 0.3 mm)
-button_upper_d = 17;
+shaft_hole_d   = 6;    // loose, 0.5 mm radial clearance to the Ø5 steel shaft (was 8.7 for Ø8)
+button_upper_d = 16.5;
 button_axis    = "y"; // [x,y]
-hole_spacing_cc = 20;  // radial position of the two button centres, NOT centre-to-centre
-                        // (was 25; 20 -> 40 mm true centre-to-centre along the axis) --
-                        // shared with the cage's matching bore via p_button_radius())
+button_center_r = 23.2; // TRUE distance, cap centre -> each button centre (was 24, ~20.9 before);
+                        // the USB-C hole sits on this same circle. Keep the cage's
+                        // button_r equal to it (Bottle_Control_Cage.scad)
 button_axis_offset = 6; // slides BOTH button centres off the etched axle line, same
                          // real-world direction as tab_side_offset below (not mirrored)
+// on-axis component of the button position, derived so the true radius stays
+// button_center_r whatever the offset (23.2 / 6 -> 22.41; holes 44.8 mm apart)
+hole_spacing_cc = sqrt(button_center_r * button_center_r - button_axis_offset * button_axis_offset);
 
 /* [Axle O-ring gland] */
 oring_gland_enable = true;
-oring_gland_od = 11.5;      // groove bottom diameter in the bore
+oring_gland_od = 8.5;       // groove bottom diameter in the bore (p_cap_oring_gland_od(): Ø9 O-ring - 0.25 squeeze; was 11.5)
 oring_gland_width = 2.6;    // groove axial width
 oring_gland_from_face = 3.5; // groove centre, below the cap outer face
 
@@ -106,7 +109,7 @@ tab_side_offset = 6;    // both tabs slide this far sideways, same real-world di
 // same side as button_axis_offset above) -- so it sits clear of the side
 // tabs, which run along button_axis.
 usbc_hole_enable   = true;
-usbc_hole_diameter = 12;
+usbc_hole_diameter = 11;
 
 /* [Reference etch line] */
 // Faint reference groove on the cavity ceiling (roof underside, the "inner"
@@ -300,7 +303,7 @@ function p_cap_insert_len()  = 35;    // straight insert shaft length
 function p_cap_insert_wall_t() = 4;
 function p_cap_entry_chamfer_h()     = 1;
 function p_cap_entry_chamfer_delta() = 1;
-function p_cap_axle_bore_d() = 8.7;   // 0.35 mm radial clearance to the Ø8 shaft (was 8.6 / 0.3 mm)
+function p_cap_axle_bore_d() = 6;     // loose: 0.5 mm radial clearance to the Ø5 steel shaft (was 8.7 for Ø8 PLA)
 function p_cap_cage_radial_clearance() = 1;   // cap disk -> cage inner wall (radial)
 function p_cap_total_h()     = p_cap_roof_t() + p_cap_insert_len();           // 40
 function p_cap_bearing_len() = p_cap_roof_t() + p_cap_boss_depth();           // 6.5 (was 7)
@@ -338,15 +341,15 @@ function p_seal_groove_root_d() = p_insert_shaft_d()
 //  sail bar's own hole (both p_axle_shaft_hole_d()); it locks to the
 //  ROTATING cage with a single M3 set screw through the cage hub
 //  (p_cage_setscrew_pilot_d()) rather than a shaped (hex) interference fit.
-function p_axle_round_d()        = 8;
+function p_axle_round_d()        = 5;    // Ø5 steel rod (v6.4.0; was an Ø8 printed PLA shaft)
 function p_axle_round_ext()      = 1;    // projection above the cap's outer face
 function p_axle_round_inside_cap() = p_cap_insert_len() - 5;  // 30: roof underside to round end (incl. boss)
 function p_axle_round_len()      = p_axle_round_inside_cap() + p_cap_roof_t() + p_axle_round_ext();  // 36
 function p_axle_upper_len()      = 23;   // continues up through the cage hub + sail bar (was the hex length)
 function p_axle_total_len()      = p_axle_upper_len() + p_axle_round_len();
-function p_axle_shaft_clearance() = 0.2; // light running clearance, diametral: any hole the shaft passes
+function p_axle_shaft_clearance() = 0.4; // snug fit, diametral (was 0.2 on the Ø8 shaft): any hole the shaft passes
                                           // (but does not bear in) is p_axle_round_d() + this
-function p_axle_shaft_hole_d()   = p_axle_round_d() + p_axle_shaft_clearance();  // 8.2
+function p_axle_shaft_hole_d()   = p_axle_round_d() + p_axle_shaft_clearance();  // 5.4 (cage hub bore)
 function p_magnet_d()            = 3;    // AS5600 sensing magnet recess
 function p_magnet_t()            = 1;
 
@@ -354,12 +357,12 @@ function p_magnet_t()            = 1;
 //  A round-section O-ring seated in a gland in the control-cap bore, sealing
 //  against the spinning round section of the axle. ID is tied to the shaft.
 function p_axle_oring_cs()     = 2.0;                                   // cross-section
-function p_axle_oring_id()     = p_axle_round_d();                      // 8 -- hugs the shaft
-function p_axle_oring_od()     = p_axle_oring_id() + 2 * p_axle_oring_cs();          // 12
-function p_axle_oring_mean_r() = (p_axle_oring_id() + p_axle_oring_cs()) / 2;        // 5
+function p_axle_oring_id()     = p_axle_round_d();                      // 5 -- hugs the shaft
+function p_axle_oring_od()     = p_axle_oring_id() + 2 * p_axle_oring_cs();          // 9
+function p_axle_oring_mean_r() = (p_axle_oring_id() + p_axle_oring_cs()) / 2;        // 3.5
 //  gland cut into the cap bore for it
 function p_cap_oring_squeeze()      = 0.25;  // radial squeeze on the seal
-function p_cap_oring_gland_od()     = p_axle_oring_od() - 2 * p_cap_oring_squeeze(); // 11.5
+function p_cap_oring_gland_od()     = p_axle_oring_od() - 2 * p_cap_oring_squeeze(); // 8.5
 function p_cap_oring_gland_w()      = 1.3 * p_axle_oring_cs();                       // 2.6 axial
 function p_cap_oring_gland_from_face() = 3.5; // gland centre, from the cap outer face, along the bore
 
@@ -440,7 +443,7 @@ function p_top_crossbar_t()  = p_wood_t();          // 12
 // The shaft passes the connector with generous clearance (no bearing), and an
 // M3 self-tapped in from the connector's side face clamps it, locking frame,
 // cage and shaft together (replaces the cage hub set screw).
-function p_sail_connector_axle_hole_d()  = 9;     // Ø8 shaft, 0.5 mm radial clearance (was Ø8.2 in the one-piece bar)
+function p_sail_connector_axle_hole_d()  = 6;     // Ø5 steel shaft, 0.5 mm radial clearance (v6.4.0; was 9 for the Ø8 shaft)
 function p_sail_m3_pilot_d()             = 2.8;   // self-tap pilot: clamp screw + the half-to-connector screws
 function p_sail_m3_clear_d()             = p_cage_mount_hole_d();   // 3.2, through the top (half) layer
 function p_sail_connector_overhang()     = 15;    // connector past each sail batten's outer face

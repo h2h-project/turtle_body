@@ -5,7 +5,8 @@
  and the top sail bar's own hole; locks to the rotating cage with a single
  M3 set screw through the cage hub (see Bottle_Control_Cage.scad).
  Upper end on Z=0 for printing; the magnet recess opens upward.
- Round-in-cap section = 30 mm inside the cavity (incl. boss) + 5 mm cap roof
+ v6.4.0: the real shaft is an Ø5 steel rod; this file now just gives its
+ cut length and magnet-recess position. Round-in-cap section = 30 mm inside the cavity (incl. boss) + 5 mm cap roof
  (TB-03) + 1 mm proud. Overall length 59 mm.
 
  SOURCE FILE — geometry lives in lib/sail_shaft.scad + lib/params.scad.
@@ -13,7 +14,8 @@
 */
 
 /* [Shaft] */
-shaft_diameter = 8;
+shaft_diameter = 5;  // v6.4.0: Ø5 steel rod (was an Ø8 printed PLA shaft) -- this model is now
+                     // the cut-length / magnet-recess reference, not a print
 round_length_inside_cap = 30; // roof underside -> lower end, INCLUDING the boss
 round_extension_above_cap = 1;
 upper_length = 23; // continues up through the cage hub + sail bar

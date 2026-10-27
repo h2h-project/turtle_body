@@ -2010,7 +2010,7 @@ module hope_turtle_sail_apparatus(
     // ============================================================
     // SAIL SHAFT (TB-08: uniform round, no hex)
     // ============================================================
-    round_shaft_diameter   = 8.0;
+    round_shaft_diameter   = p_axle_round_d();   // 5, steel rod (v6.4.0; was a literal 8.0)
     round_shaft_length     = 30.0;  // length inside the cap cavity
     round_shaft_extension_above_cap = 1.0;
     shaft_upper_length     = 23.0; // continues up through the cage hub + sail bar (was hex_shaft_length)

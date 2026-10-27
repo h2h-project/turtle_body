@@ -1,6 +1,6 @@
 {
-  "version": "6.3.5",
-  "updated": "2026-10-22",
+  "version": "6.4.0",
+  "updated": "2026-10-27",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
     "patch": "+0.0.1  component-scoped change (one lib/<subsystem>.scad or one src/components/*.scad)",
@@ -8,6 +8,18 @@
     "major": "+1.0.0  bottle / board / hardware interface break (existing builds no longer fit)"
   },
   "changelog": [
+    {
+      "version": "6.4.0",
+      "date": "2026-10-27",
+      "files": ["lib/params.scad", "lib/silicone_ring_mold.scad", "src/components/Bottle_Control_Cap.scad", "src/components/Bottle_Control_Cage.scad", "src/components/Bottle_Sail_Shaft.scad", "src/components/Silicone_Ring_Mold.scad", "lib/sail_frame.scad", "src/Full_Turtle.scad", "build/params.json", "Full_Turtle_v1.scad", "scads_v1/*.scad"],
+      "note": "Sail shaft becomes an Ø5 steel rod (p_axle_round_d() 8 -> 5). Cap axle bore 8.7 -> 6 (loose, 0.5 mm radial); cage hub bore 8.2 -> 5.4 (p_axle_shaft_clearance() 0.2 -> 0.4, snug). Axle O-ring follows the shaft: ID/OD 8/12 -> 5/9, cap gland root 11.5 -> 8.5, mold O-ring cavities shrink with it. Sail crossbar connector shaft hole 9 -> 6 (p_sail_connector_axle_hole_d(); wood, 0.5 mm radial clearance), propagated to hopeTurtles.org generator/objects/sails.py. sail_frame / Full_Turtle round_shaft_diameter literals (8.0) now read p_axle_round_d()."
+    },
+    {
+      "version": "6.3.6",
+      "date": "2026-10-27",
+      "files": ["src/components/Bottle_Control_Cap.scad", "src/components/Bottle_Control_Cage.scad", "scads_v1/Bottle_Control_Cap.scad", "scads_v1/Bottle_Control_Cage.scad"],
+      "note": "Cap button holes moved out to a true 23.2 mm from the cap centre (was ~20.9: on-axis 20 + 6 mm offset) and narrowed 17 -> 16.5 mm; new button_center_r customizer value, hole_spacing_cc now derived as sqrt(23.2^2 - 6^2) = 22.41, holes 44.8 mm apart. USB-C hole 12 -> 11 mm, still on the same circle. Cage wrapper button_r 25 -> 23.2 to match. PLA-only, no generator propagation."
+    },
     {
       "version": "6.3.5",
       "date": "2026-10-22",

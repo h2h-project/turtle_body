@@ -8,8 +8,8 @@
 //    * `ring_count` round AXLE O-RINGS       -- one nested in the centre of
 //      EVERY flat-ring mold ("an additional mold circle" per ring), so the
 //      default 2-ring mold yields TWO O-rings and you get two chances at a
-//      good one. ID is tied to the sealing (round) section of the hex-shaft
-//      axle, p_axle_oring_id() = p_axle_round_d() (8); CS 2, OD 12.
+//      good one. ID is tied to the round sail shaft,
+//      p_axle_oring_id() = p_axle_round_d() (5, steel rod); CS 2, OD 9.
 //
 //  The bottom plate carries the flat-ring channels (full depth, scrape-fill),
 //  the LOWER half of each O-ring torus, and THREE male alignment pegs. The

@@ -48,18 +48,21 @@ entry_chamfer_h     = 1;
 entry_chamfer_delta = 1;
 
 /* [Axle and buttons] */
-shaft_hole_d   = 8.7;  // 0.35 mm radial clearance to the Ø8 axle (was 8.6 / 0.3 mm)
-button_upper_d = 17;
+shaft_hole_d   = 6;    // loose, 0.5 mm radial clearance to the Ø5 steel shaft (was 8.7 for Ø8)
+button_upper_d = 16.5;
 button_axis    = "y"; // [x,y]
-hole_spacing_cc = 20;  // radial position of the two button centres, NOT centre-to-centre
-                        // (was 25; 20 -> 40 mm true centre-to-centre along the axis) --
-                        // shared with the cage's matching bore via p_button_radius())
+button_center_r = 23.2; // TRUE distance, cap centre -> each button centre (was 24, ~20.9 before);
+                        // the USB-C hole sits on this same circle. Keep the cage's
+                        // button_r equal to it (Bottle_Control_Cage.scad)
 button_axis_offset = 6; // slides BOTH button centres off the etched axle line, same
                          // real-world direction as tab_side_offset below (not mirrored)
+// on-axis component of the button position, derived so the true radius stays
+// button_center_r whatever the offset (23.2 / 6 -> 22.41; holes 44.8 mm apart)
+hole_spacing_cc = sqrt(button_center_r * button_center_r - button_axis_offset * button_axis_offset);
 
 /* [Axle O-ring gland] */
 oring_gland_enable = true;
-oring_gland_od = 11.5;      // groove bottom diameter in the bore
+oring_gland_od = 8.5;       // groove bottom diameter in the bore (p_cap_oring_gland_od(): Ø9 O-ring - 0.25 squeeze; was 11.5)
 oring_gland_width = 2.6;    // groove axial width
 oring_gland_from_face = 3.5; // groove centre, below the cap outer face
 
@@ -100,7 +103,7 @@ tab_side_offset = 6;    // both tabs slide this far sideways, same real-world di
 // same side as button_axis_offset above) -- so it sits clear of the side
 // tabs, which run along button_axis.
 usbc_hole_enable   = true;
-usbc_hole_diameter = 12;
+usbc_hole_diameter = 11;
 
 /* [Reference etch line] */
 // Faint reference groove on the cavity ceiling (roof underside, the "inner"

@@ -41,11 +41,11 @@ roof_bevel = 3;         // 45-deg outward chamfer on the roof-top edge (0 = shar
 /* [Bearings and button] */
 bump_d = 9;
 button_diameter = 22;  // opens onto the hub face -> set-screw access
-button_r = 25;         // matches the cap's button holes (p_button_radius())
+button_r = 23.2;       // matches the cap's true button radius (Bottle_Control_Cap.scad button_center_r)
 button_angle = 90; // [0:0.5:359.5]
 
 /* [Shaft hub, lock screw and clip pocket] */
-shaft_hole_diameter = 8.2;  // TB-08: round bore, shaft dia + running clearance (was a hex bore)
+shaft_hole_diameter = 5.4;  // snug on the Ø5 steel shaft (p_axle_shaft_hole_d(); was 8.2 for Ø8)
 cage_hub_d = 29;
 setscrew = false;               // v6.0.0: hub M3 set screw + recess OFF (the sail crossbar connector clamps the shaft)
 setscrew_pilot_diameter = 2.5;  // self-tapping M3 grub-screw pilot, untested thread engagement

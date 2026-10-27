@@ -43,7 +43,7 @@ mold_spacing = 8; // gap between flat mold bodies
    change to p_bottle_d()/p_seal_groove_root_d()/p_seal_ring_radial_w()/
    p_seal_ring_elasticity_reduction(); build/test.py's bounds check is what
    catches a forgotten update. The nested axle O-ring (small ring, ID/OD
-   8/12) is not affected by these three values. */
+   5/9, follows p_axle_round_d()) is not affected by these three values. */
 flat_ring_inner_d  = 57.75; // mm, as-cast inner diameter
 flat_ring_outer_d  = 77.75; // mm, as-cast outer diameter
 flat_ring_axial_t  = 2.6;   // mm, cast thickness
