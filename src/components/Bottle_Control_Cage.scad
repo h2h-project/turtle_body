@@ -40,7 +40,7 @@ roof_bevel = 3;         // 45-deg outward chamfer on the roof-top edge (0 = shar
 
 /* [Bearings and button] */
 bump_d = 9;
-button_diameter = 22;  // opens onto the hub face -> set-screw access
+button_diameter = 18;  // v6.5.2 (was 22, sized to open onto the hub face for the now-disabled set screw)
 button_r = 23.2;       // matches the cap's true button radius (Bottle_Control_Cap.scad button_center_r)
 button_angle = 90; // [0:0.5:359.5]
 

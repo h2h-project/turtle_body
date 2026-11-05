@@ -137,12 +137,14 @@ module control_cage(inner_d       = p_cage_inner_d(),
         assert(pocket_floor <= 6.5 && cage_top > 10.2,
                "control_cage: keep the shaft / clip axial clearances.");
     }
-    // The button opening intentionally bites into the hub, uncovering the
-    // face the set screw enters through -- but it must stop short of the bore.
-    assert(button_r - button_d / 2 < hub_d / 2
-           && button_r - button_d / 2 > shaft_hole_d / 2 + 2
+    // With the set screw on, the button opening must bite into the hub,
+    // uncovering the face the screw enters through; either way it must stop
+    // short of the bore.
+    assert(!setscrew || button_r - button_d / 2 < hub_d / 2,
+           "control_cage: with the set screw on, the button opening must uncover the hub face.");
+    assert(button_r - button_d / 2 > shaft_hole_d / 2 + 2
            && button_r + button_d / 2 < ri,
-           "control_cage: button opening must uncover the hub face but keep 2 mm to the shaft bore.");
+           "control_cage: button opening must keep 2 mm to the shaft bore and stay inside the wall.");
     assert(button_r + button_d / 2 < bump_pcd / 2 - bump_d / 2,
            "control_cage: button must clear the bearings at every angle.");
     assert(lower_hole_z - m3_d / 2 > edge_z(hole_edge_angle) + 2,

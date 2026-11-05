@@ -1,7 +1,7 @@
 // ==========================================================================
 //  GENERATED FILE -- DO NOT EDIT.
 //  Produced by build/build.py from components/Bottle_Control_Cage.scad
-//  Turtle Body version 6.4.0
+//  Turtle Body version 6.5.2
 //  Edit lib/ and src/ instead, then run: python3 build/build.py
 // ==========================================================================
 /*
@@ -46,7 +46,7 @@ roof_bevel = 3;         // 45-deg outward chamfer on the roof-top edge (0 = shar
 
 /* [Bearings and button] */
 bump_d = 9;
-button_diameter = 22;  // opens onto the hub face -> set-screw access
+button_diameter = 18;  // v6.5.2 (was 22, sized to open onto the hub face for the now-disabled set screw)
 button_r = 23.2;       // matches the cap's true button radius (Bottle_Control_Cap.scad button_center_r)
 button_angle = 90; // [0:0.5:359.5]
 
@@ -216,8 +216,8 @@ function p_eco_screw_pair_offset() =
 //  the axle (below) is derived to this datum.
 function p_cap_disk_d()      = 102;   // control-cap disk (independent of p_bottle_cap_d; was 100, +2 mm)
 function p_cap_roof_t()      = 5;     // disk / roof thickness
-function p_cap_boss_depth()  = 1.5;   // extra projection of the centre boss into the hollow cap
-                                       // (was 2; lowered 0.5 mm -> 6.5 mm axle bearing length)
+function p_cap_boss_depth()  = 0;     // extra projection of the centre boss into the hollow cap.
+                                       // 0 = no boss, flat cavity ceiling (v6.5.1; was 1.5, before that 2)
 function p_cap_boss_d()      = 18;
 function p_cap_insert_len()  = 35;    // straight insert shaft length
 function p_cap_insert_wall_t() = 4;
@@ -226,7 +226,7 @@ function p_cap_entry_chamfer_delta() = 1;
 function p_cap_axle_bore_d() = 6;     // loose: 0.5 mm radial clearance to the Ø5 steel shaft (was 8.7 for Ø8 PLA)
 function p_cap_cage_radial_clearance() = 1;   // cap disk -> cage inner wall (radial)
 function p_cap_total_h()     = p_cap_roof_t() + p_cap_insert_len();           // 40
-function p_cap_bearing_len() = p_cap_roof_t() + p_cap_boss_depth();           // 6.5 (was 7)
+function p_cap_bearing_len() = p_cap_roof_t() + p_cap_boss_depth();           // 5 (was 6.5, 7)
 
 // buttons (through both cap and cage)
 function p_button_upper_d()  = 17;    // clearance hole in the cap
@@ -284,7 +284,8 @@ function p_axle_oring_mean_r() = (p_axle_oring_id() + p_axle_oring_cs()) / 2;   
 function p_cap_oring_squeeze()      = 0.25;  // radial squeeze on the seal
 function p_cap_oring_gland_od()     = p_axle_oring_od() - 2 * p_cap_oring_squeeze(); // 8.5
 function p_cap_oring_gland_w()      = 1.3 * p_axle_oring_cs();                       // 2.6 axial
-function p_cap_oring_gland_from_face() = 3.5; // gland centre, from the cap outer face, along the bore
+function p_cap_oring_gland_from_face() = p_cap_bearing_len() / 2; // gland centre, from the cap outer face, along the bore
+                                         // (2.5 = mid-roof since the boss went in v6.5.1; was 3.5)
 
 // ---- rotating control cage (CLAUDE.md s6) ------------------------
 function p_cage_wall_t()     = 6.5;   // radial wall thickness
@@ -308,8 +309,8 @@ function p_cage_pocket_depth() = 4;   //   "        "     "
 function p_cage_bearing_d()  = 9;     // hemispherical bearing bump
 function p_cage_bearing_count() = 8;
 function p_cage_bearing_pcd() = p_cap_disk_d() - p_cage_bearing_d() + 0.5;          // 91.5
-function p_cage_top_hole_d() = 22;    // button / access hole through the roof (was 18; +2 mm radius so it
-                                       // opens onto the hub and exposes the set-screw face)
+function p_cage_top_hole_d() = 18;    // button / access hole through the roof (v6.5.2: back to 18 from 22;
+                                       // the 22 opened onto the hub for set-screw access, off since v6.0.0)
 function p_cage_mount_hole_d() = 3.2; // two M3 clearance holes per batten / groove
 function p_cage_mount_pitch()  = 32;  // vertical pitch of the pair
 function p_cage_lower_hole_from_tip() = 10;
@@ -348,7 +349,10 @@ function p_cage_roof_bevel() = 3;
 // flush with the cage roof top (derived in lib/sail_frame.scad, 178 mm).
 function p_side_batten_h()   = 205 + p_wood_t();       // 217
 function p_side_batten_w()   = 20;
-function p_side_batten_radial_t() = 10;
+// v6.5.0: battens are cut from the same board as every other slat (were a
+// separate 20 x 10 stock), so their radial thickness -- and every slot that
+// takes a batten -- is the board thickness.
+function p_side_batten_radial_t() = p_wood_t();     // 12 (was 10)
 // Top crossbar span, tip to tip: 6 x bottle_d (504). v6.1.0 briefly made each
 // half a head-fin-slat length (span 843.6); v6.2.0 reverted it -- the sails
 // came out too big. The halves are derived from this span.
@@ -553,12 +557,14 @@ module control_cage(inner_d       = p_cage_inner_d(),
         assert(pocket_floor <= 6.5 && cage_top > 10.2,
                "control_cage: keep the shaft / clip axial clearances.");
     }
-    // The button opening intentionally bites into the hub, uncovering the
-    // face the set screw enters through -- but it must stop short of the bore.
-    assert(button_r - button_d / 2 < hub_d / 2
-           && button_r - button_d / 2 > shaft_hole_d / 2 + 2
+    // With the set screw on, the button opening must bite into the hub,
+    // uncovering the face the screw enters through; either way it must stop
+    // short of the bore.
+    assert(!setscrew || button_r - button_d / 2 < hub_d / 2,
+           "control_cage: with the set screw on, the button opening must uncover the hub face.");
+    assert(button_r - button_d / 2 > shaft_hole_d / 2 + 2
            && button_r + button_d / 2 < ri,
-           "control_cage: button opening must uncover the hub face but keep 2 mm to the shaft bore.");
+           "control_cage: button opening must keep 2 mm to the shaft bore and stay inside the wall.");
     assert(button_r + button_d / 2 < bump_pcd / 2 - bump_d / 2,
            "control_cage: button must clear the bearings at every angle.");
     assert(lower_hole_z - m3_d / 2 > edge_z(hole_edge_angle) + 2,

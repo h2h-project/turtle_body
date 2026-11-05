@@ -6,6 +6,8 @@
 //  cap. See CLAUDE.md s7 / s8.
 //
 //  TB-03: 5 mm roof + 2 mm internal boss (7 mm axle bearing length).
+//  v6.5.1: boss removed by default (p_cap_boss_depth() = 0) -- the inside
+//  of the cap is flat; the axle bears over the 5 mm roof only.
 //  The boss is joined to the roof with a Boolean overlap and survives the
 //  cavity subtraction; the central bore passes through both.
 //
@@ -423,12 +425,17 @@ module control_cap(disk_od       = p_cap_disk_d(),
            "control_cap: button hole overlaps the centre axle bore -- increase button_radius/reduce button_d, or reduce button_offset.");
     assert(button_center_dist + button_d / 2 < disk_od / 2);
     assert(button_axis == "x" || button_axis == "y");
-    assert(boss_depth > 0 && boss_depth < insert_len);
-    assert(boss_d > axle_bore_d && boss_d < inner_top_od);
-    assert(boss_d / 2 < button_center_dist - button_d / 2,
-           "control_cap: centre boss must clear the button openings.");
+    // boss_depth = 0 -> no boss: the cavity ceiling (inner surface of the
+    // roof) is flat right up to the axle bore (default since v6.5.1).
+    assert(boss_depth >= 0 && boss_depth < insert_len);
+    if (boss_depth > 0) {
+        assert(boss_d > axle_bore_d && boss_d < inner_top_od);
+        assert(boss_d / 2 < button_center_dist - button_d / 2,
+               "control_cap: centre boss must clear the button openings.");
+    }
     if (oring_gland) {
-        assert(oring_gland_od > axle_bore_d && oring_gland_od < boss_d - 1,
+        assert(oring_gland_od > axle_bore_d
+               && (boss_depth == 0 || oring_gland_od < boss_d - 1),
                "control_cap: O-ring gland OD must sit between the bore and the boss wall.");
         assert(oring_gland_z - oring_gland_w / 2 > 0.5
                && oring_gland_z + oring_gland_w / 2 < roof_t + boss_depth - 0.5,
@@ -484,6 +491,8 @@ module control_cap(disk_od       = p_cap_disk_d(),
                                chamfer_h, chamfer_delta);
             }
             // boss, overlapped into the roof so it is one solid body
+            // (omitted when boss_depth = 0: flat cavity ceiling)
+            if (boss_depth > 0)
             translate([0, 0, roof_t - 2 * p_eps()])
                 cylinder(d = boss_d, h = boss_depth + 2 * p_eps());
             // internal cavity side tabs, rooted at the cavity floor,

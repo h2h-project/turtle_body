@@ -2,8 +2,8 @@
  Hope Turtle — control cap for the current full-turtle sine cage. Units: mm.
  License: CERN-OHL-S-2.0.
  Cap disk 102 mm (was 100); matching cage cavity 104 mm (1 mm radial clearance).
- Print bearing face down at Z=0, open insert + boss facing up.
- 5 mm roof + 2 mm internal boss (TB-03).
+ Print bearing face down at Z=0, open insert facing up.
+ 5 mm roof, flat inside -- no internal boss since v6.5.1 (TB-03 had a 2 mm boss).
  The axle bore carries an O-ring gland (rotary seal on the spinning axle
  round section) -- waterproofs the bore. O-ring is cast in Silicone_Ring_Mold.
  Side tabs (two internal cavity ribs + lip extension, on by default) are a
@@ -40,7 +40,7 @@
 
 /* [Cap body] */
 top_disk_thickness  = 5;   // roof / disk thickness
-centre_boss_depth   = 1.5; // extra projection of the boss into the hollow cap (was 2; lowered 0.5 mm)
+centre_boss_depth   = 0;   // extra projection of the boss into the hollow cap; 0 = no boss, flat inside (v6.5.1; was 1.5)
 centre_boss_diameter = 18;
 cup_wall_thickness  = 4;
 insert_total_h      = 35;
@@ -64,7 +64,7 @@ hole_spacing_cc = sqrt(button_center_r * button_center_r - button_axis_offset * 
 oring_gland_enable = true;
 oring_gland_od = 8.5;       // groove bottom diameter in the bore (p_cap_oring_gland_od(): Ø9 O-ring - 0.25 squeeze; was 11.5)
 oring_gland_width = 2.6;    // groove axial width
-oring_gland_from_face = 3.5; // groove centre, below the cap outer face
+oring_gland_from_face = 2.5; // groove centre, below the cap outer face (mid-roof now there is no boss; was 3.5)
 
 /* [Silicone band channels] */
 // One groove (was two): moved up flush with the insert shoulder -- where

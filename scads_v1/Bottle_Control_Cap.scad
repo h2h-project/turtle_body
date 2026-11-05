@@ -1,15 +1,15 @@
 // ==========================================================================
 //  GENERATED FILE -- DO NOT EDIT.
 //  Produced by build/build.py from components/Bottle_Control_Cap.scad
-//  Turtle Body version 6.4.0
+//  Turtle Body version 6.5.2
 //  Edit lib/ and src/ instead, then run: python3 build/build.py
 // ==========================================================================
 /*
  Hope Turtle — control cap for the current full-turtle sine cage. Units: mm.
  License: CERN-OHL-S-2.0.
  Cap disk 102 mm (was 100); matching cage cavity 104 mm (1 mm radial clearance).
- Print bearing face down at Z=0, open insert + boss facing up.
- 5 mm roof + 2 mm internal boss (TB-03).
+ Print bearing face down at Z=0, open insert facing up.
+ 5 mm roof, flat inside -- no internal boss since v6.5.1 (TB-03 had a 2 mm boss).
  The axle bore carries an O-ring gland (rotary seal on the spinning axle
  round section) -- waterproofs the bore. O-ring is cast in Silicone_Ring_Mold.
  Side tabs (two internal cavity ribs + lip extension, on by default) are a
@@ -46,7 +46,7 @@
 
 /* [Cap body] */
 top_disk_thickness  = 5;   // roof / disk thickness
-centre_boss_depth   = 1.5; // extra projection of the boss into the hollow cap (was 2; lowered 0.5 mm)
+centre_boss_depth   = 0;   // extra projection of the boss into the hollow cap; 0 = no boss, flat inside (v6.5.1; was 1.5)
 centre_boss_diameter = 18;
 cup_wall_thickness  = 4;
 insert_total_h      = 35;
@@ -70,7 +70,7 @@ hole_spacing_cc = sqrt(button_center_r * button_center_r - button_axis_offset * 
 oring_gland_enable = true;
 oring_gland_od = 8.5;       // groove bottom diameter in the bore (p_cap_oring_gland_od(): Ø9 O-ring - 0.25 squeeze; was 11.5)
 oring_gland_width = 2.6;    // groove axial width
-oring_gland_from_face = 3.5; // groove centre, below the cap outer face
+oring_gland_from_face = 2.5; // groove centre, below the cap outer face (mid-roof now there is no boss; was 3.5)
 
 /* [Silicone band channels] */
 // One groove (was two): moved up flush with the insert shoulder -- where
@@ -140,6 +140,8 @@ fn = 120; // [48:8:240]
 //  cap. See CLAUDE.md s7 / s8.
 //
 //  TB-03: 5 mm roof + 2 mm internal boss (7 mm axle bearing length).
+//  v6.5.1: boss removed by default (p_cap_boss_depth() = 0) -- the inside
+//  of the cap is flat; the axle bears over the 5 mm roof only.
 //  The boss is joined to the roof with a Boolean overlap and survives the
 //  cavity subtraction; the central bore passes through both.
 //
@@ -296,8 +298,8 @@ function p_eco_screw_pair_offset() =
 //  the axle (below) is derived to this datum.
 function p_cap_disk_d()      = 102;   // control-cap disk (independent of p_bottle_cap_d; was 100, +2 mm)
 function p_cap_roof_t()      = 5;     // disk / roof thickness
-function p_cap_boss_depth()  = 1.5;   // extra projection of the centre boss into the hollow cap
-                                       // (was 2; lowered 0.5 mm -> 6.5 mm axle bearing length)
+function p_cap_boss_depth()  = 0;     // extra projection of the centre boss into the hollow cap.
+                                       // 0 = no boss, flat cavity ceiling (v6.5.1; was 1.5, before that 2)
 function p_cap_boss_d()      = 18;
 function p_cap_insert_len()  = 35;    // straight insert shaft length
 function p_cap_insert_wall_t() = 4;
@@ -306,7 +308,7 @@ function p_cap_entry_chamfer_delta() = 1;
 function p_cap_axle_bore_d() = 6;     // loose: 0.5 mm radial clearance to the Ø5 steel shaft (was 8.7 for Ø8 PLA)
 function p_cap_cage_radial_clearance() = 1;   // cap disk -> cage inner wall (radial)
 function p_cap_total_h()     = p_cap_roof_t() + p_cap_insert_len();           // 40
-function p_cap_bearing_len() = p_cap_roof_t() + p_cap_boss_depth();           // 6.5 (was 7)
+function p_cap_bearing_len() = p_cap_roof_t() + p_cap_boss_depth();           // 5 (was 6.5, 7)
 
 // buttons (through both cap and cage)
 function p_button_upper_d()  = 17;    // clearance hole in the cap
@@ -364,7 +366,8 @@ function p_axle_oring_mean_r() = (p_axle_oring_id() + p_axle_oring_cs()) / 2;   
 function p_cap_oring_squeeze()      = 0.25;  // radial squeeze on the seal
 function p_cap_oring_gland_od()     = p_axle_oring_od() - 2 * p_cap_oring_squeeze(); // 8.5
 function p_cap_oring_gland_w()      = 1.3 * p_axle_oring_cs();                       // 2.6 axial
-function p_cap_oring_gland_from_face() = 3.5; // gland centre, from the cap outer face, along the bore
+function p_cap_oring_gland_from_face() = p_cap_bearing_len() / 2; // gland centre, from the cap outer face, along the bore
+                                         // (2.5 = mid-roof since the boss went in v6.5.1; was 3.5)
 
 // ---- rotating control cage (CLAUDE.md s6) ------------------------
 function p_cage_wall_t()     = 6.5;   // radial wall thickness
@@ -388,8 +391,8 @@ function p_cage_pocket_depth() = 4;   //   "        "     "
 function p_cage_bearing_d()  = 9;     // hemispherical bearing bump
 function p_cage_bearing_count() = 8;
 function p_cage_bearing_pcd() = p_cap_disk_d() - p_cage_bearing_d() + 0.5;          // 91.5
-function p_cage_top_hole_d() = 22;    // button / access hole through the roof (was 18; +2 mm radius so it
-                                       // opens onto the hub and exposes the set-screw face)
+function p_cage_top_hole_d() = 18;    // button / access hole through the roof (v6.5.2: back to 18 from 22;
+                                       // the 22 opened onto the hub for set-screw access, off since v6.0.0)
 function p_cage_mount_hole_d() = 3.2; // two M3 clearance holes per batten / groove
 function p_cage_mount_pitch()  = 32;  // vertical pitch of the pair
 function p_cage_lower_hole_from_tip() = 10;
@@ -428,7 +431,10 @@ function p_cage_roof_bevel() = 3;
 // flush with the cage roof top (derived in lib/sail_frame.scad, 178 mm).
 function p_side_batten_h()   = 205 + p_wood_t();       // 217
 function p_side_batten_w()   = 20;
-function p_side_batten_radial_t() = 10;
+// v6.5.0: battens are cut from the same board as every other slat (were a
+// separate 20 x 10 stock), so their radial thickness -- and every slot that
+// takes a batten -- is the board thickness.
+function p_side_batten_radial_t() = p_wood_t();     // 12 (was 10)
 // Top crossbar span, tip to tip: 6 x bottle_d (504). v6.1.0 briefly made each
 // half a head-fin-slat length (span 843.6); v6.2.0 reverted it -- the sails
 // came out too big. The halves are derived from this span.
@@ -958,12 +964,17 @@ module control_cap(disk_od       = p_cap_disk_d(),
            "control_cap: button hole overlaps the centre axle bore -- increase button_radius/reduce button_d, or reduce button_offset.");
     assert(button_center_dist + button_d / 2 < disk_od / 2);
     assert(button_axis == "x" || button_axis == "y");
-    assert(boss_depth > 0 && boss_depth < insert_len);
-    assert(boss_d > axle_bore_d && boss_d < inner_top_od);
-    assert(boss_d / 2 < button_center_dist - button_d / 2,
-           "control_cap: centre boss must clear the button openings.");
+    // boss_depth = 0 -> no boss: the cavity ceiling (inner surface of the
+    // roof) is flat right up to the axle bore (default since v6.5.1).
+    assert(boss_depth >= 0 && boss_depth < insert_len);
+    if (boss_depth > 0) {
+        assert(boss_d > axle_bore_d && boss_d < inner_top_od);
+        assert(boss_d / 2 < button_center_dist - button_d / 2,
+               "control_cap: centre boss must clear the button openings.");
+    }
     if (oring_gland) {
-        assert(oring_gland_od > axle_bore_d && oring_gland_od < boss_d - 1,
+        assert(oring_gland_od > axle_bore_d
+               && (boss_depth == 0 || oring_gland_od < boss_d - 1),
                "control_cap: O-ring gland OD must sit between the bore and the boss wall.");
         assert(oring_gland_z - oring_gland_w / 2 > 0.5
                && oring_gland_z + oring_gland_w / 2 < roof_t + boss_depth - 0.5,
@@ -1019,6 +1030,8 @@ module control_cap(disk_od       = p_cap_disk_d(),
                                chamfer_h, chamfer_delta);
             }
             // boss, overlapped into the roof so it is one solid body
+            // (omitted when boss_depth = 0: flat cavity ceiling)
+            if (boss_depth > 0)
             translate([0, 0, roof_t - 2 * p_eps()])
                 cylinder(d = boss_d, h = boss_depth + 2 * p_eps());
             // internal cavity side tabs, rooted at the cavity floor,

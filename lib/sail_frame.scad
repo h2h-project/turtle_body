@@ -100,7 +100,10 @@ module sail_frame(
     top_sail_bar_thickness = board_width;
 
     top_sail_bar_slot_depth = 11;
-    top_sail_bar_slot_width = 10;
+    // v6.5.0: battens are the same board as every other slat, so the slot
+    // that takes one is the board thickness (p_side_batten_radial_t(); was
+    // a fixed 10 for separate 20 x 10 batten stock).
+    top_sail_bar_slot_width = board_width;
     // v6.0.0: the one-piece bar is split. A centre CONNECTOR on the cage
     // roof spans the two sail battens and carries the shaft hole (generous
     // clearance) + a side M3 clamp screw; a LEFT and RIGHT HALF sit on top of
@@ -482,10 +485,12 @@ module sail_frame(
     // (clip-pocket dimension assert removed with the pocket -- top_pocket = false)
     assert(cage_hub_diameter > cage_shaft_hole_diameter,
            "Shaft hub must clear the shaft bore.");
+    // opening uncovers the hub's set-screw face -- only needed with the set screw on (v6.5.2)
+    assert(!p_cage_setscrew_enabled()
+           || cage_top_hole_radial_position - cage_top_hole_diameter/2
+              < cage_hub_diameter/2);
     assert(cage_top_hole_radial_position - cage_top_hole_diameter/2
-           < cage_hub_diameter/2
-           && cage_top_hole_radial_position - cage_top_hole_diameter/2
-           > cage_shaft_hole_diameter/2 + 2);  // opening uncovers the hub's set-screw face
+           > cage_shaft_hole_diameter/2 + 2);
     assert(cage_top_hole_radial_position + cage_top_hole_diameter/2
            < cage_bearing_pcd/2 - cage_bearing_diameter/2);
     assert(round_shaft_extension_above_cap + shaft_upper_length

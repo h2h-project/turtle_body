@@ -183,7 +183,7 @@ The design evolved from a continuous cylindrical skirt with four grooves to a co
 | Set screw (TB-08) | **OFF since v6.0.0** (`p_cage_setscrew_enabled()` / wrapper `setscrew`, which also drops the recess) — the sail crossbar connector's M3 clamps the shaft instead. When on: single radial M3, pilot Ø2.5, aimed at the centre of the roof button opening (follows `button_angle`), at the vertical centre of the access recess (Z 4.75 installed) — v4.1.2 |
 | Centre hub / top pocket diameter | 29 / 26 (top pocket OFF by default since v1.10.0 — `control_cage(top_pocket=false)`) |
 | Pocket depth | 4 (only when `top_pocket=true`) |
-| Button opening / centre radius | 22 / 25 (v4.1.0: was 18 / 24; the Ø22 opening bites 0.5 mm into the Ø29 hub to uncover the set-screw face) |
+| Button opening / centre radius | 18 / 25 in `lib/params.scad`; the standalone cage wrapper uses r 23.2 to match the cap (v6.5.2: opening back to Ø18 from Ø22 — the Ø22 only existed to uncover the hub's set-screw face, and the set screw is off; the hub-bite assert now applies only when `setscrew = true`) |
 | Set-screw access recess | 5 wide × 3 deep, flat floor at r 11, full hub height Z 1 → 8.5, open end to end (`p_cage_setscrew_recess_*()`) — v4.1.2 |
 | Hub bottom above cap face | 1 mm gap (bearing tips carry the cage; hub is a tilt backstop — keep) |
 
@@ -208,15 +208,15 @@ Current repository standalone dimensions:
 | Feature | Value |
 | --- | ---: |
 | Disk diameter / roof thickness | 100 / 5 |
-| Boss outside diameter / inward projection | 18 / 2 |
-| Nominal total axle-bearing length | 7 |
+| Boss outside diameter / inward projection | 18 / **0 — removed in v6.5.1, cavity ceiling is flat** (was 2, then 1.5) |
+| Nominal total axle-bearing length | 5 (roof only; was 7) |
 | Axle bore diameter | 8.6 |
 | Insert outside diameter / length | 79 / 35 |
 | Insert wall thickness | 4 |
 | Nominal total cap height | 40 |
 | Button holes | Two Ø17 at ±24 along Y |
 | Entry chamfer height / diameter reduction | 1 / 1 |
-| Axle O-ring gland (in the bore) | Ø11.5 groove root × 2.6 wide, centred 3.5 mm below the outer face |
+| Axle O-ring gland (in the bore) | Ø8.5 groove root × 2.6 wide, centred 2.5 mm below the outer face (mid-roof since v6.5.1; was 3.5) |
 
 The boss is an integral cylindrical collar on the hollow underside. It does not protrude onto the flat surface facing the cage. The centre bore must pass through both roof and boss, and the cavity subtraction must not erase the boss. Ensure a positive overlap connects it to the roof.
 
@@ -337,10 +337,10 @@ The standalone sail apparatus emits the wooden frame, four battens, reinforcemen
 | Feature | Current value or rule |
 | --- | --- |
 | Wood thickness | 12 mm |
-| Batten height / width / radial thickness | sail 217 (205 + t) · non-sail 178 (top flush with the cage roof top) — v6.1.0 / 20 / 10 mm |
+| Batten height / width / radial thickness | sail 217 (205 + t) · non-sail 178 (top flush with the cage roof top) — v6.1.0 / 20 / t = 12 mm (board stock since v6.5.0; separate 10 mm stock before) |
 | Top crossbar span (tip to tip) / width / thickness | 504 (`p_top_crossbar_len()` = 6 × bottle d; 843.6 in v6.1.0 only) / 22 / 12 mm — **three pieces since v6.0.0**, see below |
 | Crossbar halves (×2) | 212.2 mm (derived from the span; v6.1.0's 382 reverted in v6.2.0), on top of the connector, from 15 mm inboard of each sail batten out to the tip |
-| Sail crossbar connector | 159.6 mm, on the cage roof, 15 mm past each sail batten's outer face; Ø9 shaft hole (clearance, not a bearing) |
+| Sail crossbar connector | 163.6 mm (159.6 before v6.5.0), on the cage roof, 15 mm past each sail batten's outer face; Ø6 shaft hole (v6.4.0) (clearance, not a bearing) |
 | Shaft clamp | one M3 self-tapped from the connector's +Y side face into a Ø2.8 pilot, pressing on the shaft (untested in wood) |
 | Half-to-connector screws | one M3 per side, Ø3.2 clearance in the half, Ø2.8 pilot in the connector, centred in the connector overhang |
 | Sail-batten upper notch | 2t = 24 mm tall (connector + half), 15 mm of batten above it (v6.1.0; 27 in v6.0.0) |

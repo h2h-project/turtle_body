@@ -1,6 +1,6 @@
 {
-  "version": "6.4.0",
-  "updated": "2026-10-27",
+  "version": "6.5.2",
+  "updated": "2026-11-03",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
     "patch": "+0.0.1  component-scoped change (one lib/<subsystem>.scad or one src/components/*.scad)",
@@ -8,6 +8,49 @@
     "major": "+1.0.0  bottle / board / hardware interface break (existing builds no longer fit)"
   },
   "changelog": [
+    {
+      "version": "6.5.2",
+      "date": "2026-11-03",
+      "files": [
+        "lib/params.scad",
+        "lib/control_cage.scad",
+        "lib/sail_frame.scad",
+        "src/components/Bottle_Control_Cage.scad",
+        "src/Full_Turtle.scad",
+        "CLAUDE.md",
+        "build/params.json",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad"
+      ],
+      "note": "Cage roof button opening 22 -> 18 mm (p_cage_top_hole_d() and the cage wrapper button_diameter). The 22 mm size existed only to open onto the hub face for set-screw access; the set screw is off since v6.0.0, so the \"opening must bite into the hub\" assert (lib/control_cage.scad plus the inert copies in lib/sail_frame.scad and src/Full_Turtle.scad) now applies only when the set screw is on. Opening still clears the cap button holes (O16.5 standalone / O17 full turtle) at the same radius. PLA-only, no generator propagation."
+    },
+    {
+      "version": "6.5.1",
+      "date": "2026-11-02",
+      "files": [
+        "lib/control_cap.scad",
+        "lib/params.scad",
+        "src/components/Bottle_Control_Cap.scad",
+        "build/params.json",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad"
+      ],
+      "note": "Control cap inner surface is now flat: centre boss removed (p_cap_boss_depth() 1.5 -> 0; control_cap() skips the boss when boss_depth = 0). Axle bearing length 6.5 -> 5 (roof only). Axle O-ring gland re-centred mid-roof (p_cap_oring_gland_from_face() 3.5 -> 2.5 = bearing_len/2) so it keeps 1.2 mm lands inside the 5 mm roof. Shaft length unchanged (measured from the roof underside). PLA-only, no generator propagation."
+    },
+    {
+      "version": "6.5.0",
+      "date": "2026-10-30",
+      "files": [
+        "lib/params.scad",
+        "lib/sail_frame.scad",
+        "src/Full_Turtle.scad",
+        "CLAUDE.md",
+        "build/params.json",
+        "Full_Turtle_v1.scad",
+        "scads_v1/*.scad"
+      ],
+      "note": "Sail battens are now cut from the same board as every other slat: p_side_batten_radial_t() 10 -> p_wood_t() (12), and sail_frame / Full_Turtle top_sail_bar_slot_width reads board_width instead of a literal 10. Every batten slot (crossbar halves, connector, bottom rails, C pieces) follows: 10 -> 12. The slot inner edge stays flush with the cage notch root, so the battens' outer face, the sails' inner edge and the strengtheners move out 2 mm; connector 159.6 -> 163.6, C pieces +2; halves (212.2), rails (264), batten heights and cage M3 holes unchanged. build.py + lint.py clean; connector echo checked. build/test.py NOT run. Propagated to hopeTurtles.org generator/objects/sails.py."
+    },
     {
       "version": "6.4.0",
       "date": "2026-10-27",

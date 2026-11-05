@@ -1877,7 +1877,8 @@ module hope_turtle_sail_apparatus(
     top_sail_bar_thickness = board_width;
 
     top_sail_bar_slot_depth = 11;
-    top_sail_bar_slot_width = 10;
+    // v6.5.0: battens are board stock -> slot = board thickness (was 10).
+    top_sail_bar_slot_width = board_width;
     // TB-08: round shaft + running clearance (was Ø12 for the hex corners).
     // v6.0.0: the shaft now passes the split crossbar's centre connector.
     top_sail_bar_axle_hole_diameter = p_sail_connector_axle_hole_d();
@@ -2260,10 +2261,12 @@ module hope_turtle_sail_apparatus(
     // (clip-pocket dimension assert removed with the pocket -- top_pocket = false)
     assert(cage_hub_diameter > cage_shaft_hole_diameter,
            "Shaft hub must clear the shaft bore.");
+    // opening uncovers the hub's set-screw face -- only needed with the set screw on (v6.5.2)
+    assert(!p_cage_setscrew_enabled()
+           || cage_top_hole_radial_position - cage_top_hole_diameter/2
+              < cage_hub_diameter/2);
     assert(cage_top_hole_radial_position - cage_top_hole_diameter/2
-           < cage_hub_diameter/2
-           && cage_top_hole_radial_position - cage_top_hole_diameter/2
-           > cage_shaft_hole_diameter/2 + 2);  // opening uncovers the hub's set-screw face
+           > cage_shaft_hole_diameter/2 + 2);
     assert(cage_top_hole_radial_position + cage_top_hole_diameter/2
            < cage_bearing_pcd/2 - cage_bearing_diameter/2);
     assert(round_shaft_extension_above_cap + shaft_upper_length
