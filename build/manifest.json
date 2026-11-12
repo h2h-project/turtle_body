@@ -23,7 +23,7 @@
       "src": "src/components/Bottle_Sail_Shaft.scad",
       "out": "scads_v1/Bottle_Sail_Shaft.scad",
       "renders": [
-        { "name": "default", "defines": {}, "export_stl": true, "stl": "Bottle_Sail_Shaft" }
+        { "name": "default", "defines": {}, "export_stl": false, "stl": "Bottle_Sail_Shaft" }
       ]
     },
     {

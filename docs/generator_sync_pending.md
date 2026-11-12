@@ -31,9 +31,10 @@ physical calibration or manufacturing validation.
 
 ## Two local upstream checkouts
 
-`/home/russs/WebstormProjects/turtle_body` is a separate older checkout. Until it
-is reconciled with this one, website sync commands must select the intended
-upstream explicitly:
+The older checkout was renamed `/home/russs/WebstormProjects/turtle_body_OLD- nov11`
+(2026-11-12) and must not be used. This repo now lives in PycharmProjects, so the
+website's `../turtle_body` default finds nothing; website sync commands must name
+the upstream explicitly:
 
 ```bash
 cd /home/russs/WebstormProjects/hopeTurtles.org

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Write turtle_body_full_inventory.svg -- every wooden slat in one Turtle, 1:1.
+"""Write turtle_body_full_inventory_<version>.svg -- every wooden slat in one Turtle, 1:1.
 
 Each wooden part is rendered from lib/ (via its src/components wrapper, or a
 direct lib call for the Ecojoiner Johns), laid flat on its thinnest axis
@@ -17,9 +17,21 @@ Each piece's code appears only in the caption beneath it; the outline itself
 is left clean and uninterrupted so labelling artwork can be added later. The
 codes live in INVENTORY below -- edit the `code` fields to change them.
 
+Output (<version> = VERSION.json "version", e.g. 6.6.0):
+  * turtle_body/turtle_body_full_inventory_<version>.svg. Older
+    turtle_body_full_inventory*.svg files in the repo root are removed, so only
+    the current version remains, like stls_v1/.
+  * the same file copied into the turtle_labels repository root, where label
+    artwork is designed against it. Older versions there are left alone. The
+    labels checkout is --labels-dir, else $TURTLE_LABELS_DIR, else
+    ~/WebstormProjects/turtle_labels, else ../turtle_labels. If none exists,
+    a warning is printed and only the turtle_body copy is written.
+
 Usage:
-    python3 build/export_inventory.py               # -> turtle_body_full_inventory.svg
-    python3 build/export_inventory.py --out x.svg
+    python3 build/export_inventory.py               # both copies, versioned
+    python3 build/export_inventory.py --no-labels   # turtle_body copy only
+    python3 build/export_inventory.py --labels-dir /path/to/turtle_labels
+    python3 build/export_inventory.py --out x.svg   # explicit path; no pruning
     python3 build/export_inventory.py --keep-temp   # keep the per-part STL/SVG scratch
 
 Standard library only; needs OpenSCAD (found like the other build scripts).
@@ -31,6 +43,7 @@ import argparse
 import datetime
 import html
 import math
+import os
 import re
 import shutil
 import struct
@@ -407,11 +420,51 @@ def build_svg(groups_out, version: str) -> str:
 
 
 # --------------------------------------------------------------------------- #
+# output locations
+# --------------------------------------------------------------------------- #
+
+INVENTORY_STEM = "turtle_body_full_inventory"
+
+
+def inventory_name(version: str) -> str:
+    return f"{INVENTORY_STEM}_{version}.svg"
+
+
+def find_labels_dir(cli_value: str | None) -> Path | None:
+    """The turtle_labels checkout: --labels-dir, $TURTLE_LABELS_DIR, then the
+    maintainer's ~/WebstormProjects/turtle_labels, then a ../turtle_labels sibling."""
+    root = repo_root()
+    candidates = [cli_value, os.environ.get("TURTLE_LABELS_DIR"),
+                  Path.home() / "WebstormProjects" / "turtle_labels",
+                  root.parent / "turtle_labels"]
+    for c in candidates:
+        if not c:
+            continue
+        path = Path(c).expanduser().resolve()
+        if (path / ".git").exists() or (path / "master").is_dir():
+            return path
+        if c in (cli_value, os.environ.get("TURTLE_LABELS_DIR")):
+            raise SystemExit(f"export_inventory: {path} is not a turtle_labels checkout")
+    return None
+
+
+def prune_old(directory: Path, keep: Path) -> list[Path]:
+    removed = []
+    for old in sorted(directory.glob(f"{INVENTORY_STEM}*.svg")):
+        if old.resolve() != keep.resolve():
+            old.unlink()
+            removed.append(old)
+    return removed
+
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--out", default="turtle_body_full_inventory.svg")
+    ap.add_argument("--out", default=None,
+                    help="explicit output path (default: turtle_body_full_inventory_<version>.svg "
+                         "in the repo root, replacing older versions there)")
+    ap.add_argument("--labels-dir", default=None, help="turtle_labels checkout to copy into")
+    ap.add_argument("--no-labels", action="store_true", help="do not copy into turtle_labels")
     ap.add_argument("--keep-temp", action="store_true")
     args = ap.parse_args(argv)
 
@@ -438,9 +491,26 @@ def main(argv=None) -> int:
                                        name=part["name"], polys=polys, ext=ext, w=w, h=h,
                                        fill=part["fill"], note=part.get("note")))
             groups_out.append(dict(title=g["title"], code=g["code"], pieces=pieces))
-        out = (root / args.out) if not Path(args.out).is_absolute() else Path(args.out)
-        out.write_text(build_svg(groups_out, version), encoding="utf-8")
-        print(f"\nwrote {out}  ({sum(len(g['pieces']) for g in groups_out)} pieces)")
+        svg_text = build_svg(groups_out, version)
+        n_pieces = sum(len(g["pieces"]) for g in groups_out)
+        if args.out:
+            out = Path(args.out) if Path(args.out).is_absolute() else root / args.out
+        else:
+            out = root / inventory_name(version)
+        out.write_text(svg_text, encoding="utf-8")
+        print(f"\nwrote {out}  ({n_pieces} pieces)")
+        if not args.out:
+            for old in prune_old(root, out):
+                print(f"removed superseded {old.name}")
+        if not args.no_labels:
+            labels = find_labels_dir(args.labels_dir)
+            if labels is None:
+                print("WARNING: turtle_labels checkout not found (set TURTLE_LABELS_DIR or "
+                      "--labels-dir); labels copy NOT written", file=sys.stderr)
+            else:
+                dest = labels / inventory_name(version)
+                dest.write_text(svg_text, encoding="utf-8")
+                print(f"wrote {dest}")
     finally:
         if args.keep_temp:
             print(f"scratch kept in {work}")

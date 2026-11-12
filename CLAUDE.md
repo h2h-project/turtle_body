@@ -30,7 +30,7 @@ See `issues_to_fix.md` for the accompanying prioritized repair and verification 
 >
 > **2026-09-08 — downstream bridge to the HopeTurtles.org generators.** The
 > Python generators that turn a builder's measurements into cutting files live
-> in the sibling repository `../hopeTurtles.org/generator/`. **`lib/params.scad`
+> in the HopeTurtles.org repository `/home/russs/WebstormProjects/hopeTurtles.org/generator/`. **`lib/params.scad`
 > is authoritative; they follow it.** Any change to a shared value or a wooden
 > component must be propagated (or logged) there — see **section 19** and step 8
 > of the section 15 workflow.
@@ -57,9 +57,11 @@ Related projects:
 | Project | Responsibility |
 | --- | --- |
 | [Turtle Body](https://github.com/h2h-project/turtle_body) | Mechanical source models and fabrication files |
-| [TurtleOS](https://github.com/h2h-project/turtleOS) | Sensing, actuation and navigation software |
-| TurtleShell PCB | Electronics interconnection and power hardware; no repository URL established by this task |
-| [HopeTurtles.org source](https://github.com/h2h-project/hopeTurtles.org) | Builder-facing website; hosts the Python turtle generators in `generator/` that are downstream of this repository's `lib/` (section 19). Checked out locally at `../hopeTurtles.org`. |
+| [TurtleOS](https://github.com/h2h-project/turtleOS) | Sensing, actuation and navigation software. Local checkout: `/home/russs/PycharmProjects/turtleOS` (`../turtleOS`) |
+| [TurtleShell PCB](https://github.com/h2h-project/turtle_Shells) | Electronics interconnection and power hardware. Local checkout: `/home/russs/PycharmProjects/turtle_Shells` (`../turtle_Shells`) |
+| [Turtle Wrangler](https://github.com/h2h-project/turtle_wrangler) | Android app for talking to and sending requests to turtles; its telemetry field meanings are what the sim roadmap aligns with (section 20). Local checkout: `/home/russs/PycharmProjects/turtle_wrangler` (`../turtle_wrangler`) |
+| [Turtle Labels](https://github.com/h2h-project/turtle_labels) | Multilingual SVG labels/iconography printed or laser-engraved on turtles. Receives `turtle_body_full_inventory_<version>.svg` from this repo (section 21). Local checkout: `/home/russs/WebstormProjects/turtle_labels` |
+| [HopeTurtles.org source](https://github.com/h2h-project/hopeTurtles.org) | Builder-facing website; hosts the Python turtle generators in `generator/` that are downstream of this repository's `lib/` (section 19). Local checkout: `/home/russs/WebstormProjects/hopeTurtles.org`. |
 | [HopeTurtles.org](https://hopeturtles.org) | Public project website; `/ecojoiners/generate` is the live generator form |
 
 The generator accepts a builder's bottle, board and solar-panel dimensions and produces cutting files (SCAD, SVG, DXF, PDF) for the wooden components. It runs as Python inside the HopeTurtles.org Node app, not as a service this repository calls. Do not invent a deployed geometry API, CI workflow, package manager, or frontend build process here.
@@ -77,10 +79,14 @@ Paths below were verified in the inspected GitHub tree.
 | `src/Full_Turtle.scad` | **Editable.** The full-assembly source (git-renamed from `Full_Turtle_v1.scad`). M7 pending: still holds embedded geometry, not yet `use`-ing lib. |
 | `Full_Turtle_v1.scad` | **GENERATED** by `build/build.py` from `src/Full_Turtle.scad`. Self-contained, committed, downloadable. Do not hand-edit (a banner says so). |
 | `scads_v1/*.scad` | **GENERATED** bundles from `src/components/*.scad` + `lib/`. Eight files named after their `src/components/` wrapper (no `_v1` suffix — the folder carries it); each is a self-contained single-file download. |
-| `build/` | `scad_lib.py` (helpers), `bundle.py` (inline `use`/`include`), `build.py` (regenerate all bundles = the sync step), `lint.py`, `test.py`, `baseline.py`, `export_stl.py`, `manifest.json`, `README.md`. Python 3 stdlib only. |
+| `build/` | `scad_lib.py` (helpers), `bundle.py` (inline `use`/`include`), `build.py` (regenerate all bundles = the sync step), `lint.py`, `test.py`, `baseline.py`, `export_stl.py`, `manifest.json`, `README.md` — Python 3 stdlib only. Exceptions (need the sim venv, section 20): `export_sim.py` (installed meshes + ruler datums → `sim/generated/`) and `export_fin_dxf.py` (fin CUT/ENGRAVE DXFs → `fabrication/fins/`). |
+| `lib/fin_ruler.scad` | **Editable.** Shared 0.3 mm-deep vector ruler engraving (font-free digits) used by `lib/head_fin.scad` and `lib/rear_fin.scad`, and by `src/Full_Turtle.scad` for ruler datums (v6.6.0). |
+| `sim/`, `physics/`, `run_sim.sh` | Turtle_Sim buoyancy workbench (v6.6.0) — see **section 20**. `physics/components.yaml` is the distributed measurement template (unknowns null). |
+| `docs/` | `sim_roadmap.md` (Turtle_Sim plan), `buoyancy_measurements.md` (physical survey), `generator_sync_pending.md` (record of the v6.6.0 website sync). |
 | `tests/expected_bounds.json` | Regression baseline (per-render bounding box + tris + known warnings) checked by `build/test.py`. `tests/baseline/` holds the full per-render dumps. |
 | `VERSION.json` | Single set-level version + bump rules + changelog. STL exports carry this version in their filename. |
-| `stls_v1/` | Fabrication exports, written on demand by `build/export_stl.py` as `<name>_v<version>.stl`. The pre-refactor un-versioned STLs were deleted at v1.6.0; the v1.7.0/v1.7.1 set was cleared at v1.10.0 so only the current version's files remain. Current printable set (all `_v1.10.0`): cap, cage, sail shaft (TB-08: renamed from hex shaft), the combined mold layout (`Silicone_Ring_Mold`) and its two plates (`Silicone_Ring_Mold_bottom` / `_top`). F6-verified, not physically validated. |
+| `turtle_body_full_inventory_<version>.svg` | **GENERATED** by `build/export_inventory.py`: every wooden piece in one Turtle, 1:1, labelled. Only the current version is kept here; a copy goes to turtle_labels (section 21). Do not hand-edit. |
+| `stls_v1/` | Fabrication exports, written on demand by `build/export_stl.py` as `<name>_v<version>.stl`. The pre-refactor un-versioned STLs were deleted at v1.6.0; the v1.7.0/v1.7.1 set was cleared at v1.10.0 so only the current version's files remain. Current printable set (all `_v6.6.0`): cap, cage, the combined mold layout (`Silicone_Ring_Mold`) and its two plates (`Silicone_Ring_Mold_bottom` / `_top`). No sail shaft STL — the shaft is an Ø5 steel rod since v6.4.0 (manifest `export_stl: false`). `stls_v1/gear_housing/` holds gear-housing STLs that the build scripts do not generate or manage. F6-verified, not physically validated. |
 | `README.md` | Project overview and generator intent |
 | `LICENSE` | CERN Open Hardware Licence v2, Strongly Reciprocal |
 
@@ -89,7 +95,7 @@ OpenSCAD is required for `build/lint.py`, `build/test.py`, `build/baseline.py` a
 `$OPENSCAD` → `PATH` → `~/.local/bin/openscad` → the macOS app bundle. `build/build.py`
 and `build/bundle.py` are pure Python. There is no CI service — everything runs locally.
 The Python geometry generators described in section 14 live in the HopeTurtles.org
-repository (`../hopeTurtles.org/generator/`), not here; section 19 is the contract between
+repository (`/home/russs/WebstormProjects/hopeTurtles.org/generator/`), not here; section 19 is the contract between
 the two.
 
 ## 4. Important differences to reconcile
@@ -104,7 +110,7 @@ These are observations, not permission to overwrite the repository with older ve
 | Full assembly axle | Standalone shortened to 58 mm and has magnet pocket | Embedded full-model axle still uses the older roof-based length and lacks the standalone magnet recess |
 | Sail attachment details | No C-piece bores, no non-sail-batten bottom bores, brown bottom rails | Standalone sail file incorporates these changes; full assembly still has old bores and orange bottom rails |
 | Seal ring | Implemented 5 mm radial width; 3.5 mm later suggested | Mold still uses **5 mm radial width**; the narrower suggestion was not implemented |
-| Python generators | Delivered for rear fin, ballast and sails | Present in `../hopeTurtles.org/generator/` (plus a 6FC Ecojoiner generator), but drifted from `lib/params.scad` — see section 19 |
+| Python generators | Delivered for rear fin, ballast and sails | Present in `/home/russs/WebstormProjects/hopeTurtles.org/generator/` (plus a 6FC Ecojoiner generator), but drifted from `lib/params.scad` — see section 19 |
 
 The repository's 5 mm roof/2 mm boss appears to be a later edit outside the conversation. Preserve it unless the user requests otherwise. It changes the cap-to-axle relationship: the 58 mm axle's round end is 34 mm below the bearing face, so it extends 29 mm beyond a 5 mm roof, rather than the 30 mm assumed by its parameter comments. This is a dimension mismatch to evaluate, not proof that it cannot assemble.
 
@@ -179,7 +185,7 @@ The design evolved from a continuous cylindrical skirt with four grooves to a co
 | Lower hole distance from peak tip | 10 |
 | Bearing bumps | Eight Ø9 hemispheres |
 | Bearing pitch-circle diameter | 91.5 |
-| Centre shaft hole (TB-08: round, was a 10.3 AF hex) | 8.2 |
+| Centre shaft hole (round; Ø8.2 for the old PLA shaft, a 10.3 AF hex before TB-08) | 5.4 (Ø5 steel rod + 0.4) |
 | Set screw (TB-08) | **OFF since v6.0.0** (`p_cage_setscrew_enabled()` / wrapper `setscrew`, which also drops the recess) — the sail crossbar connector's M3 clamps the shaft instead. When on: single radial M3, pilot Ø2.5, aimed at the centre of the roof button opening (follows `button_angle`), at the vertical centre of the access recess (Z 4.75 installed) — v4.1.2 |
 | Centre hub / top pocket diameter | 29 / 26 (top pocket OFF by default since v1.10.0 — `control_cage(top_pocket=false)`) |
 | Pocket depth | 4 (only when `top_pocket=true`) |
@@ -210,7 +216,7 @@ Current repository standalone dimensions:
 | Disk diameter / roof thickness | 100 / 5 |
 | Boss outside diameter / inward projection | 18 / **0 — removed in v6.5.1, cavity ceiling is flat** (was 2, then 1.5) |
 | Nominal total axle-bearing length | 5 (roof only; was 7) |
-| Axle bore diameter | 8.6 |
+| Axle bore diameter | 6 (0.5 mm radial clearance to the Ø5 steel rod, v6.4.0; was 8.6/8.7 for the Ø8 PLA shaft) |
 | Insert outside diameter / length | 79 / 35 |
 | Insert wall thickness | 4 |
 | Nominal total cap height | 40 |
@@ -220,15 +226,15 @@ Current repository standalone dimensions:
 
 The boss is an integral cylindrical collar on the hollow underside. It does not protrude onto the flat surface facing the cage. The centre bore must pass through both roof and boss, and the cavity subtraction must not erase the boss. Ensure a positive overlap connects it to the roof.
 
-Rationale from the conversation: an 8 mm roof resists flex and provides a longer axle bearing, but distributes material across the entire disk. A thinner roof plus a local boss concentrates support around the axle. A longer bore does not eliminate the 0.3 mm radial clearance between Ø8 shaft and Ø8.6 bore. No stiffness or wear optimization has been physically verified.
+Rationale from the conversation: an 8 mm roof resists flex and provides a longer axle bearing, but distributes material across the entire disk. A thinner roof plus a local boss concentrates support around the axle. A longer bore does not eliminate the 0.5 mm radial clearance between the Ø5 steel rod and the Ø6 bore. No stiffness or wear optimization has been physically verified.
 
 **Axle O-ring gland (rotary seal).** The bore now carries an annular groove
 (`oring_gland`, default on) that seats a round-section O-ring against the
-spinning axle round section, closing the 0.3 mm bore gap as a water path. The
-gland root is Ø11.5, 2.6 mm axial, centred 3.5 mm below the cap outer face —
-lands of ~2.2 mm remain each side within the 7 mm bore column. Parameters:
-`p_axle_oring_cs()` (2.0), `p_axle_oring_id()` = `p_axle_round_d()` (8 — tied to
-the shaft), `p_axle_oring_od()` (12), `p_cap_oring_gland_*()`. `control_cap()`
+spinning Ø5 steel rod, closing the 0.5 mm radial bore gap as a water path. The
+gland root is Ø8.5, 2.6 mm axial, centred 2.5 mm below the cap outer face
+(mid-roof) — lands of ~1.2 mm remain each side within the 5 mm bore column.
+Parameters: `p_axle_oring_cs()` (2.0), `p_axle_oring_id()` = `p_axle_round_d()`
+(5 — tied to the shaft), `p_axle_oring_od()` (9), `p_cap_oring_gland_*()`. `control_cap()`
 asserts the gland OD sits between the bore and the boss wall and that the
 groove + lands fit the bore column — a change that violates either is flagged,
 not silently made. The O-ring is cast in the two-part mold (section 8). Not
@@ -273,8 +279,8 @@ in one session:
 - **`ring_count` axle O-rings** — round cross-section, one nested in the centre
   of **every** flat-ring mold ("an additional mold circle" per ring), so the
   default 2-ring mold casts **two** O-rings and you get two chances at a good
-  one. ID = `p_axle_oring_id()` = `p_axle_round_d()` (**8 — tied to the sealing
-  section of the sail shaft, TB-08: uniform round, no hex**), CS `p_axle_oring_cs()` (2), OD 12.
+  one. ID = `p_axle_oring_id()` = `p_axle_round_d()` (**5 — tied to the Ø5
+  steel sail-shaft rod, v6.4.0**), CS `p_axle_oring_cs()` (2), OD 9.
   Each torus is split across the two plates (lower half in the bottom, upper
   half in the top).
 
@@ -290,11 +296,22 @@ top plate on (pegs → holes), cure, split, peel out `ring_count` flat rings +
 `ring_count` O-rings.
 
 Neither seal is validated. The O-ring's radial squeeze, the dynamic friction
-of a silicone lip on a rotating PLA shaft, and demoulding a round ring from a
+of a silicone lip on a rotating steel rod, and demoulding a round ring from a
 pressed mold without flash all need real testing. Casting two O-rings per
 session is a yield hedge, not a fix for any of those.
 
 ## 9. Sail shaft and magnetic sensing
+
+> **v6.4.0 — the shaft is an Ø5 steel rod, not a printed part.** `p_axle_round_d()`
+> = 5 (was an Ø8 printed PLA shaft). `lib/sail_shaft.scad` / `Bottle_Sail_Shaft.scad`
+> now only document the rod's **cut length (59 mm)** and the magnet-recess
+> position; the model is a reference, not a print. Its manifest render has
+> `export_stl: false`, so `build/export_stl.py` does not write a shaft STL — do
+> not add one back to the printable set. Mating holes followed the rod: cap bore
+> Ø6, cage hub bore Ø5.4 (`p_axle_shaft_hole_d()` = 5 + 0.4 diametral clearance),
+> sail crossbar connector Ø6 (`p_sail_connector_axle_hole_d()`), axle O-ring ID 5.
+> The TB-08 note below is kept for history; its Ø8 / Ø8.2 / 0.2 mm values are
+> superseded.
 
 > **TB-08 (2026-09-22) — the axle is now a uniform round shaft, no hex.**
 > `lib/hex_shaft.scad` / `control_axle()` were renamed to `lib/sail_shaft.scad`
@@ -318,13 +335,16 @@ The earlier 100 mm hex shaft, coupler ideas and 50 mm stepped axle are historica
 
 | Feature | Value |
 | --- | ---: |
-| Diameter (uniform, whole shaft) | 8 |
+| Material | Ø5 steel rod (v6.4.0) — cut to length, not printed |
+| Diameter (uniform, whole shaft) | 5 |
 | Nominal length inside cap | 35 |
 | Upper length (through cage hub + sail crossbar connector) | 23 |
-| Overall length | 59 |
-| Magnet recess | Ø3 × 1 deep, adjustable |
-| Cage hub / sail-bar running hole | 8.2 (shaft + 0.2 mm clearance) |
-| Frame / cage lock | v6.0.0: M3 through the side of the sail crossbar connector, Ø2.8 pilot, into the Ø9 connector hole (the cage hub set screw is switched off; untested) |
+| Overall (cut) length | 59 |
+| Magnet recess | Ø3 × 1 deep in the lower end, adjustable (must be drilled into the steel end; how the AS5600 magnet behaves on a steel rod is an installation check) |
+| Cap bore | 6 (0.5 mm radial clearance) |
+| Cage hub bore | 5.4 (shaft + 0.4 mm diametral clearance) |
+| Sail crossbar connector hole | 6 (clearance, not a bearing) |
+| Frame / cage lock | v6.0.0: M3 through the side of the sail crossbar connector, Ø2.8 pilot, pressing on the rod (the cage hub set screw is switched off; untested) |
 
 The nominal round-in-cap length is `30 inside cap + 5 roof + 1 external extension` (TB-03/TB-04 datum). The 30 mm measurement starts at the roof underside and includes the boss; do not add the boss again. The magnet recess opens at the lower end for an AS5600 sensing magnet. Sensor-to-magnet distance and orientation remain installation checks.
 
@@ -398,6 +418,8 @@ Standalone rear shafts use a 50 mm mounting-hole offset from their front. The fu
 
 In the full Turtle, the rear assembly belongs at the physical 3-o'clock/back port and is rotated 180° around the bottle axis so the yellow fin points downward. Earlier 9-o'clock placements were corrected. Do not infer the port from a screenshot alone.
 
+**Fin rulers (v6.6.0).** Both the rear fin and the head fin carry a signed-millimetre ruler engraved 0.3 mm deep on **both** broad faces (`lib/fin_ruler.scad`, `fin_ruler_recess()`). Zero is the horizontal bottle-axis centre plane; values increase physically upward. Rear zero is `rf_ruler_zero()` (lower shaft top + bottle radius); head zero is local Z = 0. Ruler columns follow joint placement (`fr_x()`, `fr_joint_margin()`). The engravings are the buoyancy workbench's calibration datum (section 20); keep `lib/fin_ruler.scad`, `build/export_fin_dxf.py`, `build/export_sim.py` and the website's shared ruler geometry in step if a fin outline, a joint or the bottle-axis datum moves. `build/export_fin_dxf.py` writes face A (CUT + ENGRAVE) and face B (ENGRAVE only, mirrored about X = 0) for each fin. Engraving depth and face registration are not physically tested.
+
 ## 11a. Head fin (front fin) — EXPERIMENTAL, v5.8.0; raked profile since v6.3.1
 
 `lib/head_fin.scad` + wrapper `src/components/Turtle_Head_Fin.scad` → `scads_v1/Turtle_Head_Fin.scad` (parts `assembly` / `fin` / `slat`). The rear fin's mirror on the front port (pre-orientation −X, physical 9 o'clock): two purple flat slats above and below the front bottle and one blue vertical raked fin. Not built, fitted or tested. Exported by the HopeTurtles.org generator (`object_type: "head_fin"`) since 2026-10-22, which renders this bundle with the builder's dimensions — so the slats follow `p_port_height()` (the generator adds the fit offset) and **the profile needs 7·t < board width** (4t top edge + 3t cut).
@@ -447,9 +469,9 @@ Current references: 12 mm stock, 82 mm port length (derived: top dome 62 + 20 mm
 
 ## 14. Python generation logic
 
-The generators live in the HopeTurtles.org repository at `../hopeTurtles.org/generator/` (renamed from `ecojoiner/` on 2026-09-08). There is no `generators/` directory in this repository. Section 19 holds the component-to-generator map and the propagation rule; this section records how the scripts themselves behave.
+The generators live in the HopeTurtles.org repository at `/home/russs/WebstormProjects/hopeTurtles.org/generator/` (renamed from `ecojoiner/` on 2026-09-08). There is no `generators/` directory in this repository. Section 19 holds the component-to-generator map and the propagation rule; this section records how the scripts themselves behave.
 
-| File in `../hopeTurtles.org/generator/` | Geometry |
+| File in `/home/russs/WebstormProjects/hopeTurtles.org/generator/` | Geometry |
 | --- | --- |
 | `generate_exports.py` | CLI dispatcher the website runs; no geometry; `OBJECT_MODULES` maps `object_type` → module |
 | `objects/ecojoiner_6fc.py` | 6FC Ecojoiner core — self-contained SCAD f-string plus SVG/DXF/PDF writers (renamed from `six_fc.py` 2026-09-08) |
@@ -546,13 +568,22 @@ On **any** geometry change:
    `lib/rear_fin.scad`, `lib/ballast_fin.scad`, `lib/sail_frame.scad`, a wooden
    component's wrapper customizer / `part` surface, or bumped `VERSION.json` by
    a minor or major step: `build/build.py` has already refreshed `build/params.json`;
-   in `../hopeTurtles.org` run `python3 generator/sync_from_turtle_body.py &&
+   in `/home/russs/WebstormProjects/hopeTurtles.org` run `python3 generator/sync_from_turtle_body.py --turtle-body /home/russs/PycharmProjects/turtle_body &&
    python3 generator/check_params_sync.py`, fix any default the checker flags, and
    eyeball each affected `derive_dimensions()` against the vendored bundle (the
    checker does not cover the formula layer).
    If that is out of the task's scope, append an `open` entry to
-   `../hopeTurtles.org/generator/SYNC_LOG.md` and say so in the report. PLA-only
+   `/home/russs/WebstormProjects/hopeTurtles.org/generator/SYNC_LOG.md` and say so in the report. PLA-only
    changes (cap, cage, axle, mold) need neither.
+
+9. **Refresh the label inventory (section 21).** If the change touched any wooden
+   part's outline, holes, count or code (`lib/ecojoiner.scad`, `lib/rear_fin.scad`,
+   `lib/ballast_fin.scad`, `lib/head_fin.scad`, `lib/sail_frame.scad`, a `p_*()` that
+   feeds them, or `INVENTORY` in `build/export_inventory.py`), **or** `VERSION.json` was
+   bumped and the change is being released/committed, run
+   `python3 build/export_inventory.py`. It renders every wooden part (~20 s) and
+   writes `turtle_body_full_inventory_<version>.svg` here and in turtle_labels. If it is out
+   of the task's scope, say in the report that the inventory is still at the old version.
 
 Commands from the repository root:
 
@@ -564,6 +595,7 @@ python3 build/lint.py                  # parse + freshness (incl. params.json), 
 python3 build/test.py                  # cross-subsystem mesh regression — maintainer-run; shared-contract or pre-commit only. accepts target ids: build/test.py control_cap ecojoiner ...
 python3 build/baseline.py <target>     # re-record baseline (intentional changes only; maintainer-run)
 python3 build/export_stl.py            # versioned PLA-part STLs
+python3 build/export_inventory.py      # versioned wooden-slat inventory SVG -> here + turtle_labels (~20 s)
 openscad -D 'part="non_sail_batten"' -o /tmp/x.stl 'scads_v1/Turtle_Sail_Apparatus.scad'
 git diff --stat && git diff --check
 ```
@@ -647,7 +679,7 @@ For physical prototypes, separately check bottle fit, cage rubbing, shaft wobble
 ## 16. Printing, modelling and communication conventions
 
 - Cap: flat bearing face on the bed, open insert and boss pointing upward.
-- Sail shaft: upper (cage-lock) end on the bed, magnet opening upward (TB-08: uniform round bar, no hex end to orient by — either end would sit flat, this just keeps the as-modelled convention).
+- Sail shaft: **not printed** — an Ø5 steel rod cut to 59 mm (v6.4.0). The SCAD model's pose (upper end on Z=0, magnet recess up) is just the as-modelled reference.
 - Cage: **printed roof-face-down** (flat top on the bed) — this is a hard fabrication constraint, not a preference. Roof-top features must be self-supporting in that pose (bevels flare outward ≤ 45°, no undercut, no downward pocket/overhang); flag any change that would need support instead of making it. Inspect the clip-pocket bridging and horizontal bores in the slicer. See section 6.
 - Mold: openings up. Silicone rings are flexible cast parts, not rigid printed substitutes.
 - Sail and wood assemblies: inspection outputs are not automatically flat fabrication layouts.
@@ -674,7 +706,7 @@ Remaining scoped clean-ups:
   `fixed_control_bottle_unit()` + `rotating_cage_sail_unit()` around lib calls.
 - Add a GitHub Actions job that runs `build/lint.py` + `build/test.py` if the
   project ever wants CI (currently local-only by design).
-- The generator sync plan in `../hopeTurtles.org/generator/SYNC_PLAN.md`
+- The generator sync plan in `/home/russs/WebstormProjects/hopeTurtles.org/generator/SYNC_PLAN.md`
   (items S-1…S-6) is done through S-5. This repo's part: `build/export_params.py`
   → `build/params.json` (every `p_*()` + version), regenerated by `build/build.py`
   and gated by `build/lint.py`. S-5b (generators loading from that snapshot rather
@@ -690,14 +722,20 @@ When updating it, change the inspection date/revision, close resolved discrepanc
 
 ## 19. Downstream: the HopeTurtles.org generator bridge
 
-HopeTurtles.org (`../hopeTurtles.org`, sibling checkout; note the capital T) lets a
+> **Checkout locations (2026-11-12).** This repo lives at `/home/russs/PycharmProjects/turtle_body`; the
+> website at `/home/russs/WebstormProjects/hopeTurtles.org`. They are **not siblings**, so the
+> website's `sync_from_turtle_body.py` default (`../turtle_body`) does not find this repo. Always pass
+> `--turtle-body /home/russs/PycharmProjects/turtle_body` or set `TURTLE_BODY_DIR`.
+> `/home/russs/WebstormProjects/turtle_body_OLD- nov11` is a stale older clone. Never sync from it or edit it.
+
+HopeTurtles.org (`/home/russs/WebstormProjects/hopeTurtles.org`, a different parent folder from this repo; note the capital T) lets a
 builder enter bottle, board and solar-panel measurements at `/ecojoiners/generate` and
 download cutting files. Those files come from Python generators in
-`../hopeTurtles.org/generator/` (renamed from `ecojoiner/` on 2026-09-08, because the
+`/home/russs/WebstormProjects/hopeTurtles.org/generator/` (renamed from `ecojoiner/` on 2026-09-08, because the
 directory generates the wooden parts of a whole turtle, of which the Ecojoiner is the
 central part). The generators were written against the old monolithic `Full_Turtle`
 SCAD and **drifted** once geometry moved into `lib/`. This section is the contract that
-keeps them in step. The mirror of it lives in `../hopeTurtles.org/CLAUDE.md` →
+keeps them in step. The mirror of it lives in `/home/russs/WebstormProjects/hopeTurtles.org/CLAUDE.md` →
 "Turtle Generator".
 
 **Direction of truth: `lib/params.scad` (and the wooden `lib/*.scad` modules) win.**
@@ -738,7 +776,7 @@ same task, or explicitly logged if it cannot be:
 To carry it: open the generator named in the map, update `DEFAULTS` / `TUNING` /
 formula / template, keep the upstream `p_*()` name cited in the comment beside each
 constant, and re-run the generator's dry run (section 14). If the task cannot include
-that, append an `open` line to `../hopeTurtles.org/generator/SYNC_LOG.md` (format is at
+that, append an `open` line to `/home/russs/WebstormProjects/hopeTurtles.org/generator/SYNC_LOG.md` (format is at
 the top of that file) and state it in the report. Never let a `lib/` change go
 unrecorded on the generator side.
 
@@ -780,14 +818,99 @@ flattened into a constant, lift the rule into `lib/params.scad` rather than hard
 the generator.
 
 The assessment and ordered work items (S-1 rear fin, S-2 ballast, S-3 sails, S-4 6FC,
-S-5 the sync mechanism, S-6 hygiene) are in `../hopeTurtles.org/generator/SYNC_PLAN.md`.
+S-5 the sync mechanism, S-6 hygiene) are in `/home/russs/WebstormProjects/hopeTurtles.org/generator/SYNC_PLAN.md`.
 **S-1…S-5 are done (2026-09-08).** This repo's part of S-5: `build/export_params.py`
 renders every `p_*()` and writes `build/params.json` (values + version); `build/build.py`
 regenerates it with the bundles and `build/lint.py` fails on a stale one. The generator
 side vendors that file plus the four `scads_v1/` bundles into
-`../hopeTurtles.org/generator/turtle_body/` (`sync_from_turtle_body.py`) and
+`/home/russs/WebstormProjects/hopeTurtles.org/generator/turtle_body/` (`sync_from_turtle_body.py`) and
 `check_params_sync.py` asserts every generator's shared-input default against it in
 `npm run lint`. So a release here is propagated by: `python3 build/build.py`, then in
-hopeTurtles.org `python3 generator/sync_from_turtle_body.py && python3
+hopeTurtles.org `python3 generator/sync_from_turtle_body.py --turtle-body
+/home/russs/PycharmProjects/turtle_body && python3
 generator/check_params_sync.py`, then a human review of `derive_dimensions()` against the
 vendored bundles. S-5b (generators loading defaults from the snapshot) and S-6 remain.
+
+## 20. Turtle_Sim — buoyancy workbench (v6.6.0, first milestone)
+
+A local Python app for flotation, trim and stability, driven by this CAD. Plan:
+`docs/sim_roadmap.md`. How to operate it and its current model limits: `sim/README.md`.
+Physical survey: `docs/buoyancy_measurements.md`. Scope today is **calm-water hydrostatics
+only**. Sailing forces, waves, dynamic capsize, slosh, TurtleOS sensor/actuator emulation
+and the luff tests are roadmap stages 3–7, not built.
+
+| Path | Role |
+| --- | --- |
+| `sim/turtle_sim/core/` | Engine (`hydrostatics.py`), independent of HTTP. Manifold unions displacement; Trimesh mass properties; SciPy force/moment balance |
+| `sim/turtle_sim/api/app.py` | FastAPI app (`/api/geometry`, `/api/config`, `/api/solve`, `/api/jobs/{id}` …); jobs run in a separate process |
+| `sim/turtle_sim/geometry.py`, `config.py` | Component list / CAD fingerprint / mesh loading; measurement config |
+| `sim/web/` | Browser UI + vendored Three.js 0.180.0 (works offline) |
+| `sim/tests/` | `pytest` suite (hydrostatics against reference shapes, API, measurements, fin exports) + optional Playwright `browser_smoke.py` |
+| `physics/components.yaml` | Distributed measurement template. Unknowns stay **null**. Never fill it with guessed masses |
+| `build/export_sim.py` | Renders installed component meshes + ruler datums from `src/Full_Turtle.scad` into `sim/generated/` (metres; sim axes +X forward, +Y port, +Z up). No Python copy of assembly placements |
+| `run_sim.sh` | Launcher → `sim/launch.py`, binds `127.0.0.1:8765` only |
+| `sim/generated/`, `sim/data/`, `fabrication/` | **Git-ignored.** Exported meshes, the user's personal measurements, and fin DXFs |
+
+Setup and checks, from the repository root:
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install -r sim/requirements.txt
+./run_sim.sh                                   # --no-browser / --port 8766
+.venv/bin/python build/export_sim.py           # CAD -> sim/generated/ (minutes; the UI's "Export CAD" does this)
+.venv/bin/python build/export_fin_dxf.py       # fin DXFs -> fabrication/fins/
+PYTHONPATH=sim .venv/bin/pytest sim/tests -q
+```
+
+Rules:
+
+- **The CAD stays the master geometry.** The sim reads installed placements from
+  `src/Full_Turtle.scad` through `build/export_sim.py`. Do not hard-code coordinates in Python.
+  Convert mm → m only at the export boundary. A CAD/source fingerprint rejects stale exports,
+  so after any geometry change, re-export before you trust a solve.
+- **The CAD build stays stdlib-only.** NumPy/SciPy/Trimesh/FastAPI/ezdxf live only in the
+  `.venv` (`sim/requirements.txt`, pinned). `build/build.py`, `lint.py`, `test.py` and
+  `export_stl.py` must not import them.
+- **Measured vs estimated is explicit.** Masses, centres of mass and displacement status come
+  from the user's measurements. Keep bottle displacement envelopes separate from loaded mass, and
+  never count contained equipment twice. The CAD centre plane (body Z = 0) is a datum, **not** a
+  predicted waterline. Water appears only after a successful solve.
+- **The fin rulers (section 11) are the calibration datum.** The solver predicts where each
+  ruler line meets the water after heave, pitch and roll; trial readings validate the
+  volume/moment model and do not replace it. Front and rear readings alone do not establish roll.
+  There is no automatic parameter fit.
+- Sign conventions: positive roll raises port; positive mathematical pitch lowers the bow; ruler
+  values are positive above the bottle centre.
+- A passing analytic-shape test or a plausible water view does **not** show the real turtle
+  floats as predicted. Report what was solved or measured, nothing more.
+- Adding a component the sim should see means updating `COMPONENTS` in
+  `sim/turtle_sim/geometry.py`, its export in `build/export_sim.py`, and a null entry in
+  `physics/components.yaml`, together.
+
+## 21. Downstream: the turtle_labels inventory bridge
+
+[turtle_labels](https://github.com/h2h-project/turtle_labels), checked out at
+`/home/russs/WebstormProjects/turtle_labels`, is the design source for the printed and
+laser-engraved turtle labels. Label artwork for the wooden parts is laid out on the
+**full slat inventory** generated here. The direction of truth is the same as for the
+website: `lib/` wins, and the labels repo receives a generated copy.
+
+- **Generator:** `build/export_inventory.py` (stdlib + OpenSCAD). The parts, quantities,
+  piece codes (`EJ-LJ1`, `RF-FIN` …) and fills are in its `INVENTORY` table. Each
+  wooden part is rendered from `lib/`, laid flat, projected top-down at 1:1 (mm), and every
+  physical copy is drawn and captioned. Only through-face holes show. Sails are excluded.
+- **Output name carries the master version:** `turtle_body_full_inventory_<VERSION.json
+  version>.svg` (e.g. `turtle_body_full_inventory_6.6.0.svg`). The version also appears in
+  the SVG title, header line and generated-file comment.
+- **Here:** written to the repo root. Older `turtle_body_full_inventory*.svg` files are deleted
+  so only the current version remains, as in `stls_v1/`.
+- **turtle_labels:** the same file is copied to that repo's root. **Older versions there are
+  never deleted.** Label artwork may have been built on them, so pruning is the labels
+  maintainer's decision. The checkout is found from `--labels-dir`, else `$TURTLE_LABELS_DIR`,
+  else `~/WebstormProjects/turtle_labels`, else `../turtle_labels`. If none is found, the
+  script warns and writes only the local copy. `--no-labels` skips the copy deliberately.
+- **Piece codes are an interface.** Labels reference them. Renaming or renumbering a code
+  in `INVENTORY` breaks existing label artwork, so flag it to the user and don't change one
+  silently.
+- Nothing is committed in turtle_labels by this repo's tooling. The new file shows up there as
+  untracked for its maintainer to commit.
+- When to run it: workflow step 9 (section 15).
