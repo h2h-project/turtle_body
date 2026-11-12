@@ -240,3 +240,8 @@ __marimo__/
 build/__pycache__/
 **/__pycache__/
 *.pyc
+
+# Simulator generated geometry, fabrication exports and personal measurements
+/sim/generated/
+/sim/data/
+/fabrication/

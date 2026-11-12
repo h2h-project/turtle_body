@@ -19,6 +19,7 @@
 
 use <params.scad>
 use <util.scad>
+use <fin_ruler.scad>
 
 function rf_t()             = p_wood_t();
 function rf_fin_width()     = p_fin_board_w();   // 93 -- one board wide (v5.7.0; was +15 mm tab = 108)
@@ -37,6 +38,8 @@ function rf_joint_meet_x()     = rf_shaft_rear_x() / 2;
 function rf_upper_shaft_z0()   = rf_fin_height() - 3 * rf_t();
 function rf_lower_shaft_z0()   = rf_upper_shaft_z0() - p_bottle_d() - rf_t();
 function rf_solar_meet_z()     = rf_upper_shaft_z0() + rf_solar_slot_depth();
+
+function rf_ruler_zero() = rf_lower_shaft_z0() + rf_t() + p_bottle_d()/2;
 
 module rf_assert_valid(half_lap, solar_clear, hole_from_front, hole_d) {
     t = rf_t();
@@ -61,7 +64,7 @@ module rf_assert_valid(half_lap, solar_clear, hole_from_front, hole_d) {
            "rear_fin: shaft hole must stay in the forward, unjointed portion.");
 }
 
-module rear_fin(half_lap = p_fit_clearance(), solar_clear = p_fit_clearance(),
+module rear_fin_blank(half_lap = p_fit_clearance(), solar_clear = p_fit_clearance(),
                 fn = undef, colored = true) {
     t = rf_t(); eps = p_eps();
     nn = fn == undef ? p_fn_wood() : fn;
@@ -80,6 +83,14 @@ module rear_fin(half_lap = p_fit_clearance(), solar_clear = p_fit_clearance(),
                 square([t + solar_clear,
                         rf_fin_height() - rf_solar_meet_z() + solar_clear / 2 + eps]);
         }
+}
+
+module rear_fin(half_lap = p_fit_clearance(), solar_clear = p_fit_clearance(),
+                fn = undef, colored = true) {
+    difference() {
+        rear_fin_blank(half_lap, solar_clear, fn, colored);
+        fin_ruler_recess("rear", rf_ruler_zero(), rf_t());
+    }
 }
 
 module bottle_holder_shaft(z0 = 0, half_lap = p_fit_clearance(),

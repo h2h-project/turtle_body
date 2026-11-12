@@ -1,6 +1,6 @@
 {
-  "version": "6.5.2",
-  "updated": "2026-11-03",
+  "version": "6.6.0",
+  "updated": "2026-11-12",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
     "patch": "+0.0.1  component-scoped change (one lib/<subsystem>.scad or one src/components/*.scad)",
@@ -8,6 +8,11 @@
     "major": "+1.0.0  bottle / board / hardware interface break (existing builds no longer fit)"
   },
   "changelog": [
+    {
+      "version": "6.6.0",
+      "date": "2026-11-12",
+      "note": "Signed millimetre front/rear fin engravings at bottle-axis zero; shared 2D DXF marks with stock-aware ruler placement, component export, local hydrostatic workbench and measurement survey. Interfaces unchanged. Website generator synchronization and verification are recorded in docs/generator_sync_pending.md."
+    },
     {
       "version": "6.5.2",
       "date": "2026-11-03",

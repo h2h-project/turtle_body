@@ -6,3 +6,9 @@ The 3D design files that make up the components of the hope turtle's body.
 This repository contains the parametric OpenSCAD models and fabrication files used to build the turtle body, including its bottle interfaces, control cap, rotating sail cage, magnetic angle-sensing shaft, bearing surfaces, sail battens and crossbars, chassis connections, rear fin and ballast components. The designs are being developed around ordinary bottles, locally available wooden boards and accessible 3D printing, with core measurements—such as bottle diameter, wood thickness, running clearance, hole size and component spacing—kept adjustable wherever possible. Source `.scad` files are retained as the editable designs from which printable STL models and other fabrication outputs can be generated.
 
 The Turtle Body models are the geometry source behind the turtle generator on [HopeTurtles.org](https://hopeturtles.org/ecojoiners/generate). A builder enters the measurements of locally available bottles, boards and solar panels, and Python generators in the website repository's `generator/` directory produce cutting files for the wooden components. This repository's `lib/params.scad` is the authoritative dimension contract; the generators follow it, and `CLAUDE.md` section 19 records how changes made here are carried across so that each new iteration becomes easier for other builders to reproduce and adapt.
+
+The local [buoyancy workbench](sim/README.md) connects this CAD to measured masses
+and calm-water flotation. Start with the [physical measurement guide](docs/buoyancy_measurements.md).
+Front and rear fins carry signed millimetre rulers with zero at the horizontal
+bottle centreline; [local DXF exports](build/export_fin_dxf.py) separate engraving
+from cutting.

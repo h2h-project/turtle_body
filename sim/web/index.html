@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Turtle · Buoyancy workbench</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="importmap">
+      { "imports": { "three": "./vendor/three.module.js" } }
+    </script>
+  </head>
+  <body>
+    <header>
+      <div>
+        <span class="eyebrow">HOPE TURTLE / DESIGN LAB</span>
+        <h1>Buoyancy workbench</h1>
+      </div>
+      <nav>
+        <a href="/measurement-guide" target="_blank">Measurement guide ↗</a
+        ><button id="export">Export CAD</button
+        ><button id="save">Save measurements</button
+        ><button id="solve" class="primary">Calculate flotation</button>
+      </nav>
+    </header>
+    <div id="status" role="status">Loading workbench…</div>
+    <main>
+      <section class="visual">
+        <div id="viewport">
+          <div class="viewlabel">
+            <b>CALM WATER · HYDROSTATICS</b
+            ><span id="selection"
+              >Drag to orbit · scroll to zoom · click a component</span
+            >
+          </div>
+          <div class="viewtools">
+            <button id="reset">Reset view</button
+            ><button id="centre">Centre plane</button>
+          </div>
+        </div>
+        <div class="readouts">
+          <div>
+            <small>Front waterline</small><strong id="front">—</strong
+            ><span>mm relative to bottle centre</span>
+          </div>
+          <div>
+            <small>Rear waterline</small><strong id="rear">—</strong
+            ><span>mm relative to bottle centre</span>
+          </div>
+          <div>
+            <small>Attitude</small><strong id="attitude">—</strong
+            ><span>roll / pitch in degrees</span>
+          </div>
+        </div>
+        <section class="panel">
+          <h2>Calculated equilibrium</h2>
+          <div id="results">
+            Supply the required measurements to calculate a resting waterline.
+            The centre plane is a reference, not a predicted water surface.
+          </div>
+          <div id="graphs"></div>
+          <div id="comparisons"></div>
+        </section>
+      </section>
+      <aside>
+        <section class="panel">
+          <div class="sectionhead">
+            <h2>01 / Build & water</h2>
+            <div>
+              <button id="download">Download YAML</button
+              ><label class="filebutton"
+                >Load file<input
+                  id="load"
+                  type="file"
+                  accept=".yaml,.yml,.json"
+              /></label>
+            </div>
+          </div>
+          <label
+            >Configuration name<input
+              id="name"
+              placeholder="Unique name for this exact loading"
+          /></label>
+          <div class="grid2">
+            <label
+              >Water density · kg/m³<input
+                id="density"
+                type="number"
+                step="any"
+                min="1" /></label
+            ><label
+              >Density source<select id="density_source">
+                <option value="" disabled>Choose density source</option>
+                <option value="freshwater_reference">
+                  Freshwater reference (1000)
+                </option>
+                <option value="seawater_reference">
+                  Seawater reference (1025)
+                </option>
+                <option value="measured">Measured</option>
+              </select></label
+            ><label
+              >Complete mass · kg (check)<input
+                id="assembled"
+                type="number"
+                step="any"
+                min="0" /></label
+            ><label
+              >Bottle diameter / length · mm
+              <div class="inline">
+                <input
+                  id="bottle_d"
+                  aria-label="Bottle diameter"
+                  type="number"
+                  step="any"
+                /><input
+                  id="bottle_h"
+                  aria-label="Bottle length"
+                  type="number"
+                  step="any"
+                /></div
+            ></label>
+          </div>
+          <label class="check"
+            ><input id="verified" type="checkbox" /> I checked bottle shape,
+            dimensions and installed parts against CAD.</label
+          ><label
+            >Build differences & measurement notes<textarea
+              id="notes"
+              rows="2"
+            ></textarea>
+          </label>
+          <p class="hint">
+            +X forward · +Y port · +Z up. Positions in metres from the labelled
+            assembly centre. CAD-derived centres are allowed only for uniform
+            wooden parts.
+          </p>
+        </section>
+        <section class="panel">
+          <h2>02 / Mass, balance & displacement</h2>
+          <p class="hint">
+            Weigh each group including its listed hardware. Each physical item
+            belongs to exactly one group. Untick absent groups.
+          </p>
+          <div id="components"></div>
+        </section>
+        <section class="panel">
+          <div class="sectionhead">
+            <h2>03 / Extra loads & ballast</h2>
+            <button id="addpayload">Add load</button>
+          </div>
+          <p class="hint">
+            Use for equipment or ballast not already included in a group mass.
+            For enclosed loads, name the enclosing component. Exposed boxes need
+            measured dimensions.
+          </p>
+          <div id="payloads"></div>
+        </section>
+        <section class="panel">
+          <div class="sectionhead">
+            <h2>04 / Water trials</h2>
+            <button id="addtrial">Record trial</button>
+          </div>
+          <p class="hint">
+            Signed millimetres: + above centre, − below. Read the undisturbed
+            surface, avoiding the meniscus. Front and rear alone do not
+            determine roll. Give every loading a unique configuration name.
+          </p>
+          <div id="trials"></div>
+        </section>
+        <section class="panel">
+          <h2>Measurement readiness</h2>
+          <ul id="missing"></ul>
+        </section>
+      </aside>
+    </main>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

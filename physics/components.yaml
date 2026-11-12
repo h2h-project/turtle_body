@@ -1,0 +1,194 @@
+# Enter measured values in the browser. Unknowns intentionally remain null.
+schema_version: 1
+name: My turtle
+density_kg_m3: null
+density_source: freshwater_reference
+assembled_mass_kg: null
+dimensions_checked: false
+bottle_dimensions_mm: {}
+components:
+- id: frame
+  installed: true
+  mass_kg: null
+  com_source: measured
+  com_m: null
+  displacement: unknown
+  geometry_confirmed: false
+  uniform_shell_mm: null
+  displacement_mesh: null
+  offset_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  notes: ''
+- id: bottle_front
+  installed: true
+  mass_kg: null
+  com_source: measured
+  com_m: null
+  displacement: unknown
+  geometry_confirmed: false
+  uniform_shell_mm: null
+  displacement_mesh: null
+  offset_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  notes: ''
+- id: bottle_rear
+  installed: true
+  mass_kg: null
+  com_source: measured
+  com_m: null
+  displacement: unknown
+  geometry_confirmed: false
+  uniform_shell_mm: null
+  displacement_mesh: null
+  offset_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  notes: ''
+- id: bottle_port
+  installed: true
+  mass_kg: null
+  com_source: measured
+  com_m: null
+  displacement: unknown
+  geometry_confirmed: false
+  uniform_shell_mm: null
+  displacement_mesh: null
+  offset_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  notes: ''
+- id: bottle_starboard
+  installed: true
+  mass_kg: null
+  com_source: measured
+  com_m: null
+  displacement: unknown
+  geometry_confirmed: false
+  uniform_shell_mm: null
+  displacement_mesh: null
+  offset_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  notes: ''
+- id: bottle_bottom
+  installed: true
+  mass_kg: null
+  com_source: measured
+  com_m: null
+  displacement: unknown
+  geometry_confirmed: false
+  uniform_shell_mm: null
+  displacement_mesh: null
+  offset_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  notes: ''
+- id: front_fin
+  installed: true
+  mass_kg: null
+  com_source: cad_uniform
+  com_m: null
+  displacement: unknown
+  geometry_confirmed: false
+  uniform_shell_mm: null
+  displacement_mesh: null
+  offset_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  notes: ''
+- id: front_support
+  installed: true
+  mass_kg: null
+  com_source: cad_uniform
+  com_m: null
+  displacement: unknown
+  geometry_confirmed: false
+  uniform_shell_mm: null
+  displacement_mesh: null
+  offset_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  notes: ''
+- id: rear_fin
+  installed: true
+  mass_kg: null
+  com_source: cad_uniform
+  com_m: null
+  displacement: unknown
+  geometry_confirmed: false
+  uniform_shell_mm: null
+  displacement_mesh: null
+  offset_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  notes: ''
+- id: rear_support
+  installed: true
+  mass_kg: null
+  com_source: measured
+  com_m: null
+  displacement: unknown
+  geometry_confirmed: false
+  uniform_shell_mm: null
+  displacement_mesh: null
+  offset_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  notes: ''
+- id: ballast_frame
+  installed: true
+  mass_kg: null
+  com_source: measured
+  com_m: null
+  displacement: unknown
+  geometry_confirmed: false
+  uniform_shell_mm: null
+  displacement_mesh: null
+  offset_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  notes: ''
+- id: control_housing
+  installed: true
+  mass_kg: null
+  com_source: measured
+  com_m: null
+  displacement: unknown
+  geometry_confirmed: false
+  uniform_shell_mm: null
+  displacement_mesh: null
+  offset_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  notes: ''
+- id: sail_unit
+  installed: true
+  mass_kg: null
+  com_source: measured
+  com_m: null
+  displacement: unknown
+  geometry_confirmed: false
+  uniform_shell_mm: null
+  displacement_mesh: null
+  offset_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  notes: ''
+payloads: []
+observations: []
+notes: ''

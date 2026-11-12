@@ -34,6 +34,7 @@
 
 use <params.scad>
 use <util.scad>
+use <fin_ruler.scad>
 
 function hf_t()            = p_wood_t();
 function hf_fin_width()    = p_head_fin_w();          // 93
@@ -87,7 +88,7 @@ module hf_assert_valid(half_lap, hole_from_front, hole_d) {
            "head_fin: slat hole must stay in the unjointed portion, behind the bottle base.");
 }
 
-module head_fin(half_lap = p_fit_clearance(), fn = undef, colored = true) {
+module head_fin_blank(half_lap = p_fit_clearance(), fn = undef, colored = true) {
     t = hf_t(); eps = p_eps();
     nn = fn == undef ? p_fn_wood() : fn;
     W = hf_fin_width(); H2 = hf_fin_height() / 2;
@@ -102,6 +103,13 @@ module head_fin(half_lap = p_fit_clearance(), fn = undef, colored = true) {
                 translate([-eps, z - half_lap / 2])
                     square([hf_joint_meet_x() + half_lap / 2 + eps, t + half_lap]);
         }
+}
+
+module head_fin(half_lap = p_fit_clearance(), fn = undef, colored = true) {
+    difference() {
+        head_fin_blank(half_lap, fn, colored);
+        fin_ruler_recess("head", 0, hf_t());
+    }
 }
 
 module head_slat(z0 = 0, half_lap = p_fit_clearance(),

@@ -16,6 +16,7 @@ $fn = 96;
 
 // Use top_sail to inspect the installed bottle and sail apparatus by itself.
 // Use core to inspect the remaining turtle without the top apparatus.
+sim_component = ""; // empty = ordinary CAD assembly; used by export_sim.py
 assembly_view = "full_turtle"; // [full_turtle,top_sail,core]
 echo("FULL_TURTLE_V11_SELF_CONTAINED", assembly_view);
 
@@ -213,6 +214,7 @@ use <../lib/bottle_mockup.scad>
 use <../lib/ecojoiner.scad>
 use <../lib/ballast_fin.scad>
 use <../lib/rear_fin.scad>      // wooden parts; the visible solar panel + screws stay embedded below
+use <../lib/fin_ruler.scad>
 use <../lib/head_fin.scad>      // v5.8.0 EXPERIMENTAL: front (head) fin on the -X port
 use <../lib/control_cap.scad>   // TB-03: 5 mm roof + 2 mm boss + twin 2x2 grooves
 use <../lib/sail_shaft.scad>    // TB-04/TB-08: 59 mm uniform round shaft + magnet recess
@@ -1550,9 +1552,11 @@ module rear_solar_panel_screws() {
 // Wooden parts from lib/rear_fin.scad; the visible solar panel + M3 screws
 // stay local (lib/rear_fin.scad only carries a %-reference panel).
 module full_rear_fin_assembly() {
+    if (sim_component == "" || sim_component == "rear_fin")
     rear_fin(half_lap = rear_half_lap_clearance,
              solar_clear = rear_solar_slot_clearance,
              colored = enable_color_coding);
+    if (sim_component == "" || sim_component == "rear_support") {
     bottle_holder_shaft(rear_upper_shaft_z0, half_lap = rear_half_lap_clearance,
                         colored = enable_color_coding);
     bottle_holder_shaft(rear_lower_shaft_z0, half_lap = rear_half_lap_clearance,
@@ -1561,6 +1565,7 @@ module full_rear_fin_assembly() {
                        colored = enable_color_coding);
     rear_solar_panel();
     rear_solar_panel_screws();
+    }
 }
 
 
@@ -1771,7 +1776,11 @@ module installed_head_fin_on_9oclock_port() {
         [ 0, -1,  0, head_install_pre[2]],
         [ 0, 0, 0, 1]
     ])
-        head_fin_assembly(half_lap = rear_half_lap_clearance,
+        if (sim_component == "front_fin") head_fin(colored=enable_color_coding);
+        else if (sim_component == "front_support") {
+            head_slat(hf_upper_slat_z0(), colored=enable_color_coding);
+            head_slat(hf_lower_slat_z0(), colored=enable_color_coding);
+        } else head_fin_assembly(half_lap = rear_half_lap_clearance,
                           colored = enable_color_coding);
 }
 
@@ -2542,7 +2551,8 @@ module hope_turtle_sail_apparatus(
     }
 
     module complete_sail_assembly() {
-        fixed_control_bottle_unit();
+        if (sim_component == "" || sim_component == "control_housing") fixed_control_bottle_unit();
+        if (sim_component == "" || sim_component == "sail_unit")
         rotate([0, 0, cage_rotation_angle])
             rotating_cage_sail_unit();
     }
@@ -2676,6 +2686,7 @@ ballast_vertical_lift =
 module ecojoiner_and_bottles() {
     ecc = enable_color_coding;
 
+    if (sim_component == "" || sim_component == "frame") {
     // Frame 1: through-bolt (no acorns) the two clamp pairs on the physical 3-o'clock port
     // (pre-orientation +X) for the rear-fin green shafts, and the two on the physical
     // 9-o'clock port (pre-orientation -X) for the head-fin slats (v5.8.0).
@@ -2696,15 +2707,16 @@ module ecojoiner_and_bottles() {
     eco_inserted_final_key( final_key_x_offset, -final_key_z_offset, ecc);
 
 
+    }
     // Five ordinary bottles. The physical top port receives the integrated
     // sail apparatus and its own cap-down bottle below.
-    bottle_at_port("+X");
-    bottle_at_port("-X");
+    if (sim_component == "" || sim_component == "bottle_rear") bottle_at_port("+X");
+    if (sim_component == "" || sim_component == "bottle_front") bottle_at_port("-X");
 
-    bottle_at_port("+Y");
+    if (sim_component == "" || sim_component == "bottle_bottom") bottle_at_port("+Y");
 
-    bottle_at_port("+Z");
-    bottle_at_port("-Z");
+    if (sim_component == "" || sim_component == "bottle_starboard") bottle_at_port("+Z");
+    if (sim_component == "" || sim_component == "bottle_port") bottle_at_port("-Z");
 }
 
 
@@ -2737,19 +2749,36 @@ module full_turtle_scene(include_top_sail = true) {
     rotate([-90, 0, 0]) {
         ecojoiner_and_bottles();
 
-        if (include_top_sail)
+        if (include_top_sail && (sim_component == "" || sim_component == "control_housing" || sim_component == "sail_unit"))
             installed_sail_apparatus_on_top_port();
 
+        if (sim_component == "" || sim_component == "ballast_frame")
         translate([0, -ballast_vertical_lift, 0])
             installed_ballast_on_positive_y_port();
 
         // Rear apparatus around / behind the physical rear bottle.
-        installed_rear_fin_on_3oclock_port();
+        if (sim_component == "" || sim_component == "rear_fin" || sim_component == "rear_support")
+            installed_rear_fin_on_3oclock_port();
 
         // Head fin around / ahead of the physical front bottle (v5.8.0).
-        installed_head_fin_on_9oclock_port();
+        if (sim_component == "" || sim_component == "front_fin" || sim_component == "front_support")
+            installed_head_fin_on_9oclock_port();
     }
     water_preview();
+}
+
+
+// Simulator metadata in final CAD world millimetres. Ruler directions +world Z.
+if (sim_component != "") {
+    echo("SIM_ORIGIN", [assembly_center[0],assembly_center[2],-assembly_center[1]]);
+    for (face=[-1,1]) {
+        echo("SIM_RULER", "front", face,
+            [head_install_pre[0]-fr_x("head"),assembly_center[2]-face*hf_t()/2,-assembly_center[1]],
+            fr_range("head",0));
+        echo("SIM_RULER", "rear", face,
+            [rear_install_pre_x+fr_x("rear"),assembly_center[2]+face*rf_t()/2,-assembly_center[1]],
+            fr_range("rear",rf_ruler_zero()));
+    }
 }
 
 if (assembly_view == "full_turtle") {

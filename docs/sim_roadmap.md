@@ -98,3 +98,14 @@ Later stages can introduce Mediterranean wind/current datasets and more detailed
 ## Starting point
 
 Inventory component masses, define the geometry export and sensor contracts, then build the buoyancy workbench. Establish the TurtleOS adapter before developing luff and sailing experiments so the physical model and its observations grow together.
+
+## Buoyancy calibration datum
+
+The initial workbench uses front/rear fin rulers, engraved 0.3 mm deep on both
+faces. Zero is the horizontal bottle-axis centre plane; signed millimetres
+increase physically upward. CAD supplies each ruler's installed reference line.
+Predict its intersection with the world water plane after heave, pitch and roll,
+then compare with face-identified trial readings. Ruler observations validate the
+volume/moment calculation; they do not replace it. Front/rear readings alone do
+not independently establish roll. See `buoyancy_measurements.md` for the survey
+and `../sim/README.md` for operation and current model limits.

@@ -1,0 +1,12 @@
+numpy==2.5.4
+scipy==1.18.1
+trimesh==5.2.0
+manifold3d==3.5.4
+shapely==2.2.0
+mapbox-earcut==2.1.0
+fastapi==0.162.5
+uvicorn==0.54.0
+PyYAML==6.0.3
+ezdxf==1.4.5
+pytest==9.2.0
+httpx==0.28.1
