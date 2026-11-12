@@ -1,5 +1,5 @@
 {
-  "version": "6.6.0",
+  "version": "6.6.3",
   "updated": "2026-11-12",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
@@ -8,6 +8,24 @@
     "major": "+1.0.0  bottle / board / hardware interface break (existing builds no longer fit)"
   },
   "changelog": [
+    {
+      "version": "6.6.3",
+      "date": "2026-11-12",
+      "files": ["lib/pressor.scad", "src/components/Turtle_Pressor.scad", "scads_v1/Turtle_Pressor.scad", "CLAUDE.md"],
+      "note": "Pressor file outputs a single piece: wrapper default part 'assembly' -> 'pressor' (flat, print pose), and the assembly view now shows one pressor in its port instead of the mirrored pair. Pressor geometry unchanged. Component-scoped; build/lint clean."
+    },
+    {
+      "version": "6.6.2",
+      "date": "2026-11-12",
+      "files": ["lib/pressor.scad", "lib/params.scad", "src/components/Turtle_Pressor.scad", "build/manifest.json", "build/params.json", "scads_v1/*.scad", "CLAUDE.md"],
+      "note": "Pressor: M5 hole 5.2 -> 5.3 mm via its own p_pressor_hole_d() (the Johns and slats keep p_m5_hole_d() 5.2); hole $fn 16 -> 32 for printing. The assembly view no longer models the M5 screws. Pressor render flagged export_stl (Turtle_Pressor) for a 3D-printed prototype, printed flat on its board face. Component-scoped; build/lint clean."
+    },
+    {
+      "version": "6.6.1",
+      "date": "2026-11-12",
+      "files": ["lib/pressor.scad", "lib/params.scad", "src/components/Turtle_Pressor.scad", "scads_v1/Turtle_Pressor.scad", "build/manifest.json", "build/params.json", "CLAUDE.md"],
+      "note": "EXPERIMENTAL pressor: a 12 mm board block in an Ecojoiner port gap, inner edge cut concave to the bottle radius (wraps p_pressor_wrap() = d/4 past the tangent line), full port height less the 0.2 fit clearance. The Little John's M5 pair bites into two 10 mm deep Ø5.2 holes in its back edge and pushes it onto the bottle (intended to replace the acorn nuts; two per port). New p_pressor_wrap/travel/hole_depth/min_wall in params (no existing value changed). Standalone only: the Ecojoiner and full turtle still show acorns, no website generator, not in the slat inventory. Rendered and inspected (one solid, port view matches the sketch); build/lint clean. Not built, fitted or tested; no baseline recorded for the new target."
+    },
     {
       "version": "6.6.0",
       "date": "2026-11-12",

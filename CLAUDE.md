@@ -74,7 +74,7 @@ Paths below were verified in the inspected GitHub tree.
 | --- | --- |
 | `lib/params.scad` | **Editable.** Shared dimension contract — every cross-subsystem value as a `function p_*()`. One definition per concept; derived values are functions of other `p_*()`. |
 | `lib/util.scad` | **Editable.** `wood_color()`, `m6_bolt_placeholder()`, `clamp()`, `hex_prism_af()`. |
-| `lib/<subsystem>.scad` | **Editable.** One parametric module per subsystem: `control_cap`, `control_cage`, `sail_shaft` (`sail_shaft`, TB-08: was `hex_shaft` / `control_axle`), `silicone_ring_mold`, `ecojoiner`, `ballast_fin`, `rear_fin`, `head_fin` (v5.8.0, experimental), `sail_frame`, `bottle_mockup`. Module args default to `p_*()`; wrappers override individually. Definitions only — no top-level geometry or assignments. |
+| `lib/<subsystem>.scad` | **Editable.** One parametric module per subsystem: `control_cap`, `control_cage`, `sail_shaft` (`sail_shaft`, TB-08: was `hex_shaft` / `control_axle`), `silicone_ring_mold`, `ecojoiner`, `ballast_fin`, `rear_fin`, `head_fin` (v5.8.0, experimental), `pressor` (v6.6.1, experimental), `sail_frame`, `bottle_mockup`. Module args default to `p_*()`; wrappers override individually. Definitions only — no top-level geometry or assignments. |
 | `src/components/*.scad` | **Editable.** Thin wrappers: customizer block + `use <../../lib/...>` + a `part=` dispatch → one lib call. |
 | `src/Full_Turtle.scad` | **Editable.** The full-assembly source (git-renamed from `Full_Turtle_v1.scad`). M7 pending: still holds embedded geometry, not yet `use`-ing lib. |
 | `Full_Turtle_v1.scad` | **GENERATED** by `build/build.py` from `src/Full_Turtle.scad`. Self-contained, committed, downloadable. Do not hand-edit (a banner says so). |
@@ -86,7 +86,7 @@ Paths below were verified in the inspected GitHub tree.
 | `tests/expected_bounds.json` | Regression baseline (per-render bounding box + tris + known warnings) checked by `build/test.py`. `tests/baseline/` holds the full per-render dumps. |
 | `VERSION.json` | Single set-level version + bump rules + changelog. STL exports carry this version in their filename. |
 | `turtle_body_full_inventory_<version>.svg` | **GENERATED** by `build/export_inventory.py`: every wooden piece in one Turtle, 1:1, labelled. Only the current version is kept here; a copy goes to turtle_labels (section 21). Do not hand-edit. |
-| `stls_v1/` | Fabrication exports, written on demand by `build/export_stl.py` as `<name>_v<version>.stl`. The pre-refactor un-versioned STLs were deleted at v1.6.0; the v1.7.0/v1.7.1 set was cleared at v1.10.0 so only the current version's files remain. Current printable set (all `_v6.6.0`): cap, cage, the combined mold layout (`Silicone_Ring_Mold`) and its two plates (`Silicone_Ring_Mold_bottom` / `_top`). No sail shaft STL — the shaft is an Ø5 steel rod since v6.4.0 (manifest `export_stl: false`). `stls_v1/gear_housing/` holds gear-housing STLs that the build scripts do not generate or manage. F6-verified, not physically validated. |
+| `stls_v1/` | Fabrication exports, written on demand by `build/export_stl.py` as `<name>_v<version>.stl`. The pre-refactor un-versioned STLs were deleted at v1.6.0; the v1.7.0/v1.7.1 set was cleared at v1.10.0 so only the current version's files remain. Current printable set (all `_v6.6.3`): cap, cage, the combined mold layout (`Silicone_Ring_Mold`) and its two plates (`Silicone_Ring_Mold_bottom` / `_top`), plus the experimental `Turtle_Pressor` (printed prototype of a part meant to be cut from board, section 13a). No sail shaft STL — the shaft is an Ø5 steel rod since v6.4.0 (manifest `export_stl: false`). `stls_v1/gear_housing/` holds gear-housing STLs that the build scripts do not generate or manage. F6-verified, not physically validated. |
 | `README.md` | Project overview and generator intent |
 | `LICENSE` | CERN Open Hardware Licence v2, Strongly Reciprocal |
 
@@ -467,6 +467,24 @@ On the four ports where the rear-fin shafts / ballast core slats fill the gap (t
 
 Current references: 12 mm stock, 82 mm port length (derived: top dome 62 + 20 mm allowance), 82 mm port height, 31 mm cap diameter, 34 mm collar diameter, Ø5.2 M5 bite-hole pairs and 0.2 mm slot fit allowance. Bottle dimensions are sizing inputs only; the Ecojoiner-only model must not emit bottle solids.
 
+## 13a. Pressor — EXPERIMENTAL, v6.6.1
+
+`lib/pressor.scad` + wrapper `src/components/Turtle_Pressor.scad` → `scads_v1/Turtle_Pressor.scad` (parts `assembly` / `pressor` / `profile`). The file always outputs ONE piece (v6.6.3): the default is `part="pressor"`, and the assembly view shows one pressor in its port, with the bottle and John as F5-only references. It does not model the M5 screws (v6.6.2). `part="pressor"` is exported as `stls_v1/Turtle_Pressor_v<version>.stl` for a 3D-printed prototype, printed flat on its board face; the edge holes print as horizontal bores. This is meant to replace the acorn nut on each Little John's M5 pair. Two pressors per port, one each side of the bottle, hug it between them. Not built, fitted or tested. **Standalone only:** the Ecojoiner and full-turtle assemblies still show acorns (section 13), no website generator emits it, and it is not in the slat inventory (section 21).
+
+| Feature | Default |
+| --- | ---: |
+| Stock | one 12 mm board (`p_wood_t()`); the sketched shape is the board face, thickness runs along the bottle axis, centred on the screw pair 17 mm in from the John end |
+| Width (back edge → inner edge) | 32 = port gap 12 − travel 1 + wrap 21 |
+| Height | 83.8 = port height − 0.2 fit clearance (slides between the Long Johns) |
+| Inner cut | concave arc, bottle radius, centred on the bottle axis; symmetric top/bottom (no diagonal); runs out at ±36.4, corners beyond stay square |
+| Wrap past the bottle tangent | `p_pressor_wrap()` = d/4 = 21 |
+| Screw travel | `p_pressor_travel()` = 1: pressed, the back edge stands 1 mm off the John face |
+| M5 holes | two Ø5.3 holes (`p_pressor_hole_d()`, v6.6.2; the Johns keep Ø5.2) at ±18 (`p_eco_screw_pair_offset()`), mid-thickness, 10 deep (`p_pressor_hole_depth()`) |
+| Wood around a hole / beyond the tip | 3.35 each side / 5.05 to the bottle (asserted ≥ `p_pressor_min_wall()` = 3) |
+| M5 × 30 head standoff (pressed) | 7 mm off the John's outer face |
+
+How it works: each screw bites into both the John and the pressor, so turning it in carries the pressor toward the bottle; turning it out backs the pressor off. Local frame: X = 0 at the pressor's back edge, +X toward the bottle; Y across the port, centred on the bottle axis; Z = board thickness. `pressor_assert_valid()` checks the travel leaves wood on the centreline, the arc stays inside the block and covers the screw lines, there is enough wood around and beyond the holes, the screw reaches, and the width fits the board. Unverified: whether a Ø5 screw in the 12 mm edge splits the board, how much clamping force the pair gives, and whether 1 mm of travel is enough for real bottle variation.
+
 ## 14. Python generation logic
 
 The generators live in the HopeTurtles.org repository at `/home/russs/WebstormProjects/hopeTurtles.org/generator/` (renamed from `ecojoiner/` on 2026-09-08). There is no `generators/` directory in this repository. Section 19 holds the component-to-generator map and the propagation rule; this section records how the scripts themselves behave.
@@ -755,6 +773,7 @@ rule" precedent, applied in the generator→lib direction.
 | Ecojoiner core (Long/Little/Master Johns, Final Keys; M5 clamp holes — no Pressers since v5.0.0) | `lib/ecojoiner.scad` + `lib/params.scad` | `src/components/Turtle_Core_Ecojoiner.scad` → `scads_v1/Turtle_Core_Ecojoiner.scad` | `objects/ecojoiner_6fc.py` | `6fc` |
 | Rear fin, bottle-holder shafts, solar holder | `lib/rear_fin.scad` | `Turtle_Rear_Fin.scad` | `objects/back_fin.py` + `back_fin_generator.py` | `fin` |
 | Ballast (core slats, bottom board, lock feet, fin) | `lib/ballast_fin.scad` | `Turtle_Bottom_Ballast_Fin.scad` | `objects/ballast.py` + `bottom_ballast_fin_generator.py` | `ballast` |
+| Pressor (port clamp block) — experimental, v6.6.1 | `lib/pressor.scad` | `Turtle_Pressor.scad` | **none yet**: the 6FC generator still emits the acorn clamp; add a pressor part there if it replaces the acorns | — |
 | Head fin (front slats + raked fin) — experimental | `lib/head_fin.scad` | `Turtle_Head_Fin.scad` | `head_fin_generator.py` + `objects/head_fin.py` (SCAD = the vendored bundle with `p_*()` overrides) | `head_fin` |
 | Sail frame (crossbar halves + connector, battens, strengtheners, C pieces, sails) | `lib/sail_frame.scad` | `Turtle_Sail_Apparatus.scad` | `objects/sails.py` + `generate_sails.py` (SCAD = the vendored bundle with `p_*()` overrides since 2026-10-22) | `sails` |
 | Cap, cage, shaft, mold (printed PLA) | `lib/control_*.scad`, `lib/sail_shaft.scad`, `lib/silicone_ring_mold.scad` | — | **no generator; never needs propagation** | — |

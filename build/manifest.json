@@ -70,6 +70,15 @@
       ]
     },
     {
+      "id": "pressor",
+      "src": "src/components/Turtle_Pressor.scad",
+      "out": "scads_v1/Turtle_Pressor.scad",
+      "renders": [
+        { "name": "assembly", "defines": { "part": "assembly", "show_references": false } },
+        { "name": "pressor", "defines": { "part": "pressor" }, "export_stl": true, "stl": "Turtle_Pressor" }
+      ]
+    },
+    {
       "id": "head_fin",
       "src": "src/components/Turtle_Head_Fin.scad",
       "out": "scads_v1/Turtle_Head_Fin.scad",
