@@ -29,7 +29,10 @@ virtual environment; the existing CAD build commands remain standard-library onl
    independent validation trials with the predictions. No automatic parameter fit.
 
 Double-click a component to focus the view and inspect its ruler. Red marks the
-centre of mass, blue the centre of buoyancy. The faint gold plane is body Z=0.
+centre of mass, blue the centre of buoyancy (a legend appears after a solve). The
+translucent dark-blue plane is body Z=0, the bottle-centre reference; it tilts with
+the turtle and is not the waterline. Sails (white) and the solar panel (dark grey)
+are coloured from display-only face tags the CAD export writes; physics is unchanged.
 Ruler readings are listed port / starboard; positive = above bottle centre.
 Positive roll raises port; positive mathematical pitch lowers the bow.
 
@@ -93,4 +96,5 @@ and website-generator changes are outside this first workbench.
 
 Use measured geometry and separate physical trials to calibrate and validate.
 A plausible rendering or analytic-shape test does not establish accuracy for the
-real turtle. The third-party Three.js license is in `web/vendor/`.
+real turtle. The third-party Three.js license is in `web/vendor/`; the Aleo and Mulish
+fonts (SIL OFL 1.1) and their license are in `web/vendor/fonts/`.

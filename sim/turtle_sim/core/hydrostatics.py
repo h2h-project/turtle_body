@@ -41,14 +41,27 @@ def displacement_union(meshes):
     return obj
 
 
+def volume_centroid(obj):
+    """Centre of volume of a closed Manifold, from signed tetrahedra.
+
+    Computed directly with NumPy: building a trimesh.Trimesh per call (as the
+    solver did before) leaked ~3 MB each time, and a solve makes thousands of
+    calls, which exhausted system RAM.
+    """
+    m=obj.to_mesh64()
+    tri=np.asarray(m.vert_properties)[:,:3][np.asarray(m.tri_verts)]
+    a,b,c=tri[:,0],tri[:,1],tri[:,2]
+    v=np.einsum('ij,ij->i',a,np.cross(b,c))
+    return (v[:,None]*(a+b+c)).sum(axis=0)/(4*v.sum())
+
+
 def submerged(obj, heave, R):
     # Clip in BODY coordinates; Manifold closes the cut plane automatically.
     wet=obj.trim_by_plane(-R[2],heave)
     volume=wet.volume()
     if volume<1e-14:
         return 0.,np.zeros(3)
-    cb_body=as_trimesh(wet).center_mass
-    return volume, R@cb_body + [0,0,heave]
+    return volume, R@volume_centroid(wet) + [0,0,heave]
 
 
 def ruler_reading(ruler, heave, R):

@@ -32,6 +32,20 @@
               >Drag to orbit · scroll to zoom · click a component</span
             >
           </div>
+          <div id="legend" class="legend" hidden>
+            <span
+              ><i class="dot mass"></i>Centre of mass: where the turtle's whole
+              weight acts</span
+            >
+            <span
+              ><i class="dot buoy"></i>Centre of buoyancy: centre of the
+              displaced water, where the upward push acts</span
+            >
+            <span class="muted"
+              >At rest they line up vertically. Blue plane: bottle-centre
+              reference (ruler zero), not the waterline.</span
+            >
+          </div>
           <div class="viewtools">
             <button id="reset">Reset view</button
             ><button id="centre">Centre plane</button>
@@ -62,7 +76,7 @@
         </section>
       </section>
       <aside>
-        <section class="panel">
+        <section class="panel lead">
           <div class="sectionhead">
             <h2>01 / Build & water</h2>
             <div>
@@ -135,17 +149,35 @@
             wooden parts.
           </p>
         </section>
-        <section class="panel">
-          <h2>02 / Mass, balance & displacement</h2>
-          <p class="hint">
-            Weigh each group including its listed hardware. Each physical item
-            belongs to exactly one group. Untick absent groups.
-          </p>
-          <div id="components"></div>
-        </section>
+        <div id="components">
+          <section class="panel">
+            <h2>02 / Bottles</h2>
+            <p class="hint">
+              Weigh each bottle with its cap and contents. Balance it across an
+              edge to find its balance point.
+            </p>
+            <div id="group-bottles"></div>
+          </section>
+          <section class="panel">
+            <h2>03 / Flatpack slats</h2>
+            <p class="hint">
+              Weigh each wooden group with the hardware listed in its name. Each
+              physical item belongs to exactly one group. Untick absent groups.
+            </p>
+            <div id="group-slats"></div>
+          </section>
+          <section class="panel">
+            <h2>04 / Control head & sail</h2>
+            <p class="hint">
+              The fixed control housing and the rotating sail unit are weighed
+              separately.
+            </p>
+            <div id="group-head"></div>
+          </section>
+        </div>
         <section class="panel">
           <div class="sectionhead">
-            <h2>03 / Extra loads & ballast</h2>
+            <h2>05 / Extra loads & ballast</h2>
             <button id="addpayload">Add load</button>
           </div>
           <p class="hint">
@@ -157,7 +189,7 @@
         </section>
         <section class="panel">
           <div class="sectionhead">
-            <h2>04 / Water trials</h2>
+            <h2>06 / Water trials</h2>
             <button id="addtrial">Record trial</button>
           </div>
           <p class="hint">

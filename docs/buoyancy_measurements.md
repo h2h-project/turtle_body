@@ -43,26 +43,31 @@ All positions are metres in the body's nominal, level frame: +X toward the front
 bottle-axis intersection, marked in the 3D view. These are BODY coordinates, not
 coordinates measured from the ground or from a tilted waterline.
 
-Uniform front/rear wooden fins and the front wooden support group may use the
-explicit CAD-uniform centre assumption with measured masses. Other groups need a
-measured centre in body coordinates. Balance a detached group along two directions
+Uniform front/rear wooden fins and the front wooden support group use the
+CAD-uniform centre assumption with measured masses when their balance-point row
+is left blank; fill the row to use a measured centre instead. Other groups need a
+measured centre in body coordinates. A balance-point row counts only when X, Y
+and Z are all filled (type 0 for zero); a half-filled row is marked as an error. Balance a detached group along two directions
 or suspend it from two points: the vertical balance lines locate its centre.
 Repeat in a perpendicular orientation to locate its height. Fit the measured local
 balance point into its installed position relative to the bottle-axis datum.
 Record the method and uncertainty. Ask for help mapping a local measurement if
 needed; do not guess battery or ballast heights.
 
-The group move fields translate both its mass and displacement from CAD. The
-measured centre field describes the original installed position BEFORE that
-translation. Extra-load centres are their actual installed positions. Groups
-support translation only; changed orientations require a new CAD export.
+Extra-load centres are their actual installed positions. The browser form no
+longer edits a group move (`offset_m`), a flooded-bottle shell thickness or a
+replacement displacement STL. A loaded YAML that carries them still applies them
+(a group move translates both mass and displacement from CAD; the measured centre
+is the position BEFORE that translation), and the form shows them with a button to
+remove them. Changed orientations require a new CAD export.
 
 ## 4. Define the displaced water boundary
 
 - Solid: exposed solid material, including its cutouts and engraved recesses.
 - Sealed: an ordinary bottle or housing whose CAD displacement envelope actually
   matches its closed outer boundary. Confirm the real seal and geometry.
-- Flooded: water enters the cavity; no trapped-air buoyancy is credited. Ordinary
+- Flooded (YAML only; not offered in the browser form): water enters the cavity;
+  no trapped-air buoyancy is credited. Ordinary
   bottles can use a measured, explicitly assumed UNIFORM wall/closure thickness;
   this is a morphological shell model of the CAD envelope. If wall or closure
   thickness varies, provide an appropriate solid-wall displacement STL instead.

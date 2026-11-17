@@ -23,6 +23,10 @@ $fn = 96;
 // Use top_sail to inspect the installed bottle and sail apparatus by itself.
 // Use core to inspect the remaining turtle without the top apparatus.
 sim_component = ""; // empty = ordinary CAD assembly; used by export_sim.py
+// Display-only: export_sim.py renders a component again without one detail
+// ("no_sails" / "no_panel") to find which faces to colour as that detail.
+// Empty (the default) changes nothing.
+sim_detail = "";
 assembly_view = "full_turtle"; // [full_turtle,top_sail,core]
 echo("FULL_TURTLE_V11_SELF_CONTAINED", assembly_view);
 
@@ -5272,7 +5276,7 @@ module full_rear_fin_assembly() {
                         colored = enable_color_coding);
     solar_panel_holder(solar_clear = rear_solar_slot_clearance,
                        colored = enable_color_coding);
-    rear_solar_panel();
+    if (sim_detail != "no_panel") rear_solar_panel();
     rear_solar_panel_screws();
     }
 }
@@ -6226,7 +6230,8 @@ module hope_turtle_sail_apparatus(
                                    cage_peak_extension = cage_peak_extension,
                                    cage_lower_hole_from_tip = cage_lower_hole_from_tip,
                                    colored = enable_color_coding,
-                                   show_hardware = true);
+                                   show_hardware = true,
+                                   show_sails = sim_detail != "no_sails");
     }
 
     // ============================================================

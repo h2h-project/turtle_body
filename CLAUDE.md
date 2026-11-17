@@ -59,12 +59,46 @@ Related projects:
 | [Turtle Body](https://github.com/h2h-project/turtle_body) | Mechanical source models and fabrication files |
 | [TurtleOS](https://github.com/h2h-project/turtleOS) | Sensing, actuation and navigation software. Local checkout: `/home/russs/PycharmProjects/turtleOS` (`../turtleOS`) |
 | [TurtleShell PCB](https://github.com/h2h-project/turtle_Shells) | Electronics interconnection and power hardware. Local checkout: `/home/russs/PycharmProjects/turtle_Shells` (`../turtle_Shells`) |
-| [Turtle Wrangler](https://github.com/h2h-project/turtle_wrangler) | Android app for talking to and sending requests to turtles; its telemetry field meanings are what the sim roadmap aligns with (section 20). Local checkout: `/home/russs/PycharmProjects/turtle_wrangler` (`../turtle_wrangler`) |
+| [Turtle Wrangler](https://github.com/h2h-project/turtle_wrangler) | Android app (Kotlin/Compose) that talks to a turtle over Bluetooth LE from a few metres away. Planned field-trial recorder for the sim (roadmap stage 4) and home of the luff tests. See **Turtle Wrangler** below. Local checkout: `/home/russs/PycharmProjects/turtle_wrangler` (`../turtle_wrangler`) |
 | [Turtle Labels](https://github.com/h2h-project/turtle_labels) | Multilingual SVG labels/iconography printed or laser-engraved on turtles. Receives `turtle_body_full_inventory_<version>.svg` from this repo (section 21). Local checkout: `/home/russs/WebstormProjects/turtle_labels` |
 | [HopeTurtles.org source](https://github.com/h2h-project/hopeTurtles.org) | Builder-facing website; hosts the Python turtle generators in `generator/` that are downstream of this repository's `lib/` (section 19). Local checkout: `/home/russs/WebstormProjects/hopeTurtles.org`. |
 | [HopeTurtles.org](https://hopeturtles.org) | Public project website; `/ecojoiners/generate` is the live generator form |
 
 The generator accepts a builder's bottle, board and solar-panel dimensions and produces cutting files (SCAD, SVG, DXF, PDF) for the wooden components. It runs as Python inside the HopeTurtles.org Node app, not as a service this repository calls. Do not invent a deployed geometry API, CI workflow, package manager, or frontend build process here.
+
+### Turtle Wrangler (inspected 2026-11-17, app v0.3.0, turtleOS GATT contract v1)
+
+Wrangler is the BLE central for turtles running TurtleOS. It complements the turtle's OLED
+and button; the turtle never needs a phone to navigate. Its screens are Dashboard (live values,
+battery and bottle graphs), Navigate (destination, journey start/end, map), GPS (manual
+position stamps) and Diagnostics (servo dial, **Find the Wind**: the luff bench sweep with
+step/hold settings, shown against the turtle's heading and the phone's compass). It also
+reads read-only shore data from hopeturtles.org. Commands go only over Bluetooth.
+
+- **The wire format is owned by TurtleOS**, not by Wrangler or this repo:
+  `../turtleOS/docs/wrangler/README.md` (GATT contract v1, with a field-meaning table shared
+  with the telemetry JSON and the server). The app plan is
+  `../turtleOS/docs/wrangler/02_android_app.md`. A new field starts in that contract, then
+  both sides follow. The sim must use the contract's field names and units (`imu_heading`,
+  `sail_angle`, `servo_pos`, `imu_pitch`/`imu_roll`, `lat`/`lon`, `fix_quality`,
+  `fix_age_s`, `machine_state`…) and its sentinel = "no data" rule. Do not invent parallel
+  names.
+- **Telemetry rates:** Position, Nav and IMU notify at 1 Hz; Sail at 1 Hz (2 Hz while
+  sweeping); Power and Environment at 0.2 Hz. Fine for tracks; coarse for turning dynamics.
+- **What Wrangler keeps today:** per-turtle journey records (`data/JourneyStore.kt`). These
+  hold departure, destination, arrival, end time, and a route of `(t, lat, lon)` points merged
+  from what the phone saw and the turtle's own `JOURNEY_TRACK`. The turtle's track points hold
+  only time, position and `machine_state`. Heading, sail angle, servo command and
+  pitch/roll are shown live and **not recorded**. Battery and environment histories exist
+  only in memory for one connection. There is no file export yet.
+- **Conventions to respect:** `servo_pos` is the *command* (0–180 spanning the servo's ~270°
+  full travel), `sail_angle` is the AS5600 *measurement* in encoder degrees with no defined
+  hull-relative zero. `ina_current_ma` is raw (negative = charging). The app never uses the
+  phone's location: "here" means the turtle's GPS. Wrangler is GPL-3.0; this repo is
+  CERN-OHL-S. Exchange data files between them, never code.
+- **Sim relationship:** the changes Wrangler (and TurtleOS) need before the sim can import a
+  trial are listed in `docs/sim_roadmap.md` → *Wrangler and TurtleOS changes for sim
+  compatibility*. They are proposals for the Wrangler roadmap, not built.
 
 ## 3. Actual repository map
 
@@ -855,8 +889,13 @@ vendored bundles. S-5b (generators loading defaults from the snapshot) and S-6 r
 A local Python app for flotation, trim and stability, driven by this CAD. Plan:
 `docs/sim_roadmap.md`. How to operate it and its current model limits: `sim/README.md`.
 Physical survey: `docs/buoyancy_measurements.md`. Scope today is **calm-water hydrostatics
-only**. Sailing forces, waves, dynamic capsize, slosh, TurtleOS sensor/actuator emulation
-and the luff tests are roadmap stages 3–7, not built.
+only**. Next, per the roadmap: stage 3, sailing and turning on true state; stage 4,
+importing real water-trial logs from **Turtle Wrangler** to calibrate and validate forces;
+stage 5, a thin TurtleOS adapter (GNSS, heading, AS5600, servo only) for running the
+navigation controller in the loop. None of these is built. Waves, dynamic capsize and slosh
+come later. **Luff detection is out of the sim's scope.** It is tested on real turtles via
+Wrangler, and the sim may only consume its recorded results. Do not emulate INA219, RTC or
+environmental sensors unless a specific question needs them.
 
 | Path | Role |
 | --- | --- |

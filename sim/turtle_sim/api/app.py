@@ -1,9 +1,11 @@
 """Local API. All numerical work and CAD exports run in an owned worker process."""
 from contextlib import asynccontextmanager
 from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures.process import BrokenProcessPool
 from pathlib import Path
 import asyncio
 import os
+import resource
 import json
 import sys
 import subprocess
@@ -17,11 +19,36 @@ from turtle_sim.config import Configuration, missing, calculate
 
 DATA=Path(os.environ.get('TURTLE_SIM_DATA', str(ROOT/'sim/data')))
 JOBS={}
+# Address-space cap for the worker process, so a runaway calculation fails on
+# its own instead of exhausting system RAM. A normal full-turtle solve reserves
+# ~2.1 GB of address space (~0.3 GB resident). Override with
+# TURTLE_SIM_WORKER_MEM_MB; 0 disables the cap.
+WORKER_MEM_MB=int(os.environ.get('TURTLE_SIM_WORKER_MEM_MB','4096'))
+MEMORY_MESSAGE=(f'The calculation ran out of its {WORKER_MEM_MB} MB memory allowance and was '
+                'stopped to protect the computer. Raise TURTLE_SIM_WORKER_MEM_MB if this '
+                'model genuinely needs more.')
+
+
+def limit_worker_memory():
+    """Process-pool initializer: cap the worker's soft address-space limit."""
+    if WORKER_MEM_MB>0:
+        _,hard=resource.getrlimit(resource.RLIMIT_AS)
+        resource.setrlimit(resource.RLIMIT_AS,(WORKER_MEM_MB*1024*1024,hard))
+
+
+def lift_memory_limit():
+    # OpenSCAD's own memory need is not measured; keep its pre-existing behaviour.
+    _,hard=resource.getrlimit(resource.RLIMIT_AS)
+    resource.setrlimit(resource.RLIMIT_AS,(hard,hard))
+
+
+def new_pool():
+    return ProcessPoolExecutor(max_workers=1,initializer=limit_worker_memory)
 
 
 def export_job():
     p=subprocess.run([sys.executable,str(ROOT/'build/export_sim.py')],cwd=ROOT,
-                     capture_output=True,text=True,timeout=7200)
+                     capture_output=True,text=True,timeout=7200,preexec_fn=lift_memory_limit)
     if p.returncode: raise ValueError(p.stderr[-4000:] or p.stdout[-4000:])
     return {'status':'exported','manifest':manifest()}
 
@@ -29,7 +56,7 @@ def export_job():
 @asynccontextmanager
 async def lifespan(app):
     DATA.mkdir(parents=True,exist_ok=True)
-    app.state.pool=ProcessPoolExecutor(max_workers=1)
+    app.state.pool=new_pool()
     app.state.exporting=False
     yield
     app.state.pool.shutdown(wait=True,cancel_futures=True)
@@ -115,6 +142,14 @@ async def run_job(job_id, function, *args):
         if function is calculate:
             (DATA/'runs').mkdir(exist_ok=True)
             (DATA/'runs'/f'{job_id}.json').write_text(json.dumps(result,indent=2,allow_nan=False))
+    except MemoryError:
+        JOBS[job_id]={'status':'failed','message':MEMORY_MESSAGE}
+    except BrokenProcessPool:
+        # Native code (e.g. Manifold) can abort the worker on allocation failure
+        # instead of raising. Replace the dead pool so later jobs still run.
+        app.state.pool=new_pool()
+        JOBS[job_id]={'status':'failed','message':'The calculation worker stopped unexpectedly, most likely by '
+                      'exceeding its memory allowance. '+MEMORY_MESSAGE}
     except Exception as e:
         JOBS[job_id]={'status':'failed','message':str(e)}
     finally:

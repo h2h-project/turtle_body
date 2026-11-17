@@ -1,5 +1,52 @@
+/* Hope Turtle typography: Aleo for headings, Mulish for body text. Vendored
+   (SIL OFL 1.1, vendor/fonts/OFL.txt) so the offline workbench never needs a
+   network. Weight mapping follows hopeturtles.org: its 400 uses Mulish Medium. */
+@font-face {
+  font-family: "Mulish";
+  src: url("vendor/fonts/Mulish-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Mulish";
+  src: url("vendor/fonts/Mulish-Medium.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Mulish";
+  src: url("vendor/fonts/Mulish-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Mulish";
+  src: url("vendor/fonts/Mulish-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Mulish";
+  src: url("vendor/fonts/Mulish-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Aleo";
+  src: url("vendor/fonts/Aleo-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 :root {
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Mulish", "Helvetica Neue", Arial, sans-serif;
+  --font-heading: "Aleo", Georgia, "Times New Roman", serif;
+  font-family: var(--font-body);
   color: #173d3c;
   background: #eef2ed;
   font-size: 14px;
@@ -24,11 +71,16 @@ header {
   letter-spacing: 0.2em;
   color: #49726a;
 }
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+}
 h1 {
   font-size: 27px;
   margin: 5px 0 0;
   font-weight: 550;
-  letter-spacing: -1px;
+  letter-spacing: -0.3px;
 }
 nav {
   display: flex;
@@ -392,4 +444,144 @@ details,
 }
 input[type="file"] {
   width: 100%;
+}
+/* An opened group: bold title so it stands apart from its contents. */
+details[open] > summary .title {
+  font-weight: 700;
+  font-size: 13px;
+}
+input.invalid {
+  border-color: #b4483a;
+  background: #fbeae4;
+}
+.rowerror {
+  display: block;
+  color: #8b4438;
+  font-size: 11px;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+.rowerror:empty {
+  display: none;
+}
+.rowerror button {
+  padding: 3px 8px;
+  margin-left: 4px;
+}
+/* First panel: darker green so the build settings stand apart. */
+.panel.lead {
+  background: #d3e5d7;
+  border-color: #a6c6b0;
+}
+.panel.lead .hint,
+.panel.lead label {
+  color: #3e5f53;
+}
+/* Unsaved changes: the header Save button flashes until saved. */
+#save.unsaved {
+  animation: savepulse 1.2s ease-in-out infinite;
+  border-color: #c08a1e;
+  font-weight: 600;
+}
+@keyframes savepulse {
+  0%,
+  100% {
+    background: #fffdf6;
+  }
+  50% {
+    background: #f4c95d;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #save.unsaved {
+    animation: none;
+    background: #f4c95d;
+  }
+}
+/* Group header: title left, picture of the group on the right. */
+summary .flag {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: #8b4438;
+}
+summary .flag[hidden] {
+  display: none;
+}
+summary .thumb {
+  margin-left: auto;
+  width: 132px;
+  height: 88px;
+  flex: none;
+  border-radius: 5px;
+  background: #e6eee7;
+  border: 1px solid #d6e1d7;
+}
+summary .flag:not([hidden]) + .thumb {
+  margin-left: 10px;
+}
+.groupfoot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+.groupfoot .mass {
+  font-size: 12px;
+  font-weight: 600;
+  color: #214c40;
+}
+.groupfoot .mass.muted {
+  font-weight: 400;
+  color: #718476;
+}
+@media (max-width: 550px) {
+  summary .thumb {
+    width: 96px;
+    height: 64px;
+  }
+}
+/* Viewport legend for the solved centre-of-mass / buoyancy markers. */
+.legend {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1;
+  max-width: 300px;
+  display: grid;
+  gap: 5px;
+  padding: 10px 12px;
+  background: rgba(251, 252, 247, 0.92);
+  border: 1px solid #c3d5cc;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.legend[hidden] {
+  display: none;
+}
+.legend span {
+  display: flex;
+  gap: 7px;
+  align-items: flex-start;
+}
+.legend .dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-top: 2px;
+  border-radius: 50%;
+}
+.legend .dot.mass {
+  background: #c9473a;
+}
+.legend .dot.buoy {
+  background: #2252ba;
+}
+@media (max-width: 550px) {
+  .legend {
+    left: 12px;
+    right: 12px;
+    bottom: 56px;
+    max-width: none;
+  }
 }

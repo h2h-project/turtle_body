@@ -7,8 +7,29 @@ const state = {
   result: null,
   revision: 0,
   busy: false,
+  incomplete: new Set(),
+  thumbs: {},
 };
 const number = (v) => (v === "" ? null : Number(v));
+// Form sections. Bottles and flatpack slats get their own panels.
+const GROUPS = {
+  bottles: "group-bottles",
+  slats: "group-slats",
+  head: "group-head",
+};
+const SLATS = [
+  "frame",
+  "front_fin",
+  "front_support",
+  "rear_fin",
+  "rear_support",
+  "ballast_frame",
+];
+const UNIFORM = ["front_fin", "rear_fin", "front_support"];
+const VESSELS = /^(bottle_|control_housing$)/;
+const shortLabel = (v) => v.replace(/ bottle and closure/g, " bottle");
+const groupLabel = (id) =>
+  shortLabel(state.geometry?.components?.find((m) => m.id === id)?.label ?? id);
 const text = (tag, value) => {
   const e = document.createElement(tag);
   e.textContent = value;
@@ -76,11 +97,30 @@ function check(parent, title, value, change) {
   parent.append(l);
   return i;
 }
-function vector(parent, title, value, change) {
+// Three-number row. A row only counts once all three boxes hold a number, so a
+// half-filled row is marked as an error instead of looking complete.
+function vector(parent, title, value, change, onState) {
   const l = text("label", title),
-    row = document.createElement("div");
+    row = document.createElement("div"),
+    warn = text("span", "");
   row.className = "vector";
-  const v = value ? [...value] : [null, null, null];
+  warn.className = "rowerror";
+  warn.setAttribute("role", "alert");
+  const v = value ? [...value] : [null, null, null],
+    inputs = [];
+  const mark = () => {
+    const filled = v.filter((x) => x !== null).length,
+      partial = filled > 0 && filled < 3;
+    inputs.forEach((i, j) =>
+      i.classList.toggle("invalid", partial && v[j] === null),
+    );
+    warn.textContent = partial
+      ? "Incomplete: fill in " +
+        ["X", "Y", "Z"].filter((_, j) => v[j] === null).join(" and ") +
+        ". Type 0 where the value is zero. Nothing in this row is used until all three are filled."
+      : "";
+    onState?.(partial ? "partial" : filled ? "complete" : "empty");
+  };
   for (let j = 0; j < 3; j++) {
     const i = document.createElement("input");
     i.type = "number";
@@ -91,14 +131,24 @@ function vector(parent, title, value, change) {
     i.onchange = () => {
       v[j] = number(i.value);
       change(v.every((x) => x !== null) ? [...v] : null);
+      mark();
       changed();
     };
+    inputs.push(i);
     row.append(i);
   }
-  l.append(row);
+  l.append(row, warn);
   parent.append(l);
+  mark();
+}
+// Unsaved edits make the header Save button flash until they are saved.
+function setDirty(dirty) {
+  const b = $("save");
+  b.classList.toggle("unsaved", dirty);
+  b.title = dirty ? "You have unsaved changes" : "";
 }
 function changed() {
+  setDirty(true);
   state.revision++;
   clearResult();
   void readiness();
@@ -109,12 +159,18 @@ async function readiness() {
   try {
     const { missing } = await api("validate", "POST", state.config);
     if (seq !== validationSeq) return;
-    $("missing").replaceChildren(
-      ...(missing.length ? missing : ["Ready to calculate."]).map((v) =>
-        text("li", v),
+    const all = [
+      ...[...state.incomplete].map(
+        (id) =>
+          groupLabel(id) +
+          ": centre row is incomplete (fill X, Y and Z; type 0 for zero)",
       ),
+      ...missing.map(shortLabel),
+    ];
+    $("missing").replaceChildren(
+      ...(all.length ? all : ["Ready to calculate."]).map((v) => text("li", v)),
     );
-    $("solve").disabled = state.busy || missing.length > 0;
+    $("solve").disabled = state.busy || all.length > 0;
   } catch (e) {
     $("solve").disabled = true;
     $("missing").replaceChildren(text("li", e.message));
@@ -135,6 +191,7 @@ function clearResult() {
   water.visible = false;
   cg.visible = false;
   cb.visible = false;
+  $("legend").hidden = true;
   for (const id of ["front", "rear", "attitude"]) $(id).textContent = "—";
   $("results").textContent =
     "Measurements changed or no calculation yet. Calculate to show the current equilibrium.";
@@ -151,144 +208,164 @@ function renderForm() {
   $("bottle_h").value = c.bottle_dimensions_mm.length ?? "";
   $("verified").checked = c.dimensions_checked;
   $("notes").value = c.notes;
-  $("components").replaceChildren();
+  for (const g of Object.values(GROUPS)) $(g).replaceChildren();
+  state.incomplete.clear();
   for (const p of c.components) {
     const meta = state.geometry?.components?.find((m) => m.id === p.id);
+    const uniform = UNIFORM.includes(p.id) || meta?.kind === "uniform",
+      vessel = ["bottle", "housing"].includes(meta?.kind) || VESSELS.test(p.id);
+    // The centre-of-mass source is no longer a form choice: plain boards use
+    // their CAD centre unless a measured centre is entered; every other
+    // group needs a measured centre.
+    if (!uniform) p.com_source = "measured";
+    else if (p.com_source === "cad_uniform") p.com_m = null;
+    else if (!p.com_m) p.com_source = "cad_uniform";
     const d = document.createElement("details"),
       s = document.createElement("summary");
-    s.append(text("span", meta?.label ?? p.id));
-    const mass = text(
-      "span",
-      p.installed
-        ? p.mass_kg === null
-          ? "mass needed"
-          : p.mass_kg + " kg"
-        : "absent",
-    );
-    mass.className = "mass";
-    s.append(mass);
+    const title = text("span", groupLabel(p.id));
+    title.className = "title";
+    s.append(title);
+    const flag = text("span", "centre incomplete");
+    flag.className = "flag";
+    s.append(flag);
+    if (state.thumbs[p.id]) {
+      const img = document.createElement("img");
+      img.className = "thumb";
+      img.src = state.thumbs[p.id];
+      img.alt = groupLabel(p.id) + " highlighted on the turtle";
+      s.append(img);
+    }
     d.append(s);
     const b = document.createElement("div");
     d.append(b);
+    const mass = text("span", "");
+    mass.className = "mass";
+    const foot = document.createElement("div");
+    foot.className = "groupfoot";
+    foot.append(mass);
+    const badge = () => {
+      flag.hidden = !state.incomplete.has(p.id);
+      mass.textContent = !p.installed
+        ? "Absent from this build"
+        : p.mass_kg === null
+          ? "Mass needed"
+          : "Mass " + p.mass_kg + " kg";
+      mass.classList.toggle("muted", !p.installed || p.mass_kg === null);
+    };
     check(b, "Installed in this build", p.installed, (v) => {
       p.installed = v;
-      mass.textContent = v
-        ? p.mass_kg === null
-          ? "mass needed"
-          : p.mass_kg + " kg"
-        : "absent";
+      badge();
     });
     const grid = document.createElement("div");
     grid.className = "grid2";
     b.append(grid);
     field(
       grid,
-      "Measured group mass · kg",
+      "Measured mass · kg",
       p.mass_kg,
       (v) => {
         p.mass_kg = v;
-        mass.textContent = v === null ? "mass needed" : v + " kg";
+        badge();
       },
       "number",
     );
+    const treatments = [
+      ["unknown", "Choose treatment"],
+      ...(vessel
+        ? [["sealed", "Sealed and watertight"]]
+        : [["solid", "Exposed solid"]]),
+      ["contained", "Inside another sealed part"],
+    ];
+    const legacy = {
+      solid: "Exposed solid",
+      sealed: "Sealed and watertight",
+      flooded: "Flooded hollow vessel",
+    };
+    if (!treatments.some(([v]) => v === p.displacement))
+      treatments.push([
+        p.displacement,
+        legacy[p.displacement] ?? p.displacement,
+      ]);
     select(
       grid,
       "Displacement",
       p.displacement,
-      [
-        ["unknown", "Choose treatment"],
-        ["solid", "Exposed solid"],
-        ["sealed", "Sealed bottle / housing"],
-        ["flooded", "Flooded hollow vessel"],
-        ["contained", "Inside another displaced envelope"],
-      ],
+      treatments,
       (v) => (p.displacement = v),
     );
-    select(
-      b,
-      "Centre of mass source",
-      p.com_source,
-      [
-        ["measured", "Measured balance point"],
-        ...(meta?.kind === "uniform" ||
-        ["front_fin", "rear_fin", "front_support"].includes(p.id)
-          ? [["cad_uniform", "CAD centre · uniform material assumption"]]
-          : []),
-      ],
-      (v) => (p.com_source = v),
-    );
-    if (meta)
-      b.append(
-        text(
-          "p",
-          "CAD centre (m): " +
-            meta.centroid_m.map((n) => n.toFixed(4)).join(", "),
-        ),
-      );
-    vector(b, "Measured group centre · m", p.com_m, (v) => (p.com_m = v));
     vector(
       b,
-      "Move whole group from CAD · m",
-      p.offset_m,
-      (v) => (p.offset_m = v ?? [0, 0, 0]),
+      uniform
+        ? "Balance point · m (optional: leave all three blank to use the board's CAD centre)"
+        : "Measured balance point · m",
+      p.com_m,
+      (v) => {
+        p.com_m = v;
+        if (uniform) p.com_source = v ? "measured" : "cad_uniform";
+      },
+      (rowState) => {
+        if (rowState === "partial") state.incomplete.add(p.id);
+        else state.incomplete.delete(p.id);
+        badge();
+      },
     );
-    field(
-      b,
-      "Uniform shell thickness · mm (ordinary flooded bottles only)",
-      p.uniform_shell_mm,
-      (v) => (p.uniform_shell_mm = v),
-      "number",
+    const frame = text(
+      "p",
+      "X forward · Y port · Z up, in metres from the bottle-axis centre." +
+        (meta
+          ? " CAD centre of this shape: " +
+            meta.centroid_m.map((n) => n.toFixed(3)).join(", ") +
+            "."
+          : ""),
     );
-    field(
-      b,
-      "Notes / enclosure / included equipment",
-      p.notes,
-      (v) => (p.notes = v),
-    );
+    frame.className = "hint";
+    b.append(frame);
+    field(b, "Notes", p.notes, (v) => (p.notes = v));
     check(
       b,
-      "I confirm this displacement shape and sealed/flooded status match the physical group.",
+      vessel
+        ? "I confirm the real part matches the CAD shape and is sealed as chosen."
+        : "I confirm the real part matches the CAD shape.",
       p.geometry_confirmed,
       (v) => (p.geometry_confirmed = v),
     );
-    const upload = text(
-      "label",
-      "Optional replacement displacement STL · metres in body coordinates",
-    );
-    const file = document.createElement("input");
-    file.type = "file";
-    file.accept = ".stl";
-    file.onchange = async () => {
-      try {
-        if (!file.files[0]) return;
-        const r = await fetch("/api/mesh-upload/" + p.id, {
-          method: "POST",
-          body: file.files[0],
-        });
-        const data = await r.json();
-        if (!r.ok) throw new Error(data.detail);
-        p.displacement_mesh = data.id;
-        changed();
-        status(
-          "Replacement displacement mesh uploaded. It is saved with this configuration.",
-        );
-      } catch (e) {
-        status(e.message, true);
-      }
-    };
-    upload.append(file);
-    b.append(upload);
-    if (p.displacement_mesh) {
-      b.append(text("p", "Replacement: " + p.displacement_mesh));
-      const remove = text("button", "Use CAD mesh instead");
-      remove.onclick = () => {
+    // Settings this form no longer edits can still arrive in a loaded file.
+    // They keep affecting the result, so show them and offer to clear them.
+    const hidden = [
+      p.offset_m.some((n) => n !== 0) &&
+        "moved from CAD by " + p.offset_m.join(", ") + " m",
+      p.displacement_mesh && "replacement shape " + p.displacement_mesh,
+      p.uniform_shell_mm !== null &&
+        "shell thickness " + p.uniform_shell_mm + " mm",
+    ].filter(Boolean);
+    if (hidden.length) {
+      const note = text(
+        "p",
+        "Loaded file settings still in effect: " + hidden.join("; ") + ". ",
+      );
+      note.className = "rowerror";
+      const clear = text("button", "Remove these settings");
+      clear.onclick = () => {
+        p.offset_m = [0, 0, 0];
         p.displacement_mesh = null;
+        p.uniform_shell_mm = null;
         renderForm();
         changed();
       };
-      b.append(remove);
+      note.append(clear);
+      b.append(note);
     }
-    $("components").append(d);
+    b.append(foot);
+    badge();
+    $(
+      GROUPS[
+        p.id.startsWith("bottle_")
+          ? "bottles"
+          : SLATS.includes(p.id)
+            ? "slats"
+            : "head"
+      ],
+    ).append(d);
   }
   renderPayloads();
   renderTrials();
@@ -426,7 +503,10 @@ for (const [id, key] of [
     state.config[key] = ["density", "assembled"].includes(id)
       ? number($(id).value)
       : $(id).value;
-    if (id === "density") {state.config.density_source="measured";$("density_source").value="measured";}
+    if (id === "density") {
+      state.config.density_source = "measured";
+      $("density_source").value = "measured";
+    }
     changed();
   };
 $("density_source").onchange = () => {
@@ -481,7 +561,9 @@ $("addtrial").onclick = () => {
 };
 $("save").onclick = async () => {
   try {
+    const rev = state.revision;
     await api("config", "PUT", state.config);
+    if (rev === state.revision) setDirty(false);
     status(
       "Measurements saved locally. Use Download YAML for a portable copy.",
     );
@@ -491,7 +573,9 @@ $("save").onclick = async () => {
 };
 $("download").onclick = async () => {
   try {
+    const rev = state.revision;
     await api("config", "PUT", state.config);
+    if (rev === state.revision) setDirty(false);
     location.href = "/api/config.yaml";
   } catch (e) {
     status(e.message, true);
@@ -527,6 +611,7 @@ async function job(kind) {
     if (kind === "solve") {
       clearResult();
       await api("config", "PUT", state.config);
+      setDirty(false); // the solve saves the measurements it uses
     }
     const { job_id } = await api(
       kind,
@@ -590,12 +675,15 @@ const bodyGroup = new THREE.Group();
 scene.add(bodyGroup);
 const meshGroup = new THREE.Group();
 bodyGroup.add(meshGroup);
+const DETAIL_COLOURS = { sail: 0xf4f4ef, solar_panel: 0x3a3e43 };
+// Bottle-centre reference plane (body Z = 0, the fin rulers' zero). It tilts
+// with the turtle; the water surface is the separate lighter plane.
 const centre = new THREE.Mesh(
   new THREE.PlaneGeometry(1.3, 0.8),
   new THREE.MeshBasicMaterial({
-    color: 0xa47435,
+    color: 0x1d5a78,
     transparent: true,
-    opacity: 0.12,
+    opacity: 0.22,
     side: THREE.DoubleSide,
     depthWrite: false,
   }),
@@ -617,7 +705,7 @@ water.visible = false;
 scene.add(water);
 function marker(color) {
   const m = new THREE.Mesh(
-    new THREE.SphereGeometry(0.009, 16, 12),
+    new THREE.SphereGeometry(0.013, 16, 12),
     new THREE.MeshBasicMaterial({ color, depthTest: false }),
   );
   m.visible = false;
@@ -658,7 +746,7 @@ function axisLabel(label, position) {
   canvas.width = 256;
   canvas.height = 64;
   const ctx = canvas.getContext("2d");
-  ctx.font = "24px sans-serif";
+  ctx.font = '600 24px Mulish, "Helvetica Neue", Arial, sans-serif';
   ctx.fillStyle = "#244c43";
   ctx.fillText(label, 4, 40);
   const sprite = new THREE.Sprite(
@@ -704,7 +792,7 @@ renderer.domElement.addEventListener("click", (e) => {
   const hit = ray.intersectObjects(meshGroup.children)[0];
   if (hit) {
     $("selection").textContent =
-      hit.object.userData.label + " · double click to focus";
+      shortLabel(hit.object.userData.label) + " · double click to focus";
   }
 });
 renderer.domElement.addEventListener("dblclick", (e) => {
@@ -733,7 +821,7 @@ async function loadGeometry() {
   for (const m of [...meshGroup.children]) {
     meshGroup.remove(m);
     m.geometry.dispose();
-    m.material.dispose();
+    [m.material].flat().forEach((x) => x.dispose());
   }
   for (const part of state.geometry.components) {
     const data = await api("mesh/" + part.id),
@@ -742,27 +830,108 @@ async function loadGeometry() {
       "position",
       new THREE.Float32BufferAttribute(data.vertices.flat(), 3),
     );
-    g.setIndex(data.faces.flat());
-    g.computeVertexNormals();
     const bottle = part.kind === "bottle" || part.kind === "housing";
-    const m = new THREE.Mesh(
-      g,
-      new THREE.MeshPhongMaterial({
-        color: bottle
-          ? 0x86bfbe
-          : part.id.includes("fin")
-            ? 0x9b9c62
-            : 0xb79363,
-        transparent: bottle,
-        opacity: bottle ? 0.4 : 1,
-        side: THREE.DoubleSide,
-        flatShading: true,
-      }),
+    const base = new THREE.MeshPhongMaterial({
+      color: bottle ? 0x86bfbe : part.id.includes("fin") ? 0x9b9c62 : 0xb79363,
+      transparent: bottle,
+      opacity: bottle ? 0.4 : 1,
+      side: THREE.DoubleSide,
+      flatShading: true,
+    });
+    // The export tags display-only details (sails, solar panel) by face, so
+    // they can be drawn in their own colour inside one physics component.
+    const tagged = Object.entries(data.highlights ?? {}).filter(
+      ([name, faces]) => DETAIL_COLOURS[name] && faces.length,
     );
+    let material = base;
+    if (tagged.length) {
+      const owner = new Int32Array(data.faces.length);
+      tagged.forEach(([, faces], k) =>
+        faces.forEach((f) => (owner[f] = k + 1)),
+      );
+      const order = [],
+        materials = [base];
+      for (let k = 0; k <= tagged.length; k++) {
+        const start = order.length;
+        data.faces.forEach((f, i) => owner[i] === k && order.push(...f));
+        g.addGroup(start, order.length - start, k);
+        if (k)
+          materials.push(
+            new THREE.MeshPhongMaterial({
+              color: DETAIL_COLOURS[tagged[k - 1][0]],
+              // Sails are thin sheets often lit from behind; a little
+              // self-light keeps them reading white from any angle.
+              emissive: tagged[k - 1][0] === "sail" ? 0x8c8c88 : 0x000000,
+              side: THREE.DoubleSide,
+              flatShading: true,
+            }),
+          );
+      }
+      g.setIndex(order);
+      material = materials;
+    } else g.setIndex(data.faces.flat());
+    g.computeVertexNormals();
+    const m = new THREE.Mesh(g, material);
     m.userData = part;
     meshGroup.add(m);
   }
+  renderThumbnails();
   status("CAD ready. Complete the measurement survey to calculate flotation.");
+}
+// One small picture per group: the whole turtle in pale grey with that group
+// highlighted, from the same angle as the main view, so front/rear/port bottles
+// are told apart by position rather than shape.
+function renderThumbnails() {
+  state.thumbs = {};
+  const W = 132,
+    H = 88;
+  let r;
+  try {
+    r = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  } catch {
+    return; // no WebGL: groups simply show no picture
+  }
+  r.setPixelRatio(2);
+  r.setSize(W, H);
+  const sc = new THREE.Scene();
+  sc.add(new THREE.HemisphereLight(0xffffff, 0x68786c, 2.2));
+  const light = new THREE.DirectionalLight(0xffffff, 2.4);
+  light.position.set(1, -1.5, 2);
+  sc.add(light);
+  const ghost = new THREE.MeshLambertMaterial({
+      color: 0xb9c6bf,
+      transparent: true,
+      opacity: 0.35,
+      depthWrite: false,
+    }),
+    hot = new THREE.MeshLambertMaterial({ color: 0xd9822b }),
+    copies = meshGroup.children.map((m) => {
+      const c = new THREE.Mesh(m.geometry, ghost);
+      c.userData = m.userData;
+      sc.add(c);
+      return c;
+    });
+  const box = new THREE.Box3();
+  copies.forEach((c) => box.expandByObject(c));
+  const sphere = box.getBoundingSphere(new THREE.Sphere()),
+    cam = new THREE.PerspectiveCamera(30, W / H, 0.01, 20);
+  cam.up.set(0, 0, 1);
+  const dir = new THREE.Vector3(1.3, -1.6, 1.1).normalize(),
+    dist = (sphere.radius / Math.sin(THREE.MathUtils.degToRad(15))) * 0.58;
+  cam.position.copy(sphere.center).addScaledVector(dir, dist);
+  cam.lookAt(sphere.center);
+  for (const target of copies) {
+    for (const c of copies) {
+      c.material = c === target ? hot : ghost;
+      c.renderOrder = c === target ? 1 : 0;
+    }
+    r.render(sc, cam);
+    state.thumbs[target.userData.id] = r.domElement.toDataURL("image/png");
+  }
+  ghost.dispose();
+  hot.dispose();
+  r.dispose();
+  r.forceContextLoss();
 }
 function showResult(result) {
   state.result = result;
@@ -796,6 +965,7 @@ function showResult(result) {
   cg.position.fromArray(e.centre_mass_m);
   cb.position.fromArray(e.centre_buoyancy_m);
   cg.visible = cb.visible = true;
+  $("legend").hidden = false;
   for (const part of meshGroup.children) {
     const config = state.config.components.find(
       (c) => c.id === part.userData.id,
