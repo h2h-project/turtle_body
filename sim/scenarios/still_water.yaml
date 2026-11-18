@@ -1,0 +1,13 @@
+schema_version: 1
+name: Still water
+description: No wind and no current. Nothing pushes the turtle, so it should stay exactly where it starts. A check that the model is at rest when it should be.
+duration_s: 60
+dt_s: 0.5
+heading_deg: 0
+wind_from_deg: 180
+wind_speed_mps: 0
+current_from_deg: 0
+current_speed_mps: 0
+destination_distance_m: 0
+servo_schedule:
+- {t_s: 0, servo_pos: 90}

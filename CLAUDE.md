@@ -108,7 +108,7 @@ Paths below were verified in the inspected GitHub tree.
 | --- | --- |
 | `lib/params.scad` | **Editable.** Shared dimension contract — every cross-subsystem value as a `function p_*()`. One definition per concept; derived values are functions of other `p_*()`. |
 | `lib/util.scad` | **Editable.** `wood_color()`, `m6_bolt_placeholder()`, `clamp()`, `hex_prism_af()`. |
-| `lib/<subsystem>.scad` | **Editable.** One parametric module per subsystem: `control_cap`, `control_cage`, `sail_shaft` (`sail_shaft`, TB-08: was `hex_shaft` / `control_axle`), `silicone_ring_mold`, `ecojoiner`, `ballast_fin`, `rear_fin`, `head_fin` (v5.8.0, experimental), `pressor` (v6.6.1, experimental), `sail_frame`, `bottle_mockup`. Module args default to `p_*()`; wrappers override individually. Definitions only — no top-level geometry or assignments. |
+| `lib/<subsystem>.scad` | **Editable.** One parametric module per subsystem: `control_cap`, `control_cage`, `sail_shaft` (`sail_shaft`, TB-08: was `hex_shaft` / `control_axle`), `silicone_ring_mold`, `ecojoiner`, `ballast_fin`, `rear_fin`, `head_fin` (v5.8.0, experimental), `pressor` (v6.6.1, experimental), `sand_ballast` (v6.7.0, experimental), `sail_frame`, `bottle_mockup`. Module args default to `p_*()`; wrappers override individually. Definitions only — no top-level geometry or assignments. |
 | `src/components/*.scad` | **Editable.** Thin wrappers: customizer block + `use <../../lib/...>` + a `part=` dispatch → one lib call. |
 | `src/Full_Turtle.scad` | **Editable.** The full-assembly source (git-renamed from `Full_Turtle_v1.scad`). M7 pending: still holds embedded geometry, not yet `use`-ing lib. |
 | `Full_Turtle_v1.scad` | **GENERATED** by `build/build.py` from `src/Full_Turtle.scad`. Self-contained, committed, downloadable. Do not hand-edit (a banner says so). |
@@ -452,7 +452,7 @@ Standalone rear shafts use a 50 mm mounting-hole offset from their front. The fu
 
 In the full Turtle, the rear assembly belongs at the physical 3-o'clock/back port and is rotated 180° around the bottle axis so the yellow fin points downward. Earlier 9-o'clock placements were corrected. Do not infer the port from a screenshot alone.
 
-**Fin rulers (v6.6.0).** Both the rear fin and the head fin carry a signed-millimetre ruler engraved 0.3 mm deep on **both** broad faces (`lib/fin_ruler.scad`, `fin_ruler_recess()`). Zero is the horizontal bottle-axis centre plane; values increase physically upward. Rear zero is `rf_ruler_zero()` (lower shaft top + bottle radius); head zero is local Z = 0. Ruler columns follow joint placement (`fr_x()`, `fr_joint_margin()`). The engravings are the buoyancy workbench's calibration datum (section 20); keep `lib/fin_ruler.scad`, `build/export_fin_dxf.py`, `build/export_sim.py` and the website's shared ruler geometry in step if a fin outline, a joint or the bottle-axis datum moves. `build/export_fin_dxf.py` writes face A (CUT + ENGRAVE) and face B (ENGRAVE only, mirrored about X = 0) for each fin. Engraving depth and face registration are not physically tested.
+**Fin rulers (v6.6.0).** Both the rear fin and the head fin carry a signed-millimetre ruler engraved 0.3 mm deep on **both** broad faces (`lib/fin_ruler.scad`, `fin_ruler_recess()`). Zero is the horizontal bottle-axis centre plane; values increase physically upward. Rear zero is `rf_ruler_zero()` (lower shaft top + bottle radius); head zero is local Z = 0. Ruler columns follow joint placement (`fr_x()`, `fr_joint_margin()`). The scale runs **past** the bottle radius: ±(bottle radius + 10 mm + a 5 mm margin), rounded up to the next 5 mm mark so it ends on a half-centimetre tick (`fr_half_range()`, `fr_range_beyond()` = 15; ±60 at Ø84 and Ø90, v6.6.9). The workbench predicted a stern waterline above the bottle top (a heavy or stern-heavy turtle), so the earlier assumption that the waterline stays within one radius (v6.6.5 ±32, v6.6.8 ±35) was wrong; do not restore it. Marks that do not fit the fin are dropped (both fins fit ±60 at Ø84/Ø90). Do not restore the old "every mark that fits the fin" scale either. The unit sits beside the zero as one label, "0 mm" (`fr_value_text()`, v6.6.8), so it reads correctly on the mirrored face B too. The engraved digits are seven-segment strokes on purpose: they need no installed font, so OpenSCAD on any machine and the website's pure-Python port (`generator/fin_rulers.py`) produce identical vector paths. A printable 1:1 paper copy of the same scale, `scads_v1/fin_ruler_scale_v<version>.svg`, is written by `python3 build/export_ruler_svg.py` from `fin_ruler_scale_2d()` (v6.6.6). It has no fin-fit rules, so one print serves both fins. Since v6.6.8 its numbers are set in **Mulish Regular** from the vendored `build/fonts/Mulish-Regular.ttf` (SIL OFL, `build/fonts/OFL.txt`) and OpenSCAD outlines them, so the SVG prints without the font installed. The file must be loaded explicitly: on the maintainer's machine fontconfig resolves "Mulish Regular" to the installed Medium. Only the paper ruler uses Mulish (user decision, 2026-11-17); do not move the engraving to a font. Only the current version is kept; it is not a bundle, so do not hand-edit it. The engravings are the buoyancy workbench's calibration datum (section 20); keep `lib/fin_ruler.scad`, `build/export_fin_dxf.py`, `build/export_sim.py` and the website's shared ruler geometry in step if a fin outline, a joint or the bottle-axis datum moves. `build/export_fin_dxf.py` writes face A (CUT + ENGRAVE) and face B (ENGRAVE only, mirrored about X = 0) for each fin. Engraving depth and face registration are not physically tested.
 
 ## 11a. Head fin (front fin) — EXPERIMENTAL, v5.8.0; raked profile since v6.3.1
 
@@ -491,6 +491,22 @@ Ballast mounting transforms reference the Ecojoiner port entrance and insertion 
 
 Slots in the ballast extraction retain nominal stock widths; the rear fin's 0.2 mm fit allowance was not automatically added to ballast joints.
 
+## 12a. Sand ballast container — EXPERIMENTAL, v6.7.0
+
+`lib/sand_ballast.scad` + wrappers `src/components/Sand_Ballast_Container_Bottom.scad` / `_Lid.scad` → `scads_v1/Sand_Ballast_Container_Bottom.scad` / `_Lid.scad` (parts `print` (default) / `closed`). It is a 3D-printed U-shaped box, a tray plus a snap-on lid, that the builder fills with sand, clicks shut and slides into the gap between the bottom (+Y) bottle's base and the ballast's orange board. Its two arms pass either side of the yellow ballast fin, and it is meant to hold the bottle in place. It is shown in the full turtle (`show_sand_ballast`, placed inside `installed_ballast_on_positive_y_port()`). Since v6.7.2 the sim sees it through `sim_component = "sand_ballast"` (the closed envelope, `sand_ballast_envelope()`) and `"sand_ballast_fill"` (the sand space). These are exported beside `COMPONENTS`, not in it, because the box's mass comes from the workbench's section 05 choice (not attached / empty / sand + fill %) rather than from a weighed group. See `sim/README.md`. Not built, filled or tested.
+
+| Feature | Default |
+| --- | ---: |
+| Bottle-base-to-board gap | 26 = `sb_bottle_gap()` = port height + 2t − port length. The ballast is inserted one port length into the port (`ballast_vertical_lift`). The full turtle asserts its placed gap equals this. (The 108 mm pre-insertion distance is **not** the gap.) |
+| Box L × W × H (closed) | 215 × 83 × 25.5: 50 past the bottle's fin-side edge to 60 past the board's back edge (Y = board width; 50 in v6.7.0); 0.5 clearance per side to the green slats; 0.5 total below the bottle |
+| End cuts (v6.7.1) | front (fin-side) **top** edge and back **bottom** edge cut at 45°, 17.5 mm each, leaving 8 mm vertical end faces (`sb_end_face_h()`). Both cuts stay in the overhangs: not under the bottle, not off the board. The lid carries the sloped front panel, and the rim band, groove, skirt and bead follow the top surface (depths measured perpendicular to it) |
+| Fin slot | 13 wide (t + 2 × 0.5), open at the fin-side end, root 1 mm past the fin's inner end (147 long). The arms are 35 wide and the closed bridge is 68 long |
+| Walls / floor / lid plate | 0.4 / 0.4 / 0.4 (`sb_wall_t()`, `sb_floor_t()`, `sb_lid_t()`) |
+| Click seal | tray rim band 1.2 thick × 5 tall, with a 45° support-free shoulder below it and a V groove 0.4 deep × 1.6 tall centred 2.5 below the top. The lid skirt is 0.8 thick with a 0.15 fit to the band and carries a V bead 0.4 high (0.25 interference) |
+| Sand space / plastic | 355 cm³ inside (mesh-measured, `sand_ballast_fill()`); PLA tray 17.7 + lid 10.2 cm³ (~35 g solid). Packed with wet sand (1.9–2.1 g/cm³) the closed box weighs ~0.71–0.78 kg in air |
+
+Print the tray floor-down and the lid with its flat plate down (both `print` poses); the lid's front panel rises off the bed at 45°. Unverified: whether 0.4 mm single-line walls and floor/lid hold the sand load and the bottle's weight, whether the click engages and stays sealed, and whether real bottles leave the nominal 26 mm.
+
 ## 13. Ecojoiner-only output
 
 The standalone extraction (`eco_ecojoiner_only()`) contains six Long Johns, six Little Johns — one of which is the **Master John** — four Final Keys and the visual M5 clamp hardware (see below). The Master John is a Little John whose two top slots are cut to `eco_master_slot_depth()` (34 mm at reference params) rather than the standard `eco_slot_depth()` (29 mm); everything else — outline, collar hole, M5 holes, placement — is identical. It is the piece fitted last, and the deeper slots are what let it drop past the already-seated Johns into the almost-closed frame. Restored in v1.8.1 (it had been flattened to a plain Little John in the v1.7.1 generator sync). The full-Turtle assembly (`ecojoiner_and_bottles()` in `src/Full_Turtle.scad`) does not flag a Master John, so its six Little Johns stay uniform; only the standalone artifact carries one. Talk of additional Saddlers still refers to other revisions, not this file.
@@ -503,21 +519,21 @@ Current references: 12 mm stock, 82 mm port length (derived: top dome 62 + 20 mm
 
 ## 13a. Pressor — EXPERIMENTAL, v6.6.1
 
-`lib/pressor.scad` + wrapper `src/components/Turtle_Pressor.scad` → `scads_v1/Turtle_Pressor.scad` (parts `assembly` / `pressor` / `profile`). The file always outputs ONE piece (v6.6.3): the default is `part="pressor"`, and the assembly view shows one pressor in its port, with the bottle and John as F5-only references. It does not model the M5 screws (v6.6.2). `part="pressor"` is exported as `stls_v1/Turtle_Pressor_v<version>.stl` for a 3D-printed prototype, printed flat on its board face; the edge holes print as horizontal bores. This is meant to replace the acorn nut on each Little John's M5 pair. Two pressors per port, one each side of the bottle, hug it between them. Not built, fitted or tested. **Standalone only:** the Ecojoiner and full-turtle assemblies still show acorns (section 13), no website generator emits it, and it is not in the slat inventory (section 21).
+`lib/pressor.scad` + wrapper `src/components/Turtle_Pressor.scad` → `scads_v1/Turtle_Pressor.scad` (parts `assembly` / `pressor` / `profile`). The file always outputs ONE piece (v6.6.3): the default is `part="pressor"`, and the assembly view shows one pressor in its port, with the bottle and John as F5-only references. It does not model the M5 screws (v6.6.2). `part="pressor"` is exported as `stls_v1/Turtle_Pressor_v<version>.stl` for a 3D-printed prototype, printed flat on its board face; the edge slots print as horizontal bores. The first v6.6.3 print was 3 mm too long for the port and its holes did not line up with the John's screws; v6.6.4 fixes both (trim + pill slots). This is meant to replace the acorn nut on each Little John's M5 pair. Two pressors per port, one each side of the bottle, hug it between them. Not built, fitted or tested. **Standalone only:** the Ecojoiner and full-turtle assemblies still show acorns (section 13), no website generator emits it, and it is not in the slat inventory (section 21).
 
 | Feature | Default |
 | --- | ---: |
 | Stock | one 12 mm board (`p_wood_t()`); the sketched shape is the board face, thickness runs along the bottle axis, centred on the screw pair 17 mm in from the John end |
 | Width (back edge → inner edge) | 32 = port gap 12 − travel 1 + wrap 21 |
-| Height | 83.8 = port height − 0.2 fit clearance (slides between the Long Johns) |
+| Height | 80.8 = port height − 0.2 fit clearance − 2 × 1.5 end trim (`p_pressor_end_trim()`, v6.6.4: the 83.8 print was 3 mm too long to enter the port) |
 | Inner cut | concave arc, bottle radius, centred on the bottle axis; symmetric top/bottom (no diagonal); runs out at ±36.4, corners beyond stay square |
 | Wrap past the bottle tangent | `p_pressor_wrap()` = d/4 = 21 |
 | Screw travel | `p_pressor_travel()` = 1: pressed, the back edge stands 1 mm off the John face |
-| M5 holes | two Ø5.3 holes (`p_pressor_hole_d()`, v6.6.2; the Johns keep Ø5.2) at ±18 (`p_eco_screw_pair_offset()`), mid-thickness, 10 deep (`p_pressor_hole_depth()`) |
-| Wood around a hole / beyond the tip | 3.35 each side / 5.05 to the bottle (asserted ≥ `p_pressor_min_wall()` = 3) |
-| M5 × 30 head standoff (pressed) | 7 mm off the John's outer face |
+| M5 openings | two Ø5.3 **pill slots** (`p_pressor_hole_d()`; the Johns keep Ø5.2) centred on ±18 (`p_eco_screw_pair_offset()`), stretched ±10 along the edge (`p_pressor_slot_ext()`, v6.6.4) so they span Y 5.35…30.65, mid-thickness, 8 deep (`p_pressor_hole_depth()`, was 10) |
+| Wood around a slot / behind it | 3.35 each face / 3.34 to the bottle at the slot's inner end, the thinnest point (asserted ≥ `p_pressor_min_wall()` = 3) |
+| M5 × 30 head standoff (pressed) | 9 mm off the John's outer face |
 
-How it works: each screw bites into both the John and the pressor, so turning it in carries the pressor toward the bottle; turning it out backs the pressor off. Local frame: X = 0 at the pressor's back edge, +X toward the bottle; Y across the port, centred on the bottle axis; Z = board thickness. `pressor_assert_valid()` checks the travel leaves wood on the centreline, the arc stays inside the block and covers the screw lines, there is enough wood around and beyond the holes, the screw reaches, and the width fits the board. Unverified: whether a Ø5 screw in the 12 mm edge splits the board, how much clamping force the pair gives, and whether 1 mm of travel is enough for real bottle variation.
+How it works: each screw bites into the John and pushes on the floor of its pill slot, so turning it in drives the pressor onto the bottle. Since v6.6.4 the slots are wider than the screw, so the screw no longer bites the pressor and backing it out does not pull the pressor back. Local frame: X = 0 at the pressor's back edge, +X toward the bottle; Y across the port, centred on the bottle axis; Z = board thickness. `pressor_assert_valid()` checks the travel leaves wood on the centreline, the arc stays inside the block and covers the screw lines, there is enough wood around and beyond the holes, the screw reaches, and the width fits the board. Unverified: whether a Ø5 screw in the 12 mm edge splits the board, how much clamping force the pair gives, and whether 1 mm of travel is enough for real bottle variation.
 
 ## 14. Python generation logic
 
@@ -648,6 +664,7 @@ python3 build/test.py                  # cross-subsystem mesh regression — mai
 python3 build/baseline.py <target>     # re-record baseline (intentional changes only; maintainer-run)
 python3 build/export_stl.py            # versioned PLA-part STLs
 python3 build/export_inventory.py      # versioned wooden-slat inventory SVG -> here + turtle_labels (~20 s)
+python3 build/export_ruler_svg.py      # printable 1:1 fin ruler scale -> scads_v1/fin_ruler_scale_v<version>.svg
 openscad -D 'part="non_sail_batten"' -o /tmp/x.stl 'scads_v1/Turtle_Sail_Apparatus.scad'
 git diff --stat && git diff --check
 ```
@@ -889,10 +906,14 @@ vendored bundles. S-5b (generators loading defaults from the snapshot) and S-6 r
 A local Python app for flotation, trim and stability, driven by this CAD. Plan:
 `docs/sim_roadmap.md`. How to operate it and its current model limits: `sim/README.md`.
 Physical survey: `docs/buoyancy_measurements.md`. Scope today is **calm-water hydrostatics
-only**. Next, per the roadmap: stage 3, sailing and turning on true state; stage 4,
+only** in the workbench, plus a **first stage-3 sailing model** (surge/sway/yaw on the fixed
+float pose, placeholder coefficients in `physics/hydrodynamics.yaml`, scenarios in
+`sim/scenarios/`; see `sim/README.md`). Its speeds and turn rates are uncalibrated: never
+report them as predictions of the real turtle. Note that `sim/turtle_sim/geometry.py` is part
+of the CAD fingerprint, so editing it makes every export stale. Next: stage 4,
 importing real water-trial logs from **Turtle Wrangler** to calibrate and validate forces;
 stage 5, a thin TurtleOS adapter (GNSS, heading, AS5600, servo only) for running the
-navigation controller in the loop. None of these is built. Waves, dynamic capsize and slosh
+navigation controller in the loop. Neither is built yet. Waves, dynamic capsize and slosh
 come later. **Luff detection is out of the sim's scope.** It is tested on real turtles via
 Wrangler, and the sim may only consume its recorded results. Do not emulate INA219, RTC or
 environmental sensors unless a specific question needs them.

@@ -56,3 +56,31 @@ def test_background_calculation_returns_snapshot(tmp_path,monkeypatch):
         assert result['configuration']['name']=='synthetic-box'
         assert result['cad_fingerprint']=='synthetic-test'
         assert (tmp_path/'runs'/f'{key}.json').exists()
+
+
+def test_sailing_endpoints(tmp_path,monkeypatch):
+    import time
+    from turtle_sim.config import Configuration,Component,Payload
+    from turtle_sim.geometry import COMPONENTS
+    m={'fingerprint':'synthetic-test','components':[{'id':k} for k in COMPONENTS],'rulers':[]}
+    monkeypatch.setattr(module,'DATA',tmp_path)
+    monkeypatch.setattr(module,'manifest',lambda:m)
+    module.JOBS.clear()
+    config=Configuration(name='synthetic-box',density_kg_m3=1000,dimensions_checked=True,
+        components=[Component(id=k,installed=False) for k in COMPONENTS],
+        payloads=[Payload(id='reference-box',mass_kg=4,com_m=(0,0,0),displacement='box',size_m=(.4,.3,.1))])
+    with TestClient(module.app) as client:
+        scenarios=client.get('/api/scenarios').json()
+        assert {s['id'] for s in scenarios}>={'still_water','sail_45_fixed'}
+        hydro=client.get('/api/hydrodynamics').json()
+        assert 'hull_cd_water' in hydro['placeholders']
+        body={'configuration':config.model_dump(mode='json'),'scenario':scenarios[0]}
+        bad={**body,'scenario':{**scenarios[0],'servo_schedule':[]}}
+        assert client.post('/api/sail/run',json=bad).status_code==422
+        key=client.post('/api/sail/run',json=body).json()['job_id']
+        for _ in range(200):
+            job=client.get('/api/jobs/'+key).json()
+            if job['status']!='running':break
+            time.sleep(.05)
+        # A turtle without its sail unit cannot sail; the job says so instead of crashing.
+        assert job['status']=='failed' and 'sail' in job['message']

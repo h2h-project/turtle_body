@@ -1,6 +1,6 @@
 {
-  "version": "6.6.3",
-  "updated": "2026-11-12",
+  "version": "6.7.2",
+  "updated": "2026-11-17",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
     "patch": "+0.0.1  component-scoped change (one lib/<subsystem>.scad or one src/components/*.scad)",
@@ -8,6 +8,60 @@
     "major": "+1.0.0  bottle / board / hardware interface break (existing builds no longer fit)"
   },
   "changelog": [
+    {
+      "version": "6.7.2",
+      "date": "2026-11-17",
+      "files": ["lib/sand_ballast.scad", "src/Full_Turtle.scad", "Full_Turtle_v1.scad", "scads_v1/Sand_Ballast_Container_*.scad", "build/export_sim.py", "sim/turtle_sim/geometry.py", "sim/turtle_sim/config.py", "sim/turtle_sim/api/app.py", "sim/web/*", "sim/tests/test_measurements.py", "physics/components.yaml", "sim/README.md", "CLAUDE.md"],
+      "note": "Workbench section 05: sand ballast container choice (not attached / attached empty / attached filled with sand) with a 0-100% fill slider, 100% = 0.75 kg saturated sand. export_sim.py renders the box's closed envelope (displacement) and fill space (sand settles as a level layer); empty box mass is measured or estimated from CAD PLA volume; optional flooded lid. New sand_ballast_envelope() / sb_installed(what=). Full-turtle display unchanged."
+    },
+    {
+      "version": "6.7.1",
+      "date": "2026-11-17",
+      "files": ["lib/sand_ballast.scad", "scads_v1/Sand_Ballast_Container_Bottom.scad", "scads_v1/Sand_Ballast_Container_Lid.scad", "Full_Turtle_v1.scad", "CLAUDE.md"],
+      "note": "Sand ballast container streamlined: front (fin-side) top edge cut off at 45 deg, back end extended 10 mm (60 past the board edge, L 205 -> 215) and its bottom edge cut at 45 deg; both cuts 17.5 mm, leaving 8 mm end faces (sb_end_face_h()). The lid now carries the sloped front panel; rim band, groove, skirt and bead follow the top surface. Sand space 355 cm3 (mesh-measured); tray 17.7 + lid 10.2 cm3 PLA. Component-scoped."
+    },
+    {
+      "version": "6.7.0",
+      "date": "2026-11-17",
+      "files": ["lib/sand_ballast.scad", "src/components/Sand_Ballast_Container_Bottom.scad", "src/components/Sand_Ballast_Container_Lid.scad", "scads_v1/Sand_Ballast_Container_Bottom.scad", "scads_v1/Sand_Ballast_Container_Lid.scad", "src/Full_Turtle.scad", "Full_Turtle_v1.scad", "build/manifest.json", "CLAUDE.md"],
+      "note": "EXPERIMENTAL printed sand ballast container: U-shaped tray + snap-on lid (0.4 mm walls) that slides into the 26 mm gap between the bottom bottle's base and the ballast's orange board, arms either side of the yellow fin; 50 mm past the bottle on the fin side, 50 mm past the board's back edge. 205 x 83 x 25.5 mm, ~364 cm3. Shown in the full turtle (show_sand_ballast); not in the sim. Full turtle asserts the placed gap equals lib sb_bottle_gap()."
+    },
+    {
+      "version": "6.6.9",
+      "date": "2026-11-17",
+      "files": ["lib/fin_ruler.scad", "scads_v1/Turtle_Rear_Fin.scad", "scads_v1/Turtle_Head_Fin.scad", "Full_Turtle_v1.scad", "scads_v1/fin_ruler_scale_v6.6.9.svg", "CLAUDE.md"],
+      "note": "Fin rulers now run PAST the bottle radius: +-(radius + 10 mm + a 5 mm margin), rounded up to the next 5 mm mark (+-60 at Ø84 and Ø90; was +-35). New fr_range_beyond() = 15 replaces fr_range_margin(). The buoyancy workbench predicted a stern waterline of about +45 mm, above the bottle top, which the old scale could not show. Both fins fit the full span. Mirrored in hopeTurtles.org generator/fin_rulers.py. Component-scoped; build/lint clean."
+    },
+    {
+      "version": "6.6.8",
+      "date": "2026-11-17",
+      "files": ["lib/fin_ruler.scad", "build/export_ruler_svg.py", "build/fonts/Mulish-Regular.ttf", "build/fonts/OFL.txt", "scads_v1/*.scad", "scads_v1/fin_ruler_scale_v6.6.8.svg", "Full_Turtle_v1.scad", "CLAUDE.md"],
+      "note": "Fin rulers: scale rounded up to the next 5 mm mark (+-35 at Ø84, was +-32) so it ends on a half-centimetre tick; the unit moves beside the zero as one label '0 mm' (was 'mm' above the 0), so it reads right on the mirrored face B too. Printed paper scale only: numbers in Mulish Regular (vendored OFL TTF, outlined by OpenSCAD); engraved fins keep the font-free stroke digits. Range and label mirrored in hopeTurtles.org generator/fin_rulers.py."
+    },
+    {
+      "version": "6.6.7",
+      "date": "2026-11-17",
+      "files": ["lib/fin_ruler.scad", "scads_v1/*.scad", "scads_v1/fin_ruler_scale_v6.6.7.svg", "Full_Turtle_v1.scad"],
+      "note": "Fin ruler 'm' glyph fixed: one top bar over three legs. It was three posts each with its own unjoined flag, so the 'mm' unit label read as 'rrrrrr' on the engraved fins and the printed scale. Mirrored in hopeTurtles.org generator/fin_rulers.py."
+    },
+    {
+      "version": "6.6.6",
+      "date": "2026-11-17",
+      "files": ["lib/fin_ruler.scad", "build/export_ruler_svg.py", "scads_v1/fin_ruler_scale_v6.6.6.svg", "scads_v1/*.scad", "Full_Turtle_v1.scad", "CLAUDE.md"],
+      "note": "New fin_ruler_scale_2d() (the engraved scale without fin-fit rules) and build/export_ruler_svg.py, which writes a printable 1:1 SVG of it to scads_v1/ -- one print serves both the head and rear fin. Fin geometry unchanged."
+    },
+    {
+      "version": "6.6.5",
+      "date": "2026-11-17",
+      "files": ["lib/fin_ruler.scad", "scads_v1/*.scad", "Full_Turtle_v1.scad", "CLAUDE.md"],
+      "note": "Fin calibration rulers limited to +-floor(bottle radius - 10 mm) (+-32 at the 84 mm reference; new fr_range_margin() / fr_half_range()) -- the waterline cannot move further than one bottle radius from the axis. Was every mark that fit the fin (down to about -150 on the rear fin). Mirrored in hopeTurtles.org generator/fin_rulers.py. Component-scoped; build/lint clean."
+    },
+    {
+      "version": "6.6.4",
+      "date": "2026-11-17",
+      "files": ["lib/pressor.scad", "lib/params.scad", "src/components/Turtle_Pressor.scad", "scads_v1/Turtle_Pressor.scad", "build/params.json", "CLAUDE.md"],
+      "note": "Pressor, after the first printed prototype: height trimmed 1.5 mm off each end (83.8 -> 80.8, new p_pressor_end_trim()) because the print was 3 mm too long for the port; each M5 hole stretched +-10 mm along the back edge into a 5.3 mm pill slot (new p_pressor_slot_ext()) so the John's screws locate easily; slot depth 10 -> 8 so the slot's inner end (where the bottle is closest) keeps the 3 mm min wall (11.34 mm of wood there). Screws now push on the slot floor rather than bite. Component-scoped; build/lint clean."
+    },
     {
       "version": "6.6.3",
       "date": "2026-11-12",

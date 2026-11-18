@@ -1,0 +1,15 @@
+schema_version: 1
+name: Sail at 45°, fixed
+description: The same 4 m/s wind from the south, but the sail is turned 45° (servo 120) and left there for the whole run. Shows how far a turned sail pushes the turtle sideways and turns it, compared with the square sail.
+duration_s: 300
+dt_s: 0.5
+heading_deg: 0
+wind_from_deg: 180
+wind_speed_mps: 4
+current_from_deg: 0
+current_speed_mps: 0
+destination_bearing_deg: 0
+destination_distance_m: 50
+arrival_radius_m: 20
+servo_schedule:
+- {t_s: 0, servo_pos: 120}

@@ -11,9 +11,19 @@
   </head>
   <body>
     <header>
-      <div>
-        <span class="eyebrow">HOPE TURTLE / DESIGN LAB</span>
-        <h1>Buoyancy workbench</h1>
+      <div class="brand">
+        <a
+          class="brand-link"
+          href="https://hopeturtles.org"
+          target="_blank"
+          rel="noopener"
+          ><span class="sr-only">hopeturtles.org</span>
+          <pre class="brand-ascii" id="logo" aria-hidden="true"></pre>
+        </a>
+        <div id="brand_text">
+          <span class="eyebrow">HOPE TURTLE / DESIGN LAB</span>
+          <h1>Buoyancy workbench</h1>
+        </div>
       </div>
       <nav>
         <a href="/measurement-guide" target="_blank">Measurement guide ↗</a
@@ -22,7 +32,10 @@
         ><button id="solve" class="primary">Calculate flotation</button>
       </nav>
     </header>
-    <div id="status" role="status">Loading workbench…</div>
+    <div id="status" role="status">
+      <span class="spinner" aria-hidden="true"></span
+      ><span>Loading workbench…</span>
+    </div>
     <main>
       <section class="visual">
         <div id="viewport">
@@ -33,36 +46,56 @@
             >
           </div>
           <div id="legend" class="legend" hidden>
-            <span
-              ><i class="dot mass"></i>Centre of mass: where the turtle's whole
-              weight acts</span
+            <span class="key" tabindex="0" aria-describedby="tip-mass"
+              ><i class="dot mass"></i>Centre of mass<span
+                class="tip"
+                id="tip-mass"
+                role="tooltip"
+                >Where the turtle's whole weight acts. At rest it sits directly
+                above or below the centre of buoyancy.</span
+              ></span
             >
-            <span
-              ><i class="dot buoy"></i>Centre of buoyancy: centre of the
-              displaced water, where the upward push acts</span
+            <span class="key" tabindex="0" aria-describedby="tip-buoy"
+              ><i class="dot buoy"></i>Centre of buoyancy<span
+                class="tip"
+                id="tip-buoy"
+                role="tooltip"
+                >Centre of the displaced water, where the upward push
+                acts.</span
+              ></span
             >
-            <span class="muted"
-              >At rest they line up vertically. Blue plane: bottle-centre
-              reference (ruler zero), not the waterline.</span
+            <span class="key" tabindex="0" aria-describedby="tip-wl"
+              ><i class="dot wl"></i>Waterline<span
+                class="tip"
+                id="tip-wl"
+                role="tooltip"
+                >Where the calm water surface meets the turtle at the calculated
+                float pose. The tilted bottle-centre plane (ruler zero) is
+                hidden; the Centre plane button shows it.</span
+              ></span
             >
           </div>
           <div class="viewtools">
             <button id="reset">Reset view</button
-            ><button id="centre">Centre plane</button>
+            ><button id="centre" aria-pressed="false">Centre plane</button>
           </div>
         </div>
         <div class="readouts">
           <div>
             <small>Front waterline</small><strong id="front">—</strong
-            ><span>mm relative to bottle centre</span>
+            ><span>from the bottle centre, middle of the fin</span>
           </div>
           <div>
             <small>Rear waterline</small><strong id="rear">—</strong
-            ><span>mm relative to bottle centre</span>
+            ><span>from the bottle centre, middle of the fin</span>
           </div>
           <div>
-            <small>Attitude</small><strong id="attitude">—</strong
-            ><span>roll / pitch in degrees</span>
+            <small>Roll</small><strong id="roll">—</strong
+            ><span>side-to-side tilt</span>
+          </div>
+          <div>
+            <small>Pitch</small><strong id="pitch">—</strong
+            ><span>bow-to-stern tilt</span>
           </div>
         </div>
         <section class="panel">
@@ -73,6 +106,145 @@
           </div>
           <div id="graphs"></div>
           <div id="comparisons"></div>
+        </section>
+        <section class="panel" id="sailing">
+          <div class="sectionhead">
+            <h2>Sailing &amp; turning</h2>
+          </div>
+          <p class="hint">
+            <b>How a run works.</b> The turtle starts at the green dot, still in
+            the water, with its bow pointing the way you set. Wind and current
+            stay steady for the whole run. Nobody steers: the only control is
+            the sail, set with the dials below. Heading, speed and drift all
+            come from the forces, so the turtle usually turns away from its
+            start heading within seconds.
+          </p>
+          <label>Scenario<select id="scenario"></select></label>
+          <p class="hint">
+            Pick a starting point, then change anything: as soon as you touch a
+            dial or field the scenario becomes <b>Custom</b>.
+          </p>
+          <p class="hint" id="sc_description"></p>
+          <p class="hint">
+            Drag a dial, or click it and use the arrow keys (Shift for 1°
+            steps). Directions are compass degrees: 0 north, 90 east, 180 south,
+            270 west.
+          </p>
+          <div class="knobs">
+            <div class="knobcard">
+              <span class="knobtitle">Bow points at start</span>
+              <div class="knob" id="k_heading"></div>
+              <small
+                >Where the turtle faces at the start. It then turns
+                freely.</small
+              >
+            </div>
+            <div class="knobcard">
+              <span class="knobtitle">Wind from</span>
+              <div class="knob" id="k_wind"></div>
+              <label class="mini"
+                >Speed · m/s<input
+                  id="sc_wind_speed"
+                  type="number"
+                  step="any"
+                  min="0"
+              /></label>
+              <small
+                >Where the wind comes from, as in a weather report. 180 = from
+                the south, blowing north.</small
+              >
+            </div>
+            <div class="knobcard">
+              <span class="knobtitle">Current from</span>
+              <div class="knob" id="k_current"></div>
+              <label class="mini"
+                >Speed · m/s<input
+                  id="sc_cur_speed"
+                  type="number"
+                  step="any"
+                  min="0"
+              /></label>
+              <small
+                >Where the water comes from. 0 = from the north, flowing
+                south.</small
+              >
+            </div>
+            <!-- Destination dial: disabled for now (not needed for the current
+                 scenario run-throughs). Restore this card and set
+                 DESTINATION_ENABLED = true in app.js to bring it back.
+            <div class="knobcard">
+              <span class="knobtitle">Destination</span>
+              <div class="knob" id="k_dest"></div>
+              <label class="mini"
+                >Distance from start · m (0 = none)<input
+                  id="sc_dest_dist"
+                  type="number"
+                  step="any"
+                  min="0"
+              /></label>
+              <label class="mini"
+                >Counts as reached within · m<input
+                  id="sc_dest_radius"
+                  type="number"
+                  step="any"
+                  min="0.1"
+              /></label>
+              <label class="check"
+                ><input id="sc_dest_stop" type="checkbox" /> End the trip when
+                it arrives</label
+              >
+              <small id="dest_hint"
+                >The dial sets the direction from the start. Without the box
+                ticked the turtle sails on past it until the trip ends.</small
+              >
+            </div>
+            -->
+          </div>
+          <p class="hint">
+            <b>Sail and timing.</b> The sail is the turtle's only control. Set
+            where it starts, and optionally one change partway through the trip.
+            Sail angles are measured from the hull: 0° = square across (catches
+            wind from behind). The grey arc is beyond the servo's reach.
+          </p>
+          <div class="knobs">
+            <div class="knobcard">
+              <span class="knobtitle">Sail at start</span>
+              <div class="knob" id="k_sail0"></div>
+              <small>Sail angle to the hull when the trip begins.</small>
+            </div>
+            <div class="knobcard">
+              <span class="knobtitle">Change sail after</span>
+              <div class="knob" id="k_timer"></div>
+              <small id="timer_hint">Minutes into the trip. 0 = never.</small>
+            </div>
+            <div class="knobcard">
+              <span class="knobtitle">Change sail to</span>
+              <div class="knob" id="k_sail1"></div>
+              <small>The new sail angle from that time on.</small>
+            </div>
+            <div class="knobcard">
+              <span class="knobtitle">Trip length</span>
+              <div class="knob" id="k_duration"></div>
+              <small>How long to sail, up to 60 minutes.</small>
+            </div>
+          </div>
+          <div class="runrow">
+            <p id="destsummary" class="destsummary idle" role="status">
+              Set the dials, then run the scenario.
+            </p>
+            <button id="sailrun" class="primary" disabled>Run scenario</button>
+          </div>
+          <div id="sailresult" hidden>
+            <canvas id="track" aria-label="Overhead track, north up"></canvas>
+            <label class="slider"
+              >Time
+              <input id="sailtime" type="range" min="0" max="0" step="1" /><span
+                id="sailreadout"
+              ></span
+            ></label>
+            <div id="sailplots"></div>
+            <ul id="sailwarnings" class="warnings"></ul>
+          </div>
         </section>
       </section>
       <aside>
@@ -180,6 +352,7 @@
             <h2>05 / Extra loads & ballast</h2>
             <button id="addpayload">Add load</button>
           </div>
+          <div id="sandballast" class="payload"></div>
           <p class="hint">
             Use for equipment or ballast not already included in a group mass.
             For enclosed loads, name the enclosing component. Exposed boxes need

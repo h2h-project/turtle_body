@@ -14,8 +14,16 @@ import yaml
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from turtle_sim.geometry import ROOT, GENERATED, COMPONENTS, manifest, load_mesh
+from turtle_sim.geometry import ROOT, GENERATED, COMPONENTS, SAND_BALLAST, manifest, load_mesh
 from turtle_sim.config import Configuration, missing, calculate
+from turtle_sim.sailing_setup import Scenario, run_sailing, list_scenarios, load_coefficients
+from pydantic import BaseModel, ConfigDict
+
+
+class SailRequest(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    configuration: Configuration
+    scenario: Scenario
 
 DATA=Path(os.environ.get('TURTLE_SIM_DATA', str(ROOT/'sim/data')))
 JOBS={}
@@ -84,7 +92,7 @@ def geometry():
 
 @app.get('/api/mesh/{component}')
 def mesh(component:str):
-    if component not in COMPONENTS: raise HTTPException(404)
+    if component not in COMPONENTS and component!=SAND_BALLAST: raise HTTPException(404)
     try: manifest()
     except ValueError as e: raise HTTPException(409,str(e)) from e
     return FileResponse(GENERATED/f'{component}.json')
@@ -139,9 +147,10 @@ async def run_job(job_id, function, *args):
     try:
         result=await asyncio.get_running_loop().run_in_executor(app.state.pool,function,*args)
         JOBS[job_id]={'status':'complete','result':result}
-        if function is calculate:
+        if function is calculate or function is run_sailing:
             (DATA/'runs').mkdir(exist_ok=True)
-            (DATA/'runs'/f'{job_id}.json').write_text(json.dumps(result,indent=2,allow_nan=False))
+            prefix='sail_' if function is run_sailing else ''
+            (DATA/'runs'/f'{prefix}{job_id}.json').write_text(json.dumps(result,indent=2,allow_nan=False))
     except MemoryError:
         JOBS[job_id]={'status':'failed','message':MEMORY_MESSAGE}
     except BrokenProcessPool:
@@ -181,6 +190,31 @@ async def solve(config:Configuration):
     errors=missing(config,m)
     if errors: raise HTTPException(422,errors)
     return submit(calculate,config.model_dump(mode='json'),m)
+
+
+@app.get('/api/scenarios')
+def scenarios():
+    try: return list_scenarios()
+    except Exception as e: raise HTTPException(500,f'A scenario file is invalid: {e}') from e
+
+
+@app.get('/api/hydrodynamics')
+def hydrodynamics():
+    try: h=load_coefficients()
+    except Exception as e: raise HTTPException(422,f'Coefficient file is invalid: {e}') from e
+    return {**h.model_dump(mode='json'),'placeholders':h.placeholders()}
+
+
+@app.post('/api/sail/run')
+async def sail_run(request:SailRequest):
+    try: m=manifest()
+    except ValueError as e: raise HTTPException(409,str(e)) from e
+    errors=missing(request.configuration,m)
+    if errors: raise HTTPException(422,errors)
+    try: coefficients=load_coefficients().model_dump(mode='json')
+    except Exception as e: raise HTTPException(422,f'Coefficient file is invalid: {e}') from e
+    return submit(run_sailing,request.configuration.model_dump(mode='json'),m,
+                  request.scenario.model_dump(mode='json'),coefficients)
 
 
 @app.get('/api/jobs/{key}')

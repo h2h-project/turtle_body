@@ -1,0 +1,16 @@
+schema_version: 1
+name: Sail change
+description: 4 m/s wind from the south. The sail starts square, then turns 45° anticlockwise (servo 120) 3 minutes in. Shows whether moving the sail changes the turtle's course, which is the only way it can steer.
+duration_s: 360
+dt_s: 0.5
+heading_deg: 0
+wind_from_deg: 180
+wind_speed_mps: 4
+current_from_deg: 0
+current_speed_mps: 0
+destination_bearing_deg: 0
+destination_distance_m: 50
+arrival_radius_m: 20
+servo_schedule:
+- {t_s: 0, servo_pos: 90}
+- {t_s: 180, servo_pos: 120}

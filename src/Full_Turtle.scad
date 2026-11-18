@@ -27,6 +27,10 @@ echo("FULL_TURTLE_V11_SELF_CONTAINED", assembly_view);
 // Wooden parts only; bottles, hardware, sails and printed parts keep their colors.
 enable_color_coding = true;
 
+// EXPERIMENTAL (v6.7.0): printed U-shaped sand box under the bottom bottle,
+// around the yellow ballast fin (lib/sand_ballast.scad). Not seen by the sim.
+show_sand_ballast = true;   // sim: rendered alone as sim_component "sand_ballast" / "sand_ballast_fill"
+
 // Water is a visual F5 preview layer, excluded from F6 and mesh exports.
 // Units are mm: 2000 x 2000 x 2000 = 8 cubic metres.
 show_water = true;
@@ -217,6 +221,7 @@ use <../lib/params.scad>
 use <../lib/bottle_mockup.scad>
 use <../lib/ecojoiner.scad>
 use <../lib/ballast_fin.scad>
+use <../lib/sand_ballast.scad>   // v6.7.0 EXPERIMENTAL: sand box under the bottom bottle
 use <../lib/rear_fin.scad>      // wooden parts; the visible solar panel + screws stay embedded below
 use <../lib/fin_ruler.scad>
 use <../lib/head_fin.scad>      // v5.8.0 EXPERIMENTAL: front (head) fin on the -X port
@@ -1223,8 +1228,20 @@ module installed_ballast_on_positive_y_port() {
                         -ballast_core_width / 2,
                         0
                     ])
-                        local_ballast_assembly(ballast_fin_inspection_pullout,
-                                               enable_color_coding);
+                    {
+                        if (sim_component == "" || sim_component == "ballast_frame")
+                            local_ballast_assembly(ballast_fin_inspection_pullout,
+                                                   enable_color_coding);
+                        // v6.7.0: sand box on the board, under the bottle. Not
+                        // part of the sim's ballast_frame mesh; export_sim.py
+                        // renders its envelope and fill space separately (v6.7.2).
+                        if (show_sand_ballast && sim_component == "")
+                            sb_installed(enable_color_coding);
+                        if (sim_component == "sand_ballast")
+                            sb_installed(false, "envelope");
+                        if (sim_component == "sand_ballast_fill")
+                            sb_installed(false, "fill");
+                    }
 }
 
 
@@ -2757,7 +2774,8 @@ module full_turtle_scene(include_top_sail = true) {
         if (include_top_sail && (sim_component == "" || sim_component == "control_housing" || sim_component == "sail_unit"))
             installed_sail_apparatus_on_top_port();
 
-        if (sim_component == "" || sim_component == "ballast_frame")
+        if (sim_component == "" || sim_component == "ballast_frame"
+            || sim_component == "sand_ballast" || sim_component == "sand_ballast_fill")
         translate([0, -ballast_vertical_lift, 0])
             installed_ballast_on_positive_y_port();
 
@@ -2802,6 +2820,16 @@ if (assembly_view == "full_turtle") {
 // ============================================================================
 // EXACT-SEATING ASSERTIONS
 // ============================================================================
+
+// v6.7.0: the sand box is sized from lib's sb_bottle_gap(); check it against
+// the placed geometry (board inner face after insertion vs. bottle base).
+ballast_board_to_bottle_gap =
+    (ballast_y_shift - slat_thickness - ballast_vertical_lift)
+    - ballast_bottle_origin_y;
+assert(abs(ballast_board_to_bottle_gap - sb_bottle_gap()) < 0.001,
+       str("Sand ballast: placed board-to-bottle gap ", ballast_board_to_bottle_gap,
+           " != lib sb_bottle_gap() ", sb_bottle_gap()));
+echo("Ballast board inner face to bottle base = ", ballast_board_to_bottle_gap, " mm");
 
 // Before insertion, green slat top is exactly at the port entrance.
 ballast_top_before_insertion_y =

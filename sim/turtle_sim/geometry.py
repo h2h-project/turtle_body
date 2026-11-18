@@ -22,6 +22,11 @@ COMPONENTS = {
     'control_housing': ('Cut control bottle, cap and buttons', 'housing'),
     'sail_unit': ('Sail, frame, cage and shaft', 'mixed'),
 }
+# Optional printed sand ballast container (lib/sand_ballast.scad). Not a
+# weighed component group: its mass comes from the section 05 choice (empty /
+# sand + fill %), so it is exported beside COMPONENTS, not in it.
+SAND_BALLAST = 'sand_ballast'
+SAND_BALLAST_FILL = 'sand_ballast_fill'
 
 def fingerprint():
     h = hashlib.sha256()

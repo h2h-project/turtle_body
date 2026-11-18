@@ -86,13 +86,20 @@ def main():
                     page.locator('#name').fill('Edited while solving');page.locator('#name').blur()
                     page.wait_for_function("document.querySelector('#status').textContent.includes('Old result discarded')",timeout=60000)
                     assert page.locator('#graphs figure').count()==0
+                    # Sailing panel: scenarios load; the synthetic box has no sail unit,
+                    # so the real worker must refuse with a clear message, not crash.
+                    assert page.locator('#scenario option').count()>=5
+                    page.wait_for_function("!document.querySelector('#sailrun').disabled")
+                    page.locator('#sailrun').click()
+                    page.wait_for_function("document.querySelector('#status').textContent.includes('sail unit')",timeout=60000)
+                    assert page.locator('#sailresult').is_hidden()
                     # Mobile layout should neither overflow nor lose the action controls.
                     page.set_viewport_size({'width':430,'height':850})
                     assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth')
                     assert not errors,errors
                     assert not external,external
                     browser.close()
-                print('PASS: offline browser, measurement gating, edit/save/reload, YAML download/import, partial trials/loads, real worker solve, stale-result rejection, responsive layout; no browser errors')
+                print('PASS: offline browser, measurement gating, edit/save/reload, YAML download/import, partial trials/loads, real worker solve, stale-result rejection, sailing refusal without a sail, responsive layout; no browser errors')
             finally:
                 server.terminate()
                 try:server.wait(timeout=10)

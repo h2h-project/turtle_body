@@ -190,5 +190,13 @@ components:
   - 0.0
   notes: ''
 payloads: []
+# Printed sand ballast container (lib/sand_ballast.scad). state: none | empty | sand.
+# box_mass_kg null = estimated from CAD plastic volume until the tray + lid are weighed.
+sand_ballast:
+  state: none
+  fill_percent: 100
+  full_sand_mass_kg: 0.75
+  box_mass_kg: null
+  floods: false
 observations: []
 notes: ''

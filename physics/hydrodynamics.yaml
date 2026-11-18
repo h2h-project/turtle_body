@@ -1,0 +1,68 @@
+# Stage 3 sailing-model coefficients (distributed template).
+# The browser never edits this file. To use your own values, copy it to
+# sim/data/hydrodynamics.yaml, which takes precedence (git-ignored).
+#
+# source: placeholder = a reasonable starting guess, not checked for this turtle
+#         literature  = a textbook / datasheet value for the idealised shape
+#         calibrated  = fitted to recorded turtle trials (stage 4)
+#         measured    = measured directly on the turtle
+#         user        = stated by the designer
+# Results stay uncalibrated while any value is a placeholder.
+schema_version: 1
+air_density_kg_m3:
+  value: 1.225
+  source: literature
+  note: ISA sea-level air.
+plate_stall_deg:
+  value: 25
+  source: placeholder
+  note: Angle of attack where flat-plate lift gives way to the normal-force model. Low-aspect plates (sails AR ~0.7) stall late.
+plate_stall_width_deg:
+  value: 5
+  source: placeholder
+  note: Width of the smooth blend around the stall angle.
+plate_cd0:
+  value: 0.05
+  source: placeholder
+  note: Zero-lift drag of a sail on battens or a 12 mm fin edge-on.
+plate_cn_max:
+  value: 1.17
+  source: literature
+  note: Normal-force coefficient of a low-aspect flat plate broadside to the flow (square plate Cd ~1.17).
+sail_lift_factor:
+  value: 1.0
+  source: placeholder
+  note: Multiplier on the finite-span lift slope 2*pi*AR/(AR+2) for the sails.
+fin_lift_factor:
+  value: 1.0
+  source: placeholder
+  note: Same multiplier for the front and rear fins (below the waterline only).
+hull_cd_water:
+  value: 1.0
+  source: placeholder
+  note: Bluff-body drag on the projected underwater area (bottles, frame, ballast incl. its fin). Cylinders in cross-flow are ~1.0-1.2.
+hull_cd_air:
+  value: 1.0
+  source: placeholder
+  note: Windage of everything above the water except the sails.
+added_mass_translation_k:
+  value: 0.5
+  source: placeholder
+  note: Added mass = k * water density * submerged volume, same for surge and sway (a sphere is 0.5).
+added_mass_yaw_k:
+  value: 0.5
+  source: placeholder
+  note: Added yaw inertia as a fraction of the rigid-body yaw inertia.
+servo_travel_deg:
+  value: 270
+  source: user
+  note: Sail travel end stop to end stop. Direct drive, so it equals the MG996R's ~270 deg travel (servo_pos 0..180 spans it).
+servo_zero_pos:
+  value: 90
+  source: placeholder
+  note: servo_pos at which the sail is square across the hull (the CAD pose). Wrangler W4 records the real value.
+servo_rate_deg_s:
+  value: 300
+  source: literature
+  note: MG996R datasheet ~0.17-0.2 s per 60 deg, unloaded. Wind load slows it.
+notes: ''

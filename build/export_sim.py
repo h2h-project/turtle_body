@@ -14,7 +14,8 @@ import os
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/'sim'))
-from turtle_sim.geometry import COMPONENTS, GENERATED, fingerprint, load_mesh, manifest
+from turtle_sim.geometry import (COMPONENTS, GENERATED, SAND_BALLAST, SAND_BALLAST_FILL,
+                                 fingerprint, load_mesh, manifest)
 from scad_lib import find_openscad, render, read_version
 import numpy as np
 
@@ -151,10 +152,37 @@ def export():
                                    'range_mm':json.loads(span)})
     if len(rulers)!=4:
         raise ValueError('Expected four CAD ruler face datums')
+    # Sand ballast container: closed outer envelope (displacement) and its
+    # inside sand space (fill level). Same body transform as the components.
+    sand={}
+    for component in (SAND_BALLAST, SAND_BALLAST_FILL):
+        print(f'Exporting {component}', flush=True)
+        with tempfile.TemporaryDirectory() as td:
+            mesh, normalization, warnings, console = render_mesh(osc, component, td)
+            mesh.apply_transform(transform)
+            np.savez_compressed(GENERATED/f'{component}.npz',vertices=mesh.vertices,faces=mesh.faces)
+            load_mesh(GENERATED/f'{component}.npz',component)
+            sand[component]=mesh
+            if component == SAND_BALLAST:
+                (GENERATED/f'{component}.json').write_text(json.dumps(
+                    {'vertices':mesh.vertices.tolist(),'faces':mesh.faces.tolist(),'highlights':{}},
+                    separators=(',',':')))
+    env,fill=sand[SAND_BALLAST],sand[SAND_BALLAST_FILL]
+    if not 0 < fill.volume < env.volume:
+        raise ValueError('Sand ballast: fill space must be positive and smaller than the box')
+    sand_ballast={'mesh':f'{SAND_BALLAST}.npz','fill_mesh':f'{SAND_BALLAST_FILL}.npz',
+                  'envelope_volume_m3':env.volume,'fill_volume_m3':fill.volume,
+                  'centroid_m':env.center_mass.tolist(),'fill_centroid_m':fill.center_mass.tolist(),
+                  'bounds_m':env.bounds.tolist()}
     if signature != fingerprint():
         raise ValueError('CAD changed during export; please export again')
+    # Bottle diameter from the p_*() snapshot build/build.py keeps current
+    # (lint fails on a stale one). The workbench flags a waterline above
+    # +radius (bottle under water) or below -radius (bottle clear of it).
+    params=json.loads((ROOT/'build'/'params.json').read_text())
     data={'fingerprint':signature,'cad_version':read_version(),
-          'units':'m','components':parts,'rulers':rulers}
+          'units':'m','bottle_diameter_m':params['p_bottle_d']/1000,
+          'components':parts,'rulers':rulers,'sand_ballast':sand_ballast}
     tmp=GENERATED/'manifest.tmp'
     tmp.write_text(json.dumps(data,indent=2)+'\n')
     os.replace(tmp,GENERATED/'manifest.json')

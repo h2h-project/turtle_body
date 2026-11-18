@@ -29,11 +29,16 @@ virtual environment; the existing CAD build commands remain standard-library onl
    independent validation trials with the predictions. No automatic parameter fit.
 
 Double-click a component to focus the view and inspect its ruler. Red marks the
-centre of mass, blue the centre of buoyancy (a legend appears after a solve). The
-translucent dark-blue plane is body Z=0, the bottle-centre reference; it tilts with
-the turtle and is not the waterline. Sails (white) and the solar panel (dark grey)
+centre of mass, blue the centre of buoyancy, and a fuchsia band the waterline:
+where the calm water surface cuts the turtle at the solved pose (a legend appears
+after a solve). The tilted bottle-centre plane (body Z=0, ruler zero) is hidden
+by default; **Centre plane** toggles it. Sails (white) and the solar panel (dark grey)
 are coloured from display-only face tags the CAD export writes; physics is unchanged.
-Ruler readings are listed port / starboard; positive = above bottle centre.
+The waterline cards always show the predicted reading; they turn red when it is
+beyond the bottle radius at that fin (bottle under water, or clear of it) and say
+when it is past the engraved scale. The export records the bottle diameter for this.
+Each waterline card shows one whole-millimetre reading at the middle of the fin
+(the mean of its port and starboard face rulers); positive = above bottle centre.
 Positive roll raises port; positive mathematical pitch lowers the bow.
 
 Unknowns remain null in `physics/components.yaml`, the distributed input template.
@@ -83,16 +88,80 @@ produces a valid mesh and changes volume by at most 0.1%; deltas and original CA
 warnings are preserved in the manifest. Other bad meshes stop export/calculation.
 
 API: `/api/geometry`, `/api/config`, `/api/validate`, `/api/import`, `/api/export`,
-`/api/solve`, `/api/jobs/{id}`, `/api/mesh-upload/{component}` and `/api/config.yaml`.
+`/api/solve`, `/api/jobs/{id}`, `/api/mesh-upload/{component}`, `/api/config.yaml`,
+and for sailing `/api/scenarios`, `/api/hydrodynamics` and `/api/sail/run`.
 FastAPI's `/docs` describes validated measurement types. Jobs run in a separate
 process and results retain the configuration and CAD fingerprint. The UI discards
 results if measurements changed during the calculation.
 
+**Sand ballast container** (section 05, `sand_ballast` in the configuration). The printed
+U box under the bottom bottle (`lib/sand_ballast.scad`) is not a weighed component group,
+so it is exported beside `COMPONENTS` as two meshes: its closed envelope (displacement)
+and its inside fill space. The user picks *not attached*, *attached, empty* or
+*attached, filled with sand*; a 0–100 % slider scales a full load of saturated sand
+(`full_sand_mass_kg`, 0.75 kg). The sand settles to the floor as a level layer in the
+CAD attitude: the solver cuts the fill space at the height that holds that fraction and
+uses the layer's centroid. It does not re-settle the sand when the turtle heels. The empty
+box's mass is the measured `box_mass_kg`, or else an estimate from its CAD plastic volume ×
+1240 kg/m³, which the result flags. By default the box is sealed: the whole envelope
+displaces water and the space above the sand holds air. `floods: true` fills that space
+with water mass instead. The box needs the ballast frame installed. The sailing model
+does not include the box's drag or yaw inertia yet.
+
 Force balance uses a level water plane at world Z=0. Multiple initial poses search
 within ±85° roll/pitch; found alternatives are retained in run JSON. Local one-axis
 restoring moments are not a full coupled-stability analysis or capsize limit.
-Waves, dynamic capsize, slosh, sailing forces, sensor emulation, online services
-and website-generator changes are outside this first workbench.
+Waves, dynamic capsize, slosh, sensor emulation, online services and
+website-generator changes are outside the workbench.
+
+## Sailing and turning (roadmap stage 3, first version)
+
+The **Sailing & turning** panel sails the turtle from its calculated float pose.
+Pick a scenario from `sim/scenarios/*.yaml`, adjust it with the compass dials
+(start heading, wind from, current from, destination direction) and the speed,
+distance and sail-schedule fields, then **Run scenario**. Nobody steers: the
+sail schedule is the only control. The result is an overhead track (north up,
+green start, red end, amber destination ring; each turtle symbol is a circle with
+an arrow at the bow and a line for the sail), a time slider, a destination
+summary (arrived, or closest approach), and plots of speed, heading and sail
+angle. Scenario defaults: bow north, wind from the south, current from the north.
+Touching any dial or field switches the menu to **Custom**, which runs exactly
+what the dials show. The destination card sets the distance, the arrival circle
+(default 20 m) and, optionally, **End the trip when it arrives**
+(`stop_at_destination`); otherwise the turtle sails on past it.
+Runs are saved as `sim/data/runs/sail_<id>.json`. The first run for a
+given set of measurements builds the model (equilibrium solve + silhouettes,
+about a minute); later runs take under a second.
+
+Model (`turtle_sim/core/sailing.py`, `core/sail_geometry.py`, `sailing_setup.py`):
+
+- Horizontal motion only: surge, sway and yaw. Heave, roll and pitch stay at the
+  stage-2 equilibrium. Heel is reported as a quasi-static estimate (sail roll
+  moment ÷ the stage-2 roll restoring slope), not fed back; a warning appears
+  above 10°.
+- Sails: the two CAD-tagged sail faces as flat plates (lift with a finite-span
+  slope below stall, normal force above), rotated about the shaft. Front and rear
+  fins: the same plate model on their submerged area. Everything else: bluff
+  drag on the projected area above and below the water, plus strip-theory yaw
+  damping. Each force acts at its own point.
+- Sail actuator: `servo_pos` 0–180 spans the ~270° travel (direct drive); 90 is
+  the sail square across the hull (the CAD pose) until Wrangler W4 calibrates it;
+  rate-limited. Commands change forces, never the heading.
+- Conventions: heading in compass degrees true; world x east, y north; heading,
+  course over ground, speed over ground and speed through water are separate.
+  Wind and current are both given as the direction they come **from**. A
+  destination is a bearing and distance from the start; arrival means coming
+  within `arrival_radius_m` (default 20 m).
+- Coefficients: `physics/hydrodynamics.yaml` (template). A copy at
+  `sim/data/hydrodynamics.yaml` takes precedence. Each value says whether it is a
+  placeholder, literature, calibrated, measured or user value, and every run
+  warns while placeholders remain.
+
+Limits: the ballast fin is drag only (no lift); sail-frame windage does not
+rotate with the sail; the Munk moment is absent (isotropic added mass); no waves
+or gusts. The outputs are true state, not sensor readings. The analytic tests
+check equations and sign conventions only. Speeds and turn rates stay indicative
+until recorded trials (stage 4) calibrate the coefficients.
 
 Use measured geometry and separate physical trials to calibrate and validate.
 A plausible rendering or analytic-shape test does not establish accuracy for the

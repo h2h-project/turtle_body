@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field, FiniteFloat
 import numpy as np
 import trimesh
 import manifold3d as md
-from turtle_sim.geometry import COMPONENTS, GENERATED, load_mesh, valid_mesh
+from turtle_sim.geometry import COMPONENTS, GENERATED, SAND_BALLAST, load_mesh, valid_mesh
 from turtle_sim.core.hydrostatics import Hydrostatics, as_manifold, as_trimesh
 
 Vec3=tuple[FiniteFloat,FiniteFloat,FiniteFloat]
@@ -33,6 +33,22 @@ class Payload(Strict):
     size_m: Vec3 | None = None
     notes: str = ''
 
+# Printed sand ballast container under the bottom bottle (CAD:
+# lib/sand_ballast.scad). 'none' = not fitted; 'empty' = fitted, no sand;
+# 'sand' = fitted, holding fill_percent of a full load. A full box of
+# saturated sand is taken as full_sand_mass_kg (0.75 kg: ~355 cm3 at ~2.1
+# g/cm3, pore water included). Sand settles to the floor as a level layer.
+# Sealed (the default): the whole closed box displaces water, air above the
+# sand. floods = True: water fills the rest of the box (and counts as mass).
+PLA_DENSITY_KG_M3 = 1240   # estimate for the empty box when it is not weighed
+
+class SandBallast(Strict):
+    state: Literal['none','empty','sand'] = 'none'
+    fill_percent: FiniteFloat = Field(default=100, ge=0, le=100)
+    full_sand_mass_kg: FiniteFloat = Field(default=0.75, gt=0)
+    box_mass_kg: FiniteFloat | None = Field(default=None, gt=0)   # measured empty box (tray + lid)
+    floods: bool = False
+
 class Observation(Strict):
     id: str
     purpose: Literal['calibration','validation']='validation'
@@ -56,6 +72,7 @@ class Configuration(Strict):
     bottle_dimensions_mm: dict[str,FiniteFloat|None] = {}
     components: list[Component]
     payloads: list[Payload] = []
+    sand_ballast: SandBallast = SandBallast()
     observations: list[Observation] = []
     notes: str = ''
 
@@ -98,6 +115,12 @@ def missing(config, manifest):
             errors.append(f'{p.id}: immersed box needs three positive measured dimensions')
         if p.displacement=='contained' and not p.notes.strip():
             errors.append(f'{p.id}: identify its enclosing displaced component in notes')
+    if config.sand_ballast.state!='none':
+        if 'sand_ballast' not in manifest:
+            errors.append('Sand ballast container: export CAD again to include it')
+        frame=next((c for c in config.components if c.id=='ballast_frame'),None)
+        if frame is None or not frame.installed:
+            errors.append('Sand ballast container: it sits on the ballast frame; install that group first')
     return errors
 
 
@@ -140,8 +163,59 @@ def build_model(config, manifest):
         if p.displacement=='box':
             mesh=trimesh.creation.box(extents=p.size_m)
             mesh.apply_translation(p.com_m);meshes.append(mesh)
+    sand=sand_ballast_loads(config,manifest)
+    if sand:
+        for mass,com in sand['loads']:
+            total+=mass;weighted+=mass*np.array(com)
+        meshes.append(sand['envelope'])
     if total<=0: raise ValueError('Total measured mass must be positive')
     return Hydrostatics(meshes,total,weighted/total,config.density_kg_m3)
+
+
+def settled_layer(fill, fraction):
+    """Volume and centroid of the lowest `fraction` of a fill space, cut level (body Z)."""
+    obj=as_manifold(fill)
+    lo,hi=fill.bounds[:,2]
+    target=fraction*obj.volume()
+    for _ in range(50):
+        h=(lo+hi)/2
+        # trim_by_plane keeps the side the normal points to: -z >= -h, i.e. z <= h
+        if obj.trim_by_plane((0.,0.,-1.),-h).volume()<target: lo=h
+        else: hi=h
+    layer=obj.trim_by_plane((0.,0.,-1.),-(lo+hi)/2)
+    m=as_trimesh(layer)
+    return layer.volume(),m.center_mass
+
+
+def sand_ballast_loads(config, manifest):
+    """Mass loads (kg, body-frame centre) and displacement mesh of the sand box."""
+    sb=config.sand_ballast
+    if sb.state=='none': return None
+    info=manifest['sand_ballast']
+    env=load_mesh(GENERATED/info['mesh'],SAND_BALLAST)
+    fill=load_mesh(GENERATED/info['fill_mesh'],SAND_BALLAST+' fill')
+    v_env,v_fill=info['envelope_volume_m3'],info['fill_volume_m3']
+    c_env,c_fill=np.array(info['centroid_m']),np.array(info['fill_centroid_m'])
+    shell_c=(v_env*c_env-v_fill*c_fill)/(v_env-v_fill)
+    box_kg=sb.box_mass_kg if sb.box_mass_kg is not None else (v_env-v_fill)*PLA_DENSITY_KG_M3
+    loads=[(box_kg,shell_c)]
+    fraction=sb.fill_percent/100 if sb.state=='sand' else 0.
+    sand_kg=fraction*sb.full_sand_mass_kg
+    v_sand,c_sand=0.,c_fill
+    if sand_kg>0:
+        v_sand,c_sand=(v_fill,c_fill) if fraction>=1 else settled_layer(fill,fraction)
+        loads.append((sand_kg,c_sand))
+    water_kg=0.
+    if sb.floods and v_fill-v_sand>1e-12:
+        water_kg=(v_fill-v_sand)*config.density_kg_m3
+        loads.append((water_kg,(v_fill*c_fill-v_sand*np.asarray(c_sand))/(v_fill-v_sand)))
+    total=sum(m for m,_ in loads)
+    com=sum(m*np.asarray(c) for m,c in loads)/total
+    summary={'state':sb.state,'fill_percent':fraction*100,'box_kg':box_kg,
+             'box_mass_source':'measured' if sb.box_mass_kg is not None else 'estimated_pla',
+             'sand_kg':sand_kg,'water_kg':water_kg,'total_kg':total,'centre_m':com.tolist(),
+             'displaced_m3':v_env,'floods':sb.floods}
+    return {'loads':loads,'envelope':env,'summary':summary}
 
 
 def calculate(config_dict, manifest):
@@ -157,6 +231,11 @@ def calculate(config_dict, manifest):
     result['configuration']=config.model_dump(mode='json')
     result['cad_fingerprint']=manifest['fingerprint']
     result['warnings']=[]
+    sand=sand_ballast_loads(config,manifest)
+    if sand:
+        result['sand_ballast']=sand['summary']
+        if sand['summary']['box_mass_source']=='estimated_pla':
+            result['warnings'].append('Sand ballast box mass is estimated from its CAD plastic volume; weigh the empty tray + lid.')
     if config.assembled_mass_kg:
         result['assembled_mass_difference_kg']=model.mass-config.assembled_mass_kg
         if abs(model.mass-config.assembled_mass_kg)>0.01*config.assembled_mass_kg:

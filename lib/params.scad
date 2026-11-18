@@ -112,8 +112,13 @@ function p_pressor_wrap()       = p_bottle_d() / 4;  // 21: inner edge reaches t
                                                       // bottle's tangent line, toward its axis
 function p_pressor_travel()     = 1;     // screw-in travel: gap left at the John face when pressed
 function p_pressor_hole_d()     = 5.3;   // M5 hole in the pressor's back edge (v6.6.2; the Johns keep p_m5_hole_d() 5.2)
-function p_pressor_hole_depth() = 10;    // M5 bite-hole depth into the pressor's back edge
+function p_pressor_hole_depth() = 8;     // M5 slot depth into the pressor's back edge (v6.6.4: was 10;
+                                          // the slot's inner end sits where the bottle curve is closest)
 function p_pressor_min_wall()   = 3;     // least wood around / beyond a screw hole (asserted)
+function p_pressor_end_trim()   = 1.5;   // v6.6.4: taken off EACH end (top/bottom edge) -- the printed
+                                          // prototype was 3 mm too long to enter the port
+function p_pressor_slot_ext()   = 10;    // v6.6.4: each M5 hole stretched this far EACH way along the
+                                          // edge into a pill slot, so the John's screws find it easily
 
 // ---- control cap (large stationary disk; see CLAUDE.md s7) ----------
 //  TB-03 resolution: repository 5 mm roof / 2 mm boss is authoritative;

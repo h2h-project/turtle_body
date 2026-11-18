@@ -1,0 +1,15 @@
+schema_version: 1
+name: Current only
+description: No wind, and a 0.3 m/s current from the north (water flowing south). With nothing in the sail, the turtle should drift south with the water.
+duration_s: 300
+dt_s: 0.5
+heading_deg: 0
+wind_from_deg: 180
+wind_speed_mps: 0
+current_from_deg: 0
+current_speed_mps: 0.3
+destination_bearing_deg: 0
+destination_distance_m: 50
+arrival_radius_m: 20
+servo_schedule:
+- {t_s: 0, servo_pos: 90}

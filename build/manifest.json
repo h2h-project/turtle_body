@@ -105,6 +105,22 @@
       ]
     },
     {
+      "id": "sand_ballast_bottom",
+      "src": "src/components/Sand_Ballast_Container_Bottom.scad",
+      "out": "scads_v1/Sand_Ballast_Container_Bottom.scad",
+      "renders": [
+        { "name": "print", "defines": { "part": "print" }, "export_stl": true, "stl": "Sand_Ballast_Container_Bottom" }
+      ]
+    },
+    {
+      "id": "sand_ballast_lid",
+      "src": "src/components/Sand_Ballast_Container_Lid.scad",
+      "out": "scads_v1/Sand_Ballast_Container_Lid.scad",
+      "renders": [
+        { "name": "print", "defines": { "part": "print" }, "export_stl": true, "stl": "Sand_Ballast_Container_Lid" }
+      ]
+    },
+    {
       "id": "full_turtle",
       "src": "src/Full_Turtle.scad",
       "out": "Full_Turtle_v1.scad",

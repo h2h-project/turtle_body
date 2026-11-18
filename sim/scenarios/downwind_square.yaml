@@ -1,0 +1,15 @@
+schema_version: 1
+name: Downwind, sail square
+description: A 4 m/s wind from the south pushes from behind. The sail is square across the hull (servo 90) to catch it. The turtle should run straight north, downwind.
+duration_s: 300
+dt_s: 0.5
+heading_deg: 0
+wind_from_deg: 180
+wind_speed_mps: 4
+current_from_deg: 0
+current_speed_mps: 0
+destination_bearing_deg: 0
+destination_distance_m: 50
+arrival_radius_m: 20
+servo_schedule:
+- {t_s: 0, servo_pos: 90}

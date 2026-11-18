@@ -90,3 +90,61 @@ def test_observation_filter_and_signed_residual(monkeypatch,tmp_path):
 def test_reference_density_is_not_mislabeled_as_measurement():
     c=template();c.density_kg_m3=1010;c.density_source='freshwater_reference'
     assert any('Density differs' in e for e in missing(c,inventory()))
+
+
+def sand_setup(tmp_path, monkeypatch):
+    """Analytic stand-in: 0.2 m cube box (centred on the origin) whose fill
+    space is the inner 0.18 m cube; one solid front fin carries the turtle."""
+    import turtle_sim.config as module
+    c=template();c.dimensions_checked=True;c.density_kg_m3=1000
+    for p in c.components:p.installed=False
+    trimesh.creation.box(extents=[.2,.2,.2]).export(tmp_path/'front_fin.stl')
+    fin=next(p for p in c.components if p.id=='front_fin')
+    fin.installed=True;fin.mass_kg=2;fin.displacement='solid';fin.geometry_confirmed=True
+    frame=next(p for p in c.components if p.id=='ballast_frame')
+    frame.installed=True;frame.mass_kg=1e-9;frame.com_m=(0,0,0);frame.displacement='contained'
+    frame.geometry_confirmed=True;frame.notes='test: inside the fin box'
+    trimesh.creation.box(extents=[.2,.2,.2]).export(tmp_path/'sand_ballast.stl')
+    trimesh.creation.box(extents=[.18,.18,.18]).export(tmp_path/'sand_ballast_fill.stl')
+    inv=inventory()
+    inv['sand_ballast']={'mesh':'sand_ballast.stl','fill_mesh':'sand_ballast_fill.stl',
+                         'envelope_volume_m3':.008,'fill_volume_m3':.18**3,
+                         'centroid_m':[0,0,0],'fill_centroid_m':[0,0,0],'bounds_m':[[-.1]*3,[.1]*3]}
+    monkeypatch.setattr(module,'GENERATED',tmp_path)
+    return module,c,inv
+
+
+def test_sand_ballast_states(tmp_path,monkeypatch):
+    module,c,inv=sand_setup(tmp_path,monkeypatch)
+    shell_kg=(.008-.18**3)*module.PLA_DENSITY_KG_M3
+    c.sand_ballast.state='none'
+    assert build_model(c,inv).mass==pytest.approx(2,abs=1e-6)
+    c.sand_ballast.state='empty'
+    assert build_model(c,inv).mass==pytest.approx(2+shell_kg,abs=1e-6)
+    c.sand_ballast.box_mass_kg=.05
+    assert build_model(c,inv).mass==pytest.approx(2.05,abs=1e-6)
+    # half full: 0.375 kg settles into the lower half of the fill space
+    c.sand_ballast.state='sand';c.sand_ballast.fill_percent=50
+    loads=module.sand_ballast_loads(c,inv)
+    sand_kg,sand_c=loads['loads'][1]
+    assert sand_kg==pytest.approx(.375)
+    assert sand_c[2]==pytest.approx(-.09/2,abs=1e-4)
+    assert loads['summary']['total_kg']==pytest.approx(.425)
+    # flooded: water fills the upper half too
+    c.sand_ballast.floods=True
+    loads=module.sand_ballast_loads(c,inv)
+    water_kg,water_c=loads['loads'][2]
+    assert water_kg==pytest.approx(.18**3/2*1000,rel=1e-3)
+    assert water_c[2]==pytest.approx(.09/2,abs=1e-4)
+
+
+def test_sand_ballast_needs_export_and_frame(tmp_path,monkeypatch):
+    module,c,inv=sand_setup(tmp_path,monkeypatch)
+    c.sand_ballast.state='empty'
+    assert not [e for e in missing(c,inv) if 'Sand ballast' in e]
+    del inv['sand_ballast']
+    assert any('export CAD again' in e for e in missing(c,inv))
+    next(p for p in c.components if p.id=='ballast_frame').installed=False
+    assert any('ballast frame' in e for e in missing(c,inv))
+    with pytest.raises(ValidationError):
+        Configuration.model_validate({**c.model_dump(),'sand_ballast':{'state':'sand','fill_percent':120}})

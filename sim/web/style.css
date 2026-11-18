@@ -46,6 +46,12 @@
 :root {
   --font-body: "Mulish", "Helvetica Neue", Arial, sans-serif;
   --font-heading: "Aleo", Georgia, "Times New Roman", serif;
+  /* Main accent: hopeturtles.org fuchsia. --accent is deep enough for white
+     button text (about 5:1); --accent-bright is the site's #ff00ff, used for
+     hover, the spinner and highlights. */
+  --accent: #c000c0;
+  --accent-bright: #ff00ff;
+  --accent-soft: #fbe3fb;
   font-family: var(--font-body);
   color: #173d3c;
   background: #eef2ed;
@@ -106,9 +112,24 @@ button,
   display: inline-block;
 }
 .primary {
-  background: #225d49;
+  background: var(--accent);
   color: #fff;
-  border-color: #225d49;
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.primary:hover:not(:disabled) {
+  background: var(--accent-bright);
+  border-color: var(--accent-bright);
+  filter: none;
+}
+input[type="range"],
+input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 button:disabled {
   opacity: 0.45;
@@ -122,6 +143,45 @@ button:hover {
   background: #dce9df;
   font-size: 12px;
   min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+/* Shown while an export, calculation or sailing run is in progress. */
+.spinner {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2.5px solid var(--accent-soft);
+  border-top-color: var(--accent-bright);
+  border-right-color: var(--accent);
+  animation: spin 0.8s linear infinite;
+}
+.donemark {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+}
+.donemark svg {
+  width: 16px;
+  height: 16px;
+}
+.donemark circle {
+  fill: #2e9a4e;
+}
+.donemark path {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 #status.error {
   background: #f5ddd0;
@@ -173,7 +233,7 @@ main {
 }
 .readouts {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   margin: 12px 0;
   gap: 8px;
 }
@@ -247,7 +307,7 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  outline: 2px solid #78ab96;
+  outline: 2px solid var(--accent);
 }
 .grid2 {
   display: grid;
@@ -280,7 +340,13 @@ textarea:focus {
 }
 details {
   border-top: 1px solid #dde5da;
-  padding: 12px 0;
+  padding: 7px 8px;
+  border-radius: 4px;
+}
+/* An open component panel gets a very light grey background. */
+details[open] {
+  background: #f1f3f1;
+  padding-bottom: 12px;
 }
 summary {
   cursor: pointer;
@@ -301,12 +367,27 @@ summary .mass {
 details > div {
   padding: 14px 0 0 22px;
 }
+/* Chevron: down = closed (opens downward), up = open. */
 details summary:before {
-  content: "+";
-  font-size: 15px;
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin: 0 4px 3px 2px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 0.15s;
 }
 details[open] summary:before {
-  content: "−";
+  transform: rotate(-135deg);
+  margin-bottom: -3px;
+}
+summary {
+  list-style: none;
+}
+summary::-webkit-details-marker {
+  display: none;
 }
 input[type="file"] {
   max-width: 230px;
@@ -316,6 +397,22 @@ input[type="file"] {
 }
 .filebutton {
   margin: 0;
+}
+h3.subhead {
+  margin: 0 0 8px;
+}
+label.sandfill input[type="range"] {
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 6px 0 2px;
+}
+#sandballast .readout {
+  display: block;
+  font-size: 12px;
+  color: #173d3c;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 8px;
 }
 .trial,
 .payload {
@@ -480,7 +577,7 @@ input.invalid {
 /* Unsaved changes: the header Save button flashes until saved. */
 #save.unsaved {
   animation: savepulse 1.2s ease-in-out infinite;
-  border-color: #c08a1e;
+  border-color: #2e9a4e;
   font-weight: 600;
 }
 @keyframes savepulse {
@@ -489,15 +586,49 @@ input.invalid {
     background: #fffdf6;
   }
   50% {
-    background: #f4c95d;
+    background: #8fd6a4;
   }
 }
 @media (prefers-reduced-motion: reduce) {
   #save.unsaved {
     animation: none;
-    background: #f4c95d;
+    background: #8fd6a4;
+  }
+  .spinner {
+    animation-duration: 2.4s;
   }
 }
+/* hopeturtles.org ASCII turtle, left of the title. */
+.brand {
+  display: flex;
+  align-items: flex-start; /* logo top = brand text top; feet on the baseline */
+  gap: 18px;
+}
+.brand-ascii {
+  font-family: "Fira Code", "DejaVu Sans Mono", "Courier New", monospace;
+  /* JS sets font-size so the 5 lines match #brand_text's height. */
+  font-size: 9px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #225d49; /* green, as on hopeturtles.org */
+  margin: 0;
+  white-space: pre;
+  text-decoration: none;
+}
+a.brand-link {
+  margin: 0;
+  text-decoration: none;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 /* Group header: title left, picture of the group on the right. */
 summary .flag {
   margin-left: auto;
@@ -510,8 +641,8 @@ summary .flag[hidden] {
 }
 summary .thumb {
   margin-left: auto;
-  width: 132px;
-  height: 88px;
+  width: 150px;
+  height: 60px;
   flex: none;
   border-radius: 5px;
   background: #e6eee7;
@@ -536,39 +667,39 @@ summary .flag:not([hidden]) + .thumb {
 }
 @media (max-width: 550px) {
   summary .thumb {
-    width: 96px;
-    height: 64px;
+    width: 110px;
+    height: 44px;
   }
 }
 /* Viewport legend for the solved centre-of-mass / buoyancy markers. */
+/* Compact: two labelled dots; the explanation is a hover/focus tooltip. */
 .legend {
   position: absolute;
   right: 12px;
   bottom: 12px;
   z-index: 1;
-  max-width: 300px;
   display: grid;
-  gap: 5px;
-  padding: 10px 12px;
-  background: rgba(251, 252, 247, 0.92);
-  border: 1px solid #c3d5cc;
-  border-radius: 6px;
+  justify-items: end;
+  gap: 4px;
   font-size: 11px;
-  line-height: 1.4;
 }
 .legend[hidden] {
   display: none;
 }
-.legend span {
+.legend .key {
+  position: relative;
   display: flex;
-  gap: 7px;
-  align-items: flex-start;
+  gap: 6px;
+  align-items: center;
+  padding: 3px 8px;
+  background: rgba(251, 252, 247, 0.85);
+  border-radius: 10px;
+  cursor: help;
 }
 .legend .dot {
   flex: none;
-  width: 10px;
-  height: 10px;
-  margin-top: 2px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
 }
 .legend .dot.mass {
@@ -577,11 +708,223 @@ summary .flag:not([hidden]) + .thumb {
 .legend .dot.buoy {
   background: #2252ba;
 }
-@media (max-width: 550px) {
-  .legend {
-    left: 12px;
-    right: 12px;
-    bottom: 56px;
-    max-width: none;
+.legend .tip {
+  display: none;
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  width: 240px;
+  padding: 8px 10px;
+  background: #173d3c;
+  color: #fbfcf7;
+  border-radius: 5px;
+  line-height: 1.45;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+.legend .key:hover .tip,
+.legend .key:focus .tip {
+  display: block;
+}
+/* Stage 3 sailing panel: overhead track (north up) and time plots. */
+#track {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #dbe9ec;
+  border: 1px solid #c6d5c9;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+label.slider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+label.slider input {
+  flex: 1;
+  padding: 0;
+}
+#sailreadout {
+  flex: 2;
+  font-variant-numeric: tabular-nums;
+  color: #173d3c;
+}
+#sailplots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+#sailplots figure {
+  margin: 0;
+}
+#sailplots figcaption {
+  font-size: 11px;
+  color: #526c62;
+}
+#sailplots svg {
+  width: 100%;
+  height: auto;
+  background: #f1f5ef;
+  border-radius: 4px;
+}
+ul.warnings {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: #7a5a1e;
+}
+@media (max-width: 700px) {
+  #sailplots {
+    grid-template-columns: 1fr;
+  }
+}
+/* Compass dials for the sailing scenario. */
+.knobs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.knobcard {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 6px;
+  padding: 10px 8px;
+  background: #f6f9f3;
+  border: 1px solid #dbe5dc;
+  border-radius: 6px;
+  text-align: center;
+}
+.knobtitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: #214c40;
+}
+.knob {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+.knob svg {
+  width: 112px;
+  height: 112px;
+  cursor: grab;
+  touch-action: none;
+  border-radius: 50%;
+}
+.knob svg:active {
+  cursor: grabbing;
+}
+.knob svg:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.knobvalue {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: #173d3c;
+}
+.knobcard small {
+  font-size: 10px;
+  line-height: 1.4;
+  color: #617c72;
+}
+label.mini {
+  margin: 0;
+  width: 100%;
+  font-size: 10px;
+}
+label.mini input {
+  padding: 5px 7px;
+  text-align: center;
+}
+.destsummary {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border-radius: 5px;
+  background: #f6ead0;
+  color: #6b4a0c;
+  font-size: 12px;
+}
+.destsummary.arrived {
+  background: #dcefdf;
+  color: #1f5a32;
+}
+/* Result notice fills the row; the Run button sits at its right. */
+.runrow {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  margin: 14px 0 10px;
+}
+.runrow .destsummary {
+  flex: 1;
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+.runrow #sailrun {
+  flex: none;
+  align-self: center;
+  padding: 11px 18px;
+  font-size: 13px;
+}
+.destsummary.idle {
+  background: #edf2ec;
+  color: #4d6f73;
+}
+@media (max-width: 600px) {
+  .runrow {
+    flex-direction: column;
+  }
+  .runrow #sailrun {
+    align-self: flex-end;
+  }
+}
+@media (max-width: 900px) {
+  .knobs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.knobcard.disabled .knob,
+.knobcard.disabled .knobtitle {
+  opacity: 0.35;
+}
+.knobcard.disabled .knob svg {
+  cursor: not-allowed;
+}
+.knobcard .check {
+  font-size: 12px;
+  text-align: left;
+  margin-top: 6px;
+}
+
+/* Waterline legend swatch: a short fuchsia bar like the band in the view. */
+.legend .dot.wl {
+  background: #ff00ff;
+  border-radius: 2px;
+  height: 4px;
+}
+/* A waterline beyond the bottle radius at that fin. */
+.readouts .submerged strong,
+.readouts .submerged span {
+  color: #c62828;
+}
+#centre[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Explanation line sits at the bottom of each readout panel. */
+.readouts > div {
+  grid-template-rows: auto auto 1fr;
+}
+.readouts > div > span {
+  align-self: end;
+}
+@media (max-width: 700px) {
+  .readouts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

@@ -39,7 +39,9 @@ function pr_r()         = p_bottle_d() / 2;
 function pr_gap()       = eco_port_gap();                         // 12: John face -> bottle
 function pr_core_w()    = pr_gap() - p_pressor_travel();          // 11: back edge -> bottle, on the centreline
 function pr_width()     = pr_core_w() + p_pressor_wrap();         // 32: back edge -> inner edge
-function pr_height()    = p_port_height() - p_fit_clearance();    // 83.8: slides between the Long Johns
+function pr_height()    = p_port_height() - p_fit_clearance()
+                          - 2 * p_pressor_end_trim();             // 80.8: slides between the Long Johns
+                                                                  // (v6.6.4: 83.8 printed 3 mm too long)
 function pr_axis_x()    = pr_core_w() + pr_r();                   // 53: back edge -> bottle axis
 function pr_arc_half()  = let(a = pr_r() - p_pressor_wrap())
                           sqrt(pr_r() * pr_r() - a * a);          // 36.4: arc ends at +-Y
@@ -47,6 +49,12 @@ function pr_screw_ys()  = [-p_eco_screw_pair_offset(), p_eco_screw_pair_offset()
 // wood along a screw line, back edge -> bottle surface (the bottle has curved away off-centre)
 function pr_wood_at_screw() = let(v = p_eco_screw_pair_offset())
     pr_axis_x() - sqrt(pr_r() * pr_r() - v * v);                  // 15.05
+// pill slot along the edge (v6.6.4): screw line +- p_pressor_slot_ext()
+function pr_slot_inner_y() = p_eco_screw_pair_offset() - p_pressor_slot_ext() - p_pressor_hole_d() / 2; // 5.35
+function pr_slot_outer_y() = p_eco_screw_pair_offset() + p_pressor_slot_ext() + p_pressor_hole_d() / 2; // 30.65
+// wood behind the slot at its inner end -- the thinnest point (bottle closest)
+function pr_wood_at_slot() = let(v = pr_slot_inner_y())
+    pr_axis_x() - sqrt(pr_r() * pr_r() - v * v);                  // 11.34 at Ø84
 // how far the cap-screw head stands off the John's outer face when pressed
 function pr_head_standoff() = p_m5_bolt_len() - pr_t() - p_pressor_travel()
                               - p_pressor_hole_depth();            // 7
@@ -64,8 +72,12 @@ module pressor_assert_valid() {
            "Pressor: M5 pair sits outside the arc -- the screw lines miss the bottle contact.");
     assert(pr_t() - p_pressor_hole_d() >= 2 * p_pressor_min_wall(),
            "Pressor: board too thin around the M5 holes.");
-    assert(pr_wood_at_screw() - p_pressor_hole_depth() >= p_pressor_min_wall(),
-           "Pressor: M5 hole too deep -- it would break through toward the bottle.");
+    assert(pr_wood_at_slot() - p_pressor_hole_depth() >= p_pressor_min_wall(),
+           "Pressor: M5 slot too deep -- its inner end would break through toward the bottle.");
+    assert(pr_slot_inner_y() > 0,
+           "Pressor: the two M5 slots would merge across the centreline.");
+    assert(pr_slot_outer_y() <= pr_height() / 2 - p_pressor_min_wall(),
+           "Pressor: M5 slot runs too close to the top/bottom edge.");
     assert(pr_head_standoff() >= 0,
            "Pressor: M5 screw too short to reach the hole depth through the John.");
     assert(pr_width() <= p_fin_board_w(),
@@ -80,16 +92,20 @@ module pressor_2d(fn = 128) {
     }
 }
 
-// One pressor, board thickness on Z = 0..t, with the two M5 bite holes
-// drilled into the back edge at mid-thickness.
+// One pressor, board thickness on Z = 0..t, with the two M5 openings cut
+// into the back edge at mid-thickness. v6.6.4: each opening is a pill slot,
+// the Ø5.3 hole stretched p_pressor_slot_ext() each way along the edge (Y),
+// so the John's screws locate without exact alignment.
 module pressor(fn = 128, colored = true) {
     pressor_assert_valid();
+    e = p_pressor_slot_ext();
     wood_color(pr_yellow(), colored)
         difference() {
             linear_extrude(height = pr_t()) pressor_2d(fn);
             for (y = pr_screw_ys())
-                translate([-0.01, y, pr_t() / 2]) rotate([0, 90, 0])
-                    cylinder(d = p_pressor_hole_d(), h = p_pressor_hole_depth() + 0.01, $fn = 32);
+                hull() for (dy = [-e, e])
+                    translate([-0.01, y + dy, pr_t() / 2]) rotate([0, 90, 0])
+                        cylinder(d = p_pressor_hole_d(), h = p_pressor_hole_depth() + 0.01, $fn = 32);
         }
 }
 
@@ -115,6 +131,8 @@ module pressor_echo() {
     echo(str("PRESSOR: ", pr_width(), " x ", pr_height(), " x ", pr_t(),
              " mm | centreline wood ", pr_core_w(), " | arc +-", pr_arc_half(),
              " | wood on screw line ", pr_wood_at_screw(),
-             " | M5 hole d/depth ", p_pressor_hole_d(), "/", p_pressor_hole_depth(),
+             " | M5 slot d/depth ", p_pressor_hole_d(), "/", p_pressor_hole_depth(),
+             " y ", pr_slot_inner_y(), "..", pr_slot_outer_y(),
+             " | wood behind slot ", pr_wood_at_slot(),
              " | head standoff ", pr_head_standoff()));
 }

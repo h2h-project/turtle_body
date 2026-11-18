@@ -4,7 +4,7 @@
  or full-turtle assemblies (they still show acorn nuts).
  A 12 mm board block in the port gap between a Little John and the bottle,
  its inner edge cut concave to the bottle radius. The John's two M5 cap
- screws drive into two 5.3 mm holes in its back edge and push it onto the
+ screws drive into two 5.3 mm pill slots (+-10 mm along the edge, v6.6.4) in its back edge and push it onto the
  bottle as they are turned in (screws not modelled). Two are used per port; this file always
  outputs ONE (default part="pressor", already in the print pose). Print part="pressor"
  flat on its board face; the edge holes are horizontal bores. Two per port, one each side of the bottle (24 for six ports).

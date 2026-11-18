@@ -27,7 +27,15 @@ Calculates total mass, centre of mass, submerged volume, centre of buoyancy and 
 
 **Remaining:** compare the assembled turtle with float and tilt tests using the fin rulers (see *Buoyancy calibration datum*). Front and rear ruler readings alone do not establish roll. A logged MPU6050 pitch/roll reading taken during the same float test can supply it. It is used as a measurement, not an emulated sensor.
 
-## 3. Add sailing and turning
+## 3. Add sailing and turning — first version built (2026-11-17)
+
+**Status:** surge/sway/yaw on the fixed stage-2 float pose; flat-plate sails and
+fins; bluff drag and windage from CAD silhouettes; rate-limited servo with ~270°
+direct-drive travel; scenario files in `sim/scenarios/`; coefficients in
+`physics/hydrodynamics.yaml` (mostly placeholders); overhead track view in the
+workbench. Details and limits: `../sim/README.md`. Still open: ballast-fin lift,
+heel feedback, waves and gusts. The milestone below is met only in the sense of
+*plausible*. *Calibrated* waits for stage 4.
 
 Model apparent wind, sail forces, water resistance and passive fin forces. Apply these forces at their physical locations to calculate forward motion, sideways drift and turning.
 
