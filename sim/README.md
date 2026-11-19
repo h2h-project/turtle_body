@@ -23,8 +23,12 @@ virtual environment; the existing CAD build commands remain standard-library onl
    from `src/Full_Turtle.scad`. This can take several minutes. Only one export or
    solve runs at a time; the browser stays responsive.
 2. Follow [the measurement guide](../docs/buoyancy_measurements.md). Enter masses,
-   balance points, displacement status and water density; confirm geometry.
-3. Save measurements and calculate. Water appears only after a successful solve.
+   balance points, displacement status and water density; confirm geometry. These
+   forms live in the **Components & measurements** drawer: the gear at the right of
+   the status bar opens and closes it (Escape also closes it). A dot on the gear
+   means unsaved edits or missing measurements inside.
+3. Save measurements (top of the drawer) and calculate. Water appears only after a
+   successful solve.
 4. Record signed ruler observations under the exact configuration name. Compare
    independent validation trials with the predictions. No automatic parameter fit.
 
@@ -37,8 +41,15 @@ are coloured from display-only face tags the CAD export writes; physics is uncha
 The waterline cards always show the predicted reading; they turn red when it is
 beyond the bottle radius at that fin (bottle under water, or clear of it) and say
 when it is past the engraved scale. The export records the bottle diameter for this.
-Each waterline card shows one whole-millimetre reading at the middle of the fin
-(the mean of its port and starboard face rulers); positive = above bottle centre.
+Each waterline card shows one reading in centimetres to one decimal (e.g.
++2.9cm) at the middle of the fin (the mean of its port and starboard face rulers;
+the engraved rulers are in mm); positive = above bottle centre. Behind each
+number a small gauge draws the bottle side-on: the card is three bottle diameters
+tall, the grey lines at 1/3 and 2/3 are the bottle's bottom and top, the dotted
+line its centre, and light blue water rises to the predicted level. The Roll
+(seen from astern, port on the left) and Pitch (seen from starboard, bow on the
+right) cards draw the same three lines tilted by the solved angle about the
+turtle's middle, with level water at the mean of the front and rear readings.
 Positive roll raises port; positive mathematical pitch lowers the bow.
 
 Unknowns remain null in `physics/components.yaml`, the distributed input template.
@@ -124,7 +135,11 @@ sail schedule is the only control. The result is an overhead track (north up,
 green start, red end, amber destination ring; each turtle symbol is a circle with
 an arrow at the bow and a line for the sail), a time slider, a destination
 summary (arrived, or closest approach), and plots of speed, heading and sail
-angle. Scenario defaults: bow north, wind from the south, current from the north.
+angle. The overhead view sits beside the 3D view and is always shown: before a
+run it previews the dials (turtle in the middle, bow and starting sail, wind and
+current flowing in toward it); changing a dial after a run drops that run and
+returns to the preview. Each dial's explanation is a tooltip on its title.
+Scenario defaults: bow north, wind from the south, current from the north.
 Touching any dial or field switches the menu to **Custom**, which runs exactly
 what the dials show. The destination card sets the distance, the arrival circle
 (default 20 m) and, optionally, **End the trip when it arrives**
@@ -146,7 +161,11 @@ Model (`turtle_sim/core/sailing.py`, `core/sail_geometry.py`, `sailing_setup.py`
   damping. Each force acts at its own point.
 - Sail actuator: `servo_pos` 0–180 spans the ~270° travel (direct drive); 90 is
   the sail square across the hull (the CAD pose) until Wrangler W4 calibrates it;
-  rate-limited. Commands change forces, never the heading.
+  rate-limited. Commands change forces, never the heading. Launch with servo 90
+  (crossbar square across, mid-travel) so the sail can trim ±135° either way. The
+  sail dials' dot shows the way the sail faces (bow at 0°), so the ~90° dead zone is
+  drawn directly behind the bow. A flat sail turned 180° lies on the same line, so
+  the dead zone costs no sail setting.
 - Conventions: heading in compass degrees true; world x east, y north; heading,
   course over ground, speed over ground and speed through water are separate.
   Wind and current are both given as the direction they come **from**. A

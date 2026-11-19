@@ -498,14 +498,14 @@ Slots in the ballast extraction retain nominal stock widths; the rear fin's 0.2 
 | Feature | Default |
 | --- | ---: |
 | Bottle-base-to-board gap | 26 = `sb_bottle_gap()` = port height + 2t − port length. The ballast is inserted one port length into the port (`ballast_vertical_lift`). The full turtle asserts its placed gap equals this. (The 108 mm pre-insertion distance is **not** the gap.) |
-| Box L × W × H (closed) | 215 × 83 × 25.5: 50 past the bottle's fin-side edge to 60 past the board's back edge (Y = board width; 50 in v6.7.0); 0.5 clearance per side to the green slats; 0.5 total below the bottle |
-| End cuts (v6.7.1) | front (fin-side) **top** edge and back **bottom** edge cut at 45°, 17.5 mm each, leaving 8 mm vertical end faces (`sb_end_face_h()`). Both cuts stay in the overhangs: not under the bottle, not off the board. The lid carries the sloped front panel, and the rim band, groove, skirt and bead follow the top surface (depths measured perpendicular to it) |
-| Fin slot | 13 wide (t + 2 × 0.5), open at the fin-side end, root 1 mm past the fin's inner end (147 long). The arms are 35 wide and the closed bridge is 68 long |
+| Box L × W × H (closed) | 225 × 83 × 25.5: 60 past the bottle's fin-side edge to 60 past the board's back edge (Y = board width). Front and back overhangs are equal since v6.7.3 (front 50 before; back 50 in v6.7.0). 0.5 clearance per side to the green slats; 0.5 total below the bottle |
+| End cuts (v6.7.3) | **both** ends cut 45° upward from the floor (bottom edges), 17.5 mm each, leaving 8 mm vertical end faces (`sb_end_face_h()`). Both cuts stay in the overhangs. The top and the lid are flat. v6.7.1 cut the front **top** edge, which put a sloped panel on the lid; do not restore it (user decision: a flat lid prints and attaches more easily) |
+| Fin slot | 13 wide (t + 2 × 0.5), open at the fin-side end, root 1 mm past the fin's inner end (157 long). The arms are 35 wide and the closed bridge is 68 long |
 | Walls / floor / lid plate | 0.4 / 0.4 / 0.4 (`sb_wall_t()`, `sb_floor_t()`, `sb_lid_t()`) |
 | Click seal | tray rim band 1.2 thick × 5 tall, with a 45° support-free shoulder below it and a V groove 0.4 deep × 1.6 tall centred 2.5 below the top. The lid skirt is 0.8 thick with a 0.15 fit to the band and carries a V bead 0.4 high (0.25 interference) |
-| Sand space / plastic | 355 cm³ inside (mesh-measured, `sand_ballast_fill()`); PLA tray 17.7 + lid 10.2 cm³ (~35 g solid). Packed with wet sand (1.9–2.1 g/cm³) the closed box weighs ~0.71–0.78 kg in air |
+| Sand space / plastic | 372 cm³ inside (mesh-measured, `sand_ballast_fill()`); PLA tray 18.5 + lid 10.2 cm³ (~36 g solid). Packed with wet sand (1.9–2.1 g/cm³) the closed box weighs ~0.74–0.82 kg in air |
 
-Print the tray floor-down and the lid with its flat plate down (both `print` poses); the lid's front panel rises off the bed at 45°. Unverified: whether 0.4 mm single-line walls and floor/lid hold the sand load and the bottle's weight, whether the click engages and stays sealed, and whether real bottles leave the nominal 26 mm.
+Print the tray floor-down (its end cuts rise off the bed at 45°) and the flat lid plate-down (both `print` poses). Unverified: whether 0.4 mm single-line walls and floor/lid hold the sand load and the bottle's weight, whether the click engages and stays sealed, and whether real bottles leave the nominal 26 mm.
 
 ## 13. Ecojoiner-only output
 

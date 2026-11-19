@@ -28,23 +28,24 @@ use <ballast_fin.scad>
 
 // ---- physical inputs ----------------------------------------------------
 function sb_wall_t()          = 0.4;   // side walls (one 0.4 mm extrusion line)
-function sb_floor_t()         = 0.4;   // tray floor (perpendicular, also on the back chamfer)
-function sb_lid_t()           = 0.4;   // lid plate (perpendicular, also on the front chamfer)
-function sb_front_overhang()  = 50;    // past the bottle's fin-side edge
+function sb_floor_t()         = 0.4;   // tray floor (perpendicular, also on both end chamfers)
+function sb_lid_t()           = 0.4;   // lid plate (flat since v6.7.3)
+function sb_front_overhang()  = 60;    // past the bottle's fin-side edge; v6.7.3: was 50, now = back
 function sb_back_overhang()   = 60;    // past the board's back edge (Y = board width); v6.7.1: was 50
 function sb_side_clear()      = 0.5;   // per side, to each green core slat face
 function sb_fin_clear()       = 0.5;   // per side, slot wall to the yellow fin
 function sb_fin_end_clear()   = 1.0;   // slot root past the fin's inner end
 function sb_vert_clear()      = 0.5;   // total, box height below the bottle base
 
-// 45 deg end cuts (v6.7.1), in the turtle's cutting style: the front (open,
-// fin-side) end loses its TOP edge, the back (bridge) end its BOTTOM edge.
-// Each leaves a vertical end face sb_end_face_h() tall.
+// 45 deg end cuts, in the turtle's cutting style. Since v6.7.3 both ends lose
+// their BOTTOM edge (cut upward from the floor, like a sled), so the top and
+// the lid are flat. (v6.7.1 cut the front TOP edge, which put a sloped panel
+// on the lid.) Each leaves a vertical end face sb_end_face_h() tall.
 function sb_end_face_h()      = 8;
 
 // snap ("click") seal: a thickened rim band at the tray top with a V groove,
 // and a lid skirt that drops inside the band with a V bead. Depths are
-// measured perpendicular to the top surface, so they follow the front cut.
+// measured down from the flat top surface.
 function sb_rim_t()           = 1.2;   // rim band thickness (inward from the outer face)
 function sb_rim_h()           = 5.0;   // rim band depth, below the tray top
 function sb_skirt_t()         = 0.8;   // lid skirt thickness
@@ -86,6 +87,8 @@ module sb_assert_valid() {
            "sand ballast: end faces too short for lid, snap rim and floor.");
     assert(sb_front_chamfer() > 0 && sb_front_chamfer() <= sb_front_overhang(),
            "sand ballast: front cut would reach under the bottle.");
+    assert(sb_length() > sb_front_chamfer() + sb_back_chamfer(),
+           "sand ballast: end cuts meet -- no flat floor.");
     assert(sb_back_chamfer() > 0 && sb_back_chamfer() <= sb_back_overhang(),
            "sand ballast: back cut would lift the box off the board.");
     assert(sb_arm_w() > 2 * sb_rim_t() + 2 * (sb_skirt_fit() + sb_skirt_t()) + 2,
@@ -123,19 +126,19 @@ module sb_band_2d(a, b)
     }
 
 // ---- 2D side profiles (box frame, YZ: u = Y, v = Z) ----------------------
-// Region below the box's top surface (flat at sb_height(), cut 45 deg at the
-// front), shrunk d mm perpendicular to that surface. Open below / beyond.
+// Region below the box's flat top surface (Z = sb_height()), d mm below it.
+// Open below / beyond.
 function sb_big() = 1000;
 module sb_below_top_2d(d) {
-    B = sb_big(); H = sb_height(); c = sb_front_chamfer();
-    offset(delta = -d)
-        polygon([[-B, -B], [B, -B], [B, H], [c, H], [c - B, H - B]]);
+    B = sb_big(); H = sb_height();
+    translate([-B, -B]) square([2 * B, B + H - d]);
 }
-// Region above the floor (flat at Z = 0, cut 45 deg at the back), shrunk d.
+// Region above the floor (flat at Z = 0, cut 45 deg upward at both ends),
+// shrunk d mm perpendicular to the floor and the cuts.
 module sb_above_floor_2d(d) {
-    B = sb_big(); L = sb_length(); c = sb_back_chamfer();
+    B = sb_big(); L = sb_length(); cf = sb_front_chamfer(); cb = sb_back_chamfer();
     offset(delta = -d)
-        polygon([[-B, 0], [L - c, 0], [L - c + B, B], [-B, B]]);
+        polygon([[cf, 0], [L - cb, 0], [L - cb + B, B], [cf - B, B]]);
 }
 // Slab between perpendicular depths d1 < d2 below the top surface.
 module sb_top_slab_2d(d1, d2)
@@ -172,7 +175,7 @@ module sand_ballast_bottom() {
     difference() {
         intersection() {
             union() {
-                // thin shell: walls + floor (follows the back cut), open on top
+                // thin shell: walls + floor (follows both end cuts), open on top
                 difference() {
                     sb_xy() sb_outline_2d();
                     intersection() {
@@ -180,7 +183,7 @@ module sand_ballast_bottom() {
                         sb_yz() sb_above_floor_2d(sb_floor_t());
                     }
                 }
-                // rim band under the lid, following the front cut
+                // rim band under the lid
                 intersection() {
                     sb_xy() sb_band_2d(0, sb_rim_t());
                     sb_yz() sb_top_slab_2d(lt - 0.01, lt + sb_rim_h());
@@ -209,8 +212,8 @@ module sb_v_shoulder(d_top, n = 8) {
         }
 }
 
-// lid in its closed position: plate (flat + the 45 deg front panel) on top,
-// skirt hanging inside the rim band.
+// lid in its closed position: flat plate on top, skirt hanging inside the
+// rim band.
 module sand_ballast_lid() {
     sb_assert_valid();
     lt = sb_lid_t();
@@ -233,8 +236,8 @@ module sand_ballast_lid() {
 }
 
 // ---- print poses ---------------------------------------------------------
-// tray: floor on the bed (already). lid: flat plate on the bed, skirt up; the
-// front panel rises off the bed at 45 deg.
+// tray: floor on the bed (already); the end cuts rise off the bed at 45 deg.
+// lid: flat plate on the bed, skirt up.
 module sand_ballast_bottom_print() sand_ballast_bottom();
 module sand_ballast_lid_print()
     translate([0, 0, sb_height()]) mirror([0, 0, 1]) sand_ballast_lid();
@@ -273,5 +276,5 @@ module sand_ballast_echo()
          " | bottle gap = ", sb_bottle_gap(),
          " | fin slot w x len = ", sb_slot_w(), sb_slot_len(),
          " | arm w = ", sb_arm_w(),
-         " | front top / back bottom 45 deg cuts = ", sb_front_chamfer(), sb_back_chamfer(),
+         " | front / back bottom 45 deg cuts = ", sb_front_chamfer(), sb_back_chamfer(),
          " | end faces = ", sb_end_face_h());

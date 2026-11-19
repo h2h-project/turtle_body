@@ -140,7 +140,6 @@ button:hover {
 }
 #status {
   padding: 11px 30px;
-  background: #dce9df;
   font-size: 12px;
   min-height: 38px;
   display: flex;
@@ -183,6 +182,170 @@ button:hover {
     transform: rotate(360deg);
   }
 }
+/* While an export, calculation or render runs: a soft light band sweeps
+   continuously left to right across the bar. */
+#status {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  flex: 1;
+  background: transparent;
+}
+#status.working::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 45%;
+  z-index: -1;
+  background: linear-gradient(
+    90deg,
+    rgb(41 104 90 / 0),
+    rgb(41 104 90 / 0.13) 50%,
+    rgb(41 104 90 / 0)
+  );
+  animation: statussweep 2.2s linear infinite;
+}
+@keyframes statussweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(225%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #status.working::before {
+    animation-duration: 6s;
+  }
+}
+/* The status bar stays at the top while scrolling; the gear at its right
+   opens the components drawer. */
+.statusbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: stretch;
+  background: #dce9df;
+  border-bottom: 1px solid #cddbd2;
+}
+.statusbar:has(#status.error) {
+  background: #f5ddd0;
+}
+button.gear {
+  position: relative;
+  flex: none;
+  margin: 4px 22px 4px 8px;
+  padding: 6px;
+  width: 36px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #214c40;
+  display: grid;
+  place-items: center;
+}
+button.gear svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.3s;
+}
+button.gear:hover {
+  background: rgb(255 255 255 / 0.5);
+  border-color: #b8cec1;
+}
+button.gear[aria-expanded="true"] {
+  background: #fffdf6;
+  border-color: #b8cec1;
+  color: var(--accent);
+}
+button.gear[aria-expanded="true"] svg {
+  transform: rotate(60deg);
+}
+/* Dot on the gear: unsaved edits or missing measurements inside the drawer. */
+.gearflag {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-bright);
+  display: none;
+}
+button.gear.attention .gearflag {
+  display: block;
+}
+/* Components drawer: slides in from the right over the main content, 40% of
+   the screen wide, from the status bar down. */
+.drawer {
+  position: fixed;
+  right: 0;
+  top: var(--drawer-top, 0px);
+  bottom: 0;
+  width: 40vw;
+  min-width: min(420px, 100vw);
+  z-index: 25;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #eef3ec;
+  border-left: 1px solid #c6d5c9;
+  box-shadow: -14px 0 30px rgb(23 61 60 / 0.16);
+  padding: 0 18px 24px;
+  transform: translateX(105%);
+  visibility: hidden;
+  transition:
+    transform 0.28s ease,
+    visibility 0s linear 0.28s;
+}
+.drawer.open {
+  transform: none;
+  visibility: visible;
+  transition:
+    transform 0.28s ease,
+    visibility 0s;
+}
+.drawerhead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 -18px 14px;
+  padding: 12px 18px;
+  background: #eef3ec;
+  border-bottom: 1px solid #d0ddd2;
+}
+.drawerhead h2 {
+  margin: 0;
+  font-size: 16px;
+  flex: 1;
+}
+button.drawerclose {
+  font-size: 20px;
+  line-height: 1;
+  padding: 4px 10px;
+}
+.drawer > .panel,
+.drawer > #components > .panel {
+  margin-bottom: 14px;
+}
+@media (max-width: 700px) {
+  .drawer {
+    width: 100vw;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .drawer,
+  .drawer.open {
+    transition: none;
+  }
+}
 #status.error {
   background: #f5ddd0;
   color: #793a2e;
@@ -193,10 +356,12 @@ main {
   gap: 22px;
   padding: 22px 30px;
 }
-.visual {
-  position: sticky;
-  top: 15px;
+.visual,
+.sidecol {
   align-self: start;
+}
+.sidecol > .panel {
+  margin-top: 0;
 }
 #viewport {
   height: 440px;
@@ -438,15 +603,44 @@ label.sandfill input[type="range"] {
   gap: 12px;
   flex-wrap: wrap;
 }
+#graphs figure p {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #456555;
+}
+#graphs figure small {
+  display: block;
+}
+#eqchoice:not(:empty) {
+  margin: 14px 0 6px;
+}
+#graphs:not(:empty) + #eqchoice:empty + #results {
+  margin-top: 12px;
+}
 #graphs figure {
   margin: 10px 0 0;
   flex: 1;
-  min-width: 160px;
+  min-width: 260px;
 }
 #graphs svg {
   width: 100%;
-  height: 100px;
-  background: #eef3eb;
+  height: auto;
+  display: block;
+  background: #f7faf5;
+  margin-top: 6px;
+}
+#graphs > p {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #2f4f45;
+}
+#graphs figcaption {
+  font-size: 12px;
+  font-weight: 600;
+  color: #173d3c;
 }
 figcaption {
   font-size: 11px;
@@ -648,6 +842,10 @@ summary .thumb {
   background: #e6eee7;
   border: 1px solid #d6e1d7;
 }
+/* Open panel: the picture becomes a full square (a square render). */
+details[open] > summary .thumb {
+  height: 150px;
+}
 summary .flag:not([hidden]) + .thumb {
   margin-left: 10px;
 }
@@ -669,6 +867,9 @@ summary .flag:not([hidden]) + .thumb {
   summary .thumb {
     width: 110px;
     height: 44px;
+  }
+  details[open] > summary .thumb {
+    height: 110px;
   }
 }
 /* Viewport legend for the solved centre-of-mass / buoyancy markers. */
@@ -726,14 +927,38 @@ summary .flag:not([hidden]) + .thumb {
   display: block;
 }
 /* Stage 3 sailing panel: overhead track (north up) and time plots. */
+/* Same height as the 3D view beside it. */
+.trackview {
+  height: 440px;
+  background: #dbe9ec;
+  border: 1px solid #c6d5c9;
+  border-radius: 8px;
+  overflow: hidden;
+}
 #track {
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 3;
-  background: #dbe9ec;
-  border: 1px solid #c6d5c9;
+  height: 100%;
+}
+.sailtimebar {
+  margin: 12px 0;
+  padding: 12px 16px;
+  background: #fbfcf7;
+  border: 1px solid #d0ddd2;
   border-radius: 6px;
-  margin-bottom: 10px;
+  font-size: 12px;
+}
+.sailtimebar[hidden] {
+  display: none;
+}
+.sidecol > .trackview + .sailtimebar[hidden] + .panel,
+.sidecol > .sailtimebar:not([hidden]) + .panel {
+  margin-top: 12px;
+}
+@media (max-width: 1000px) {
+  .trackview {
+    height: 400px;
+  }
 }
 label.slider {
   display: flex;
@@ -797,9 +1022,43 @@ ul.warnings {
   text-align: center;
 }
 .knobtitle {
+  position: relative;
   font-size: 12px;
   font-weight: 600;
   color: #214c40;
+  cursor: help;
+  text-decoration: underline dotted #9fb5aa;
+  text-underline-offset: 3px;
+}
+.knobtitle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+/* The dial's explanation: a tooltip on hover/focus of its title. */
+.knobtip {
+  display: none;
+  position: absolute;
+  z-index: 20;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 220px;
+  padding: 7px 10px;
+  background: #173d3c;
+  color: #fbfcf7;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: left;
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+}
+.knobtitle:hover .knobtip,
+.knobtitle:focus .knobtip {
+  display: block;
 }
 .knob {
   display: grid;
@@ -927,4 +1186,87 @@ label.mini input {
   .readouts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* Waterline gauge behind the front/rear cards: the card is three bottle
+   diameters tall; grey lines at 1/3 and 2/3 = bottle bottom and top, dotted
+   line = bottle centre; light blue water rises to the predicted level. */
+.readouts .wlcard {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.readouts .wlcard > :not(.wlgauge) {
+  position: relative;
+  z-index: 1;
+}
+.wlgauge,
+.wlgauge i {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+.wlgauge {
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.wlgauge .line {
+  height: 0;
+}
+/* The lines sit in a wider box that turns about the card centre, so tilted
+   lines still reach both edges. */
+.wlgauge .tilt {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -30%;
+  right: -30%;
+  transform-origin: 50% 50%;
+  transition: transform 0.5s ease;
+}
+.wlgauge .view {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: #8a9d92;
+}
+.wlgauge .top {
+  top: 33.333%;
+  border-top: 1px solid #b3bfb7;
+}
+.wlgauge .bottom {
+  top: 66.667%;
+  border-top: 1px solid #b3bfb7;
+}
+.wlgauge .centre {
+  top: 50%;
+  border-top: 2px dotted #bcc6bf;
+}
+.wlgauge .water {
+  bottom: 0;
+  height: 0;
+  background: rgb(150 200 235 / 0.35);
+  border-top: 2px solid rgb(90 160 210 / 0.55);
+  transition: height 0.5s ease;
+}
+.wlgauge .water.dry {
+  border-top-color: transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wlgauge .water,
+  .wlgauge .tilt {
+    transition: none;
+  }
+}
+.readouts .wlgauge,
+.readouts .wlgauge .tilt {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  display: block;
 }

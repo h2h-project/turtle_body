@@ -234,4 +234,13 @@ def guide():
     return FileResponse(ROOT/'docs/buoyancy_measurements.md',media_type='text/plain')
 
 
-app.mount('/',StaticFiles(directory=ROOT/'sim/web',html=True),name='web')
+class WebFiles(StaticFiles):
+    """The UI files, revalidated on every load. Without this a browser can
+    heuristically cache an old style.css next to a new app.js after an update."""
+    async def get_response(self, path, scope):
+        response=await super().get_response(path, scope)
+        response.headers['Cache-Control']='no-cache'
+        return response
+
+
+app.mount('/',WebFiles(directory=ROOT/'sim/web',html=True),name='web')

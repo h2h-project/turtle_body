@@ -28,13 +28,31 @@
       <nav>
         <a href="/measurement-guide" target="_blank">Measurement guide ↗</a
         ><button id="export">Export CAD</button
-        ><button id="save">Save measurements</button
         ><button id="solve" class="primary">Calculate flotation</button>
       </nav>
     </header>
-    <div id="status" role="status">
-      <span class="spinner" aria-hidden="true"></span
-      ><span>Loading workbench…</span>
+    <div class="statusbar">
+      <div id="status" role="status">
+        <span class="spinner" aria-hidden="true"></span
+        ><span>Loading workbench…</span>
+      </div>
+      <button
+        id="drawertoggle"
+        class="gear"
+        aria-controls="drawer"
+        aria-expanded="false"
+        title="Components and measurements"
+      >
+        <!-- gear: Feather "settings" icon (MIT licence) -->
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+          />
+        </svg>
+        <span class="sr-only">Components and measurements</span>
+        <i class="gearflag" aria-hidden="true"></i>
+      </button>
     </div>
     <main>
       <section class="visual">
@@ -81,32 +99,81 @@
           </div>
         </div>
         <div class="readouts">
-          <div>
+          <div class="wlcard">
+            <div class="wlgauge" aria-hidden="true">
+              <i class="water"></i>
+              <div class="tilt">
+                <i class="line top"></i><i class="line centre"></i
+                ><i class="line bottom"></i>
+              </div>
+            </div>
             <small>Front waterline</small><strong id="front">—</strong
             ><span>from the bottle centre, middle of the fin</span>
           </div>
-          <div>
+          <div class="wlcard">
+            <div class="wlgauge" aria-hidden="true">
+              <i class="water"></i>
+              <div class="tilt">
+                <i class="line top"></i><i class="line centre"></i
+                ><i class="line bottom"></i>
+              </div>
+            </div>
             <small>Rear waterline</small><strong id="rear">—</strong
             ><span>from the bottle centre, middle of the fin</span>
           </div>
-          <div>
+          <div class="wlcard">
+            <div class="wlgauge" aria-hidden="true">
+              <i class="water"></i>
+              <div class="tilt">
+                <i class="line top"></i><i class="line centre"></i
+                ><i class="line bottom"></i>
+              </div>
+              <b class="view">from astern · port ◀</b>
+            </div>
             <small>Roll</small><strong id="roll">—</strong
             ><span>side-to-side tilt</span>
           </div>
-          <div>
+          <div class="wlcard">
+            <div class="wlgauge" aria-hidden="true">
+              <i class="water"></i>
+              <div class="tilt">
+                <i class="line top"></i><i class="line centre"></i
+                ><i class="line bottom"></i>
+              </div>
+              <b class="view">from starboard · bow ▶</b>
+            </div>
             <small>Pitch</small><strong id="pitch">—</strong
             ><span>bow-to-stern tilt</span>
           </div>
         </div>
         <section class="panel">
           <h2>Calculated equilibrium</h2>
+          <div id="graphs"></div>
+          <div id="eqchoice"></div>
           <div id="results">
             Supply the required measurements to calculate a resting waterline.
             The centre plane is a reference, not a predicted water surface.
           </div>
-          <div id="graphs"></div>
           <div id="comparisons"></div>
         </section>
+      </section>
+      <section class="sidecol">
+        <!-- Overhead sailing view, beside the 3D view and the same height.
+             Before a run it previews the dials: bow, sail, wind and current. -->
+        <div id="trackview" class="trackview">
+          <canvas
+            id="track"
+            aria-label="Overhead sailing view, north up"
+          ></canvas>
+        </div>
+        <div id="sailtimebar" class="sailtimebar" hidden>
+          <label class="slider"
+            >Time
+            <input id="sailtime" type="range" min="0" max="0" step="1" /><span
+              id="sailreadout"
+            ></span
+          ></label>
+        </div>
         <section class="panel" id="sailing">
           <div class="sectionhead">
             <h2>Sailing &amp; turning</h2>
@@ -132,15 +199,21 @@
           </p>
           <div class="knobs">
             <div class="knobcard">
-              <span class="knobtitle">Bow points at start</span>
-              <div class="knob" id="k_heading"></div>
-              <small
-                >Where the turtle faces at the start. It then turns
-                freely.</small
+              <span class="knobtitle" tabindex="0"
+                >Bow points at start<span class="knobtip" role="tooltip"
+                  >Where the turtle faces at the start. It then turns
+                  freely.</span
+                ></span
               >
+              <div class="knob" id="k_heading"></div>
             </div>
             <div class="knobcard">
-              <span class="knobtitle">Wind from</span>
+              <span class="knobtitle" tabindex="0"
+                >Wind from<span class="knobtip" role="tooltip"
+                  >Where the wind comes from, as in a weather report. 180 = from
+                  the south, blowing north.</span
+                ></span
+              >
               <div class="knob" id="k_wind"></div>
               <label class="mini"
                 >Speed · m/s<input
@@ -149,13 +222,14 @@
                   step="any"
                   min="0"
               /></label>
-              <small
-                >Where the wind comes from, as in a weather report. 180 = from
-                the south, blowing north.</small
-              >
             </div>
             <div class="knobcard">
-              <span class="knobtitle">Current from</span>
+              <span class="knobtitle" tabindex="0"
+                >Current from<span class="knobtip" role="tooltip"
+                  >Where the water comes from. 0 = from the north, flowing
+                  south.</span
+                ></span
+              >
               <div class="knob" id="k_current"></div>
               <label class="mini"
                 >Speed · m/s<input
@@ -164,10 +238,6 @@
                   step="any"
                   min="0"
               /></label>
-              <small
-                >Where the water comes from. 0 = from the north, flowing
-                south.</small
-              >
             </div>
             <!-- Destination dial: disabled for now (not needed for the current
                  scenario run-throughs). Restore this card and set
@@ -204,28 +274,45 @@
             <b>Sail and timing.</b> The sail is the turtle's only control. Set
             where it starts, and optionally one change partway through the trip.
             Sail angles are measured from the hull: 0° = square across (catches
-            wind from behind). The grey arc is beyond the servo's reach.
+            wind from behind). On the dial the purple line is the crossbar and
+            the dot shows the way the sail faces: straight at the bow when
+            square. The grey arc behind the bow is beyond the servo's reach.
           </p>
           <div class="knobs">
             <div class="knobcard">
-              <span class="knobtitle">Sail at start</span>
+              <span class="knobtitle" tabindex="0"
+                >Sail at start<span class="knobtip" role="tooltip"
+                  >Sail angle to the hull when the trip begins.</span
+                ></span
+              >
               <div class="knob" id="k_sail0"></div>
-              <small>Sail angle to the hull when the trip begins.</small>
             </div>
             <div class="knobcard">
-              <span class="knobtitle">Change sail after</span>
+              <span class="knobtitle" tabindex="0"
+                >Change sail after<span
+                  class="knobtip"
+                  role="tooltip"
+                  id="timer_hint"
+                  >Minutes into the trip. 0 = never.</span
+                ></span
+              >
               <div class="knob" id="k_timer"></div>
-              <small id="timer_hint">Minutes into the trip. 0 = never.</small>
             </div>
             <div class="knobcard">
-              <span class="knobtitle">Change sail to</span>
+              <span class="knobtitle" tabindex="0"
+                >Change sail to<span class="knobtip" role="tooltip"
+                  >The new sail angle from that time on.</span
+                ></span
+              >
               <div class="knob" id="k_sail1"></div>
-              <small>The new sail angle from that time on.</small>
             </div>
             <div class="knobcard">
-              <span class="knobtitle">Trip length</span>
+              <span class="knobtitle" tabindex="0"
+                >Trip length<span class="knobtip" role="tooltip"
+                  >How long to sail, up to 60 minutes.</span
+                ></span
+              >
               <div class="knob" id="k_duration"></div>
-              <small>How long to sail, up to 60 minutes.</small>
             </div>
           </div>
           <div class="runrow">
@@ -235,19 +322,25 @@
             <button id="sailrun" class="primary" disabled>Run scenario</button>
           </div>
           <div id="sailresult" hidden>
-            <canvas id="track" aria-label="Overhead track, north up"></canvas>
-            <label class="slider"
-              >Time
-              <input id="sailtime" type="range" min="0" max="0" step="1" /><span
-                id="sailreadout"
-              ></span
-            ></label>
             <div id="sailplots"></div>
             <ul id="sailwarnings" class="warnings"></ul>
           </div>
         </section>
       </section>
-      <aside>
+      <!-- Components and measurements: a drawer opened by the gear in the
+           status bar. It floats over the main content from the right. -->
+      <aside
+        id="drawer"
+        class="drawer"
+        aria-label="Components and measurements"
+      >
+        <div class="drawerhead">
+          <h2>Components &amp; measurements</h2>
+          <button id="save">Save measurements</button>
+          <button id="drawerclose" class="drawerclose" aria-label="Close">
+            ×
+          </button>
+        </div>
         <section class="panel lead">
           <div class="sectionhead">
             <h2>01 / Build & water</h2>

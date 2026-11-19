@@ -39,10 +39,15 @@ def main():
                     geometry=json.load(urllib.request.urlopen(url+'/api/geometry'))
                     assert geometry['ready'],'Run .venv/bin/python build/export_sim.py before this geometry/browser integration test'
                     page.goto(url)
-                    page.wait_for_selector('#components details',timeout=60000)
+                    page.wait_for_selector('#components details',state='attached',timeout=60000)
                     assert page.locator('#components details').count()==13
                     assert page.locator('#solve').is_disabled()
                     assert page.locator('#front').inner_text()=='—'
+                    # Measurements live in a drawer opened by the status-bar gear.
+                    assert page.locator('#drawer').is_hidden()
+                    page.locator('#drawertoggle').click()
+                    page.wait_for_function("document.querySelector('#drawer').classList.contains('open')")
+                    assert page.locator('#drawertoggle').get_attribute('aria-expanded')=='true'
                     page.locator('#name').fill('Browser trial A')
                     page.locator('#name').blur()
                     page.locator('#density_source').select_option('seawater_reference')
@@ -55,7 +60,8 @@ def main():
                     with page.expect_download() as d:page.locator('#download').click()
                     download=Path(td)/'download.yaml';d.value.save_as(download)
                     assert 'Browser trial A' in download.read_text()
-                    page.reload();page.wait_for_selector('#components details')
+                    page.reload();page.wait_for_selector('#components details',state='attached')
+                    page.locator('#drawertoggle').click()
                     assert page.locator('#name').input_value()=='Browser trial A'
                     assert page.locator('#density').input_value()=='1025'
                     page.locator('#addpayload').click()
@@ -80,7 +86,7 @@ def main():
                     page.wait_for_function("document.querySelector('#status').textContent.includes('Calculation complete')",timeout=60000)
                     assert page.locator('#graphs figure').count()==2
                     assert '4.000 kg' in page.locator('#results').inner_text()
-                    assert page.locator('#front').inner_text()=='absent'
+                    assert page.locator('#front').inner_text()=='—' and 'no ruler' in page.locator('#front').locator('..').inner_text()
                     # A later edit while a solve is running must discard its old result.
                     page.locator('#solve').click()
                     page.locator('#name').fill('Edited while solving');page.locator('#name').blur()
@@ -88,6 +94,9 @@ def main():
                     assert page.locator('#graphs figure').count()==0
                     # Sailing panel: scenarios load; the synthetic box has no sail unit,
                     # so the real worker must refuse with a clear message, not crash.
+                    page.keyboard.press('Escape')
+                    page.wait_for_function("getComputedStyle(document.querySelector('#drawer')).visibility==='hidden'")
+                    assert page.locator('#drawertoggle').get_attribute('aria-expanded')=='false'
                     assert page.locator('#scenario option').count()>=5
                     page.wait_for_function("!document.querySelector('#sailrun').disabled")
                     page.locator('#sailrun').click()
@@ -99,7 +108,7 @@ def main():
                     assert not errors,errors
                     assert not external,external
                     browser.close()
-                print('PASS: offline browser, measurement gating, edit/save/reload, YAML download/import, partial trials/loads, real worker solve, stale-result rejection, sailing refusal without a sail, responsive layout; no browser errors')
+                print('PASS: offline browser, components drawer, measurement gating, edit/save/reload, YAML download/import, partial trials/loads, real worker solve, stale-result rejection, sailing refusal without a sail, responsive layout; no browser errors')
             finally:
                 server.terminate()
                 try:server.wait(timeout=10)

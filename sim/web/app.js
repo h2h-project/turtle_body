@@ -63,6 +63,7 @@ function status(message, error = false, mode = "") {
     el.replaceChildren(icon, msg);
   } else el.replaceChildren(msg);
   el.classList.toggle("error", error);
+  el.classList.toggle("working", mode === "working" && !error);
 }
 // hopeturtles.org ASCII turtle (public/turtles-ascii-logo*.txt on the site).
 // Hover/focus animation copied from the site's views/partials/nav.ejs: cycle
@@ -208,6 +209,51 @@ function setDirty(dirty) {
   const b = $("save");
   b.classList.toggle("unsaved", dirty);
   b.title = dirty ? "You have unsaved changes" : "";
+  state.dirty = dirty;
+  gearAttention();
+}
+// The gear shows a dot when something inside the closed drawer needs you:
+// unsaved edits, or measurements still missing.
+function gearAttention() {
+  const g = $("drawertoggle");
+  const reasons = [
+    state.dirty && "unsaved changes",
+    state.notReady && "measurements missing",
+  ].filter(Boolean);
+  g.classList.toggle("attention", reasons.length > 0);
+  g.title =
+    "Components and measurements" +
+    (reasons.length ? ` (${reasons.join(", ")})` : "");
+}
+// Components drawer, opened and closed by the gear in the status bar.
+{
+  const drawer = $("drawer"),
+    gear = $("drawertoggle");
+  const place = () =>
+    drawer.style.setProperty(
+      "--drawer-top",
+      `${Math.max(0, document.querySelector(".statusbar").getBoundingClientRect().bottom)}px`,
+    );
+  const setOpen = (open) => {
+    place();
+    drawer.classList.toggle("open", open);
+    gear.setAttribute("aria-expanded", String(open));
+    if (open) drawer.focus({ preventScroll: true });
+  };
+  drawer.tabIndex = -1;
+  gear.onclick = () => setOpen(!drawer.classList.contains("open"));
+  $("drawerclose").onclick = () => {
+    setOpen(false);
+    gear.focus();
+  };
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && drawer.classList.contains("open")) {
+      setOpen(false);
+      gear.focus();
+    }
+  });
+  addEventListener("scroll", place, { passive: true });
+  addEventListener("resize", place);
 }
 function changed() {
   setDirty(true);
@@ -234,6 +280,8 @@ async function readiness() {
     );
     $("solve").disabled = state.busy || all.length > 0;
     $("sailrun").disabled = state.busy || all.length > 0;
+    state.notReady = all.length > 0;
+    gearAttention();
   } catch (e) {
     $("solve").disabled = true;
     $("sailrun").disabled = true;
@@ -258,12 +306,13 @@ function clearResult() {
   cb.visible = false;
   $("legend").hidden = true;
   for (const id of ["front", "rear", "roll", "pitch"]) $(id).textContent = "—";
+  for (const id of ["front", "rear", "roll", "pitch"])
+    setWaterGauge($(id).parentElement, null);
   $("results").textContent =
     "Measurements changed or no calculation yet. Calculate to show the current equilibrium.";
-  $("sailresult").hidden = true;
-  $("destsummary").textContent = "Set the dials, then run the scenario.";
-  $("destsummary").className = "destsummary idle";
+  dropSailRun();
   $("graphs").replaceChildren();
+  $("eqchoice").replaceChildren();
   $("comparisons").replaceChildren();
 }
 function renderForm() {
@@ -299,9 +348,12 @@ function renderForm() {
     if (state.thumbs[p.id]) {
       const img = document.createElement("img");
       img.className = "thumb";
-      img.src = state.thumbs[p.id];
+      const { wide, square } = state.thumbs[p.id];
+      img.src = wide;
       img.alt = groupLabel(p.id) + " highlighted on the turtle";
       s.append(img);
+      // Square picture while open, short strip while closed.
+      d.addEventListener("toggle", () => (img.src = d.open ? square : wide));
     }
     d.append(s);
     const b = document.createElement("div");
@@ -453,7 +505,9 @@ const SAND_DEFAULTS = {
 const PLA_DENSITY_KG_M3 = 1240;
 function sandBoxEstimateKg() {
   const g = state.geometry?.sand_ballast;
-  return g ? (g.envelope_volume_m3 - g.fill_volume_m3) * PLA_DENSITY_KG_M3 : null;
+  return g
+    ? (g.envelope_volume_m3 - g.fill_volume_m3) * PLA_DENSITY_KG_M3
+    : null;
 }
 function renderSandBallast() {
   const sb = (state.config.sand_ballast = {
@@ -1188,7 +1242,8 @@ function renderThumbnails() {
   // Wide and short, framed on the highlighted part (the rest of the turtle
   // stays faint behind it for context).
   const W = 150,
-    H = 60;
+    H = 60,
+    SQ = 150; // square version, shown while a panel is open
   let r;
   try {
     r = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -1238,17 +1293,174 @@ function renderThumbnails() {
       c.material = c === target ? hot : ghost;
       c.renderOrder = c === target ? 1 : 0;
     }
+    r.setSize(W, H);
+    cam.aspect = W / H;
+    cam.updateProjectionMatrix();
     r.render(sc, cam);
-    state.thumbs[target.userData.id] = r.domElement.toDataURL("image/png");
+    const wide = r.domElement.toDataURL("image/png");
+    r.setSize(SQ, SQ);
+    cam.aspect = 1;
+    cam.updateProjectionMatrix();
+    r.render(sc, cam);
+    state.thumbs[target.userData.id] = {
+      wide,
+      square: r.domElement.toDataURL("image/png"),
+    };
   }
   ghost.dispose();
   hot.dispose();
   r.dispose();
   r.forceContextLoss();
 }
+// One stability graph. x = extra tilt away from the resting pose, y = the
+// twist (moment) the water puts on the turtle there. Sim conventions: roll +
+// raises port, pitch + lowers the bow; a positive moment turns the same way.
+function stabilityFigure(curve, pose) {
+  const roll = curve.axis === "roll";
+  const words = roll
+    ? { plus: "port side up", minus: "port side down", verb: "rolls" }
+    : { plus: "bow down", minus: "bow up", verb: "pitches" };
+  const rest = roll ? pose.roll_deg : pose.pitch_deg;
+  const vals = curve.samples;
+  const limit = Math.max(...vals.map((s) => Math.abs(s.moment_nm)), 1e-6);
+  // Plot box inside a 340 x 230 viewBox.
+  const L = 64,
+    R = 326,
+    T = 24,
+    B = 176,
+    X0 = (L + R) / 2,
+    Y0 = (T + B) / 2;
+  const sx = (deg) => X0 + (deg / 5) * ((R - L) / 2);
+  const sy = (m) => Y0 - (m / (limit * 1.15)) * ((B - T) / 2);
+  const fmt = (m) => (Math.abs(m) >= 10 ? m.toFixed(0) : m.toPrecision(2));
+  const pts = vals.map((v) => `${sx(v.offset_deg)},${sy(v.moment_nm)}`);
+  const dots = vals
+    .map(
+      (v) =>
+        `<circle cx="${sx(v.offset_deg)}" cy="${sy(v.moment_nm)}" r="${v.offset_deg === 0 ? 4.5 : 2.6}" fill="${v.offset_deg === 0 ? "#c000c0" : "#315d4c"}"/>`,
+    )
+    .join("");
+  const t = (x, y, str, extra = "") =>
+    `<text x="${x}" y="${y}" font-size="10" fill="#456555" ${extra}>${str}</text>`;
+  const svg =
+    `<svg viewBox="0 0 340 230" role="img" aria-label="${curve.axis}: twist from the water versus extra tilt">` +
+    // push-back (green) and tip-over (red) quadrants
+    `<rect x="${L}" y="${T}" width="${X0 - L}" height="${Y0 - T}" fill="#dcefe0"/>` +
+    `<rect x="${X0}" y="${Y0}" width="${R - X0}" height="${B - Y0}" fill="#dcefe0"/>` +
+    `<rect x="${X0}" y="${T}" width="${R - X0}" height="${Y0 - T}" fill="#f6e4df"/>` +
+    `<rect x="${L}" y="${Y0}" width="${X0 - L}" height="${B - Y0}" fill="#f6e4df"/>` +
+    t(L + 5, Y0 - 6, "twists it back", 'fill="#2e7a4a" font-weight="600"') +
+    t(
+      R - 5,
+      Y0 + 14,
+      "twists it back",
+      'fill="#2e7a4a" font-weight="600" text-anchor="end"',
+    ) +
+    t(R - 5, T + 13, "tips it further", 'fill="#a0473a" text-anchor="end"') +
+    t(L + 5, B - 6, "tips it further", 'fill="#a0473a"') +
+    // axes
+    `<path d="M${L} ${Y0}H${R}M${X0} ${T}V${B}" stroke="#7f9a86" stroke-width="1"/>` +
+    `<rect x="${L}" y="${T}" width="${R - L}" height="${B - T}" fill="none" stroke="#b8c9bb"/>` +
+    // x ticks + title
+    [-5, 0, 5]
+      .map((d) =>
+        t(
+          sx(d),
+          B + 13,
+          d === 0 ? "0" : `${d > 0 ? "+" : "−"}5°`,
+          'text-anchor="middle"',
+        ),
+      )
+      .join("") +
+    t(L, B + 28, `◀ more ${words.minus}`) +
+    t(R, B + 28, `more ${words.plus} ▶`, 'text-anchor="end"') +
+    t(
+      X0,
+      B + 44,
+      `Extra ${curve.axis} away from the resting pose`,
+      'text-anchor="middle" font-weight="600"',
+    ) +
+    // y ticks + title
+    t(L - 5, sy(limit) + 3, `+${fmt(limit)}`, 'text-anchor="end"') +
+    t(L - 5, Y0 + 3, "0", 'text-anchor="end"') +
+    t(L - 5, sy(-limit) + 3, `−${fmt(limit)}`, 'text-anchor="end"') +
+    `<path d="M${L - 3} ${sy(limit)}h3M${L - 3} ${sy(-limit)}h3" stroke="#7f9a86"/>` +
+    t(L - 5, T - 8, "N·m", 'text-anchor="end"') +
+    t(
+      14,
+      Y0,
+      `Twist from the water`,
+      `text-anchor="middle" font-weight="600" transform="rotate(-90 14 ${Y0})"`,
+    ) +
+    t(
+      28,
+      (T + Y0) / 2,
+      `▲ ${words.plus}`,
+      `text-anchor="middle" transform="rotate(-90 28 ${(T + Y0) / 2})"`,
+    ) +
+    t(
+      28,
+      (Y0 + B) / 2,
+      `${words.minus} ▼`,
+      `text-anchor="middle" transform="rotate(-90 28 ${(Y0 + B) / 2})"`,
+    ) +
+    // the curve
+    `<polyline points="${pts.join(" ")}" stroke="#315d4c" fill="none" stroke-width="2"/>` +
+    dots +
+    `</svg>`;
+  const f = document.createElement("figure");
+  const verdict =
+    curve.classification === "restoring"
+      ? "self-righting"
+      : curve.classification === "overturning"
+        ? "tips over"
+        : "neutral";
+  f.append(
+    text(
+      "figcaption",
+      `${roll ? "Roll" : "Pitch"} (${roll ? "side to side" : "bow to stern"}) · ${verdict}`,
+    ),
+  );
+  f.insertAdjacentHTML("beforeend", svg);
+  // A worked example from the +5° sample, in everyday units:
+  // 1 N·m is about the twist of a 1 kg weight hung 10 cm off-centre.
+  const m5 = vals.find((v) => v.offset_deg === 5)?.moment_nm ?? 0;
+  const grams = Math.round(Math.abs(m5) / (9.81 * 0.1) / 0.01) * 10;
+  const turnsBack = m5 < 0;
+  const restTxt = `${rest > 0 ? "+" : ""}${rest.toFixed(1)}°`;
+  f.append(
+    text(
+      "p",
+      `The magenta dot is the resting pose (${curve.axis} ${restTxt}). Example: if a wave ${words.verb} it 5° more ${words.plus}, the water twists it ${turnsBack ? words.minus : words.plus} with ${Math.abs(m5).toPrecision(2)} N·m, about the twist of a ${grams} g weight hung 10 cm out from the centre. ${turnsBack ? `Let go and it ${words.verb} back to ${restTxt}.` : "Let go and it keeps going over."}`,
+    ),
+  );
+  return f;
+}
+// Waterline gauge behind a fin card. The card is three bottle diameters
+// tall: the grey lines at 1/3 and 2/3 are the bottle's bottom and top, the
+// dotted line the bottle centre (ruler zero). The light blue water rises from
+// the bottom to the predicted level. `diameters` = reading / bottle diameter
+// (null = no prediction, no water).
+// Roll/pitch cards also tilt the three lines by the angle (tiltDeg, CSS
+// clockwise); the water always stays level.
+function setWaterGauge(card, diameters, tiltDeg = 0) {
+  const water = card.querySelector(".wlgauge .water");
+  if (!water) return;
+  const tilt = card.querySelector(".wlgauge .tilt");
+  if (tilt)
+    tilt.style.transform = `rotate(${diameters == null ? 0 : tiltDeg}deg)`;
+  const pct =
+    diameters == null
+      ? 0
+      : Math.min(100, Math.max(0, 50 + (diameters / 3) * 100));
+  water.style.height = pct + "%";
+  water.classList.toggle("dry", diameters == null);
+}
 function showResult(result) {
   state.result = result;
   if (result.status !== "equilibrium") {
+    $("graphs").replaceChildren();
+    $("eqchoice").replaceChildren();
     $("results").textContent =
       result.message ??
       "Status: " +
@@ -1287,11 +1499,12 @@ function showResult(result) {
     part.position.fromArray(config.offset_m);
   }
   buildWaterline();
-  // Waterline per fin: one whole-mm number at the middle of the fin (the
+  // Waterline per fin: one number at the middle of the fin (the
   // mean of its port and starboard face rulers, which is exact because the
   // water plane is flat). Red when the water is beyond the bottle radius
   // there (bottle under water, or clear of it).
   const radiusMm = (state.geometry?.bottle_diameter_m ?? 0) * 500;
+  const finMm = {};
   for (const fin of ["front", "rear"]) {
     const rr = e.rulers.filter(
       (r) => r.id.startsWith(fin) && r.reading_mm != null,
@@ -1300,24 +1513,41 @@ function showResult(result) {
       note = card.querySelector("span");
     if (!rr.length) {
       $(fin).textContent = "—";
+      setWaterGauge(card, null);
       card.classList.remove("submerged");
       note.textContent = "no ruler on this fin";
       continue;
     }
     const mm = rr.reduce((a, r) => a + r.reading_mm, 0) / rr.length;
-    const shown = Math.round(mm);
-    $(fin).textContent = `${shown > 0 ? "+" : ""}${shown}mm`;
+    finMm[fin] = mm;
+    // Shown in centimetres to one decimal, e.g. "+2.9cm".
+    const cm = Math.round(mm) / 10;
+    $(fin).textContent = `${cm > 0 ? "+" : ""}${cm.toFixed(1)}cm`;
+    setWaterGauge(card, radiusMm > 0 ? mm / (2 * radiusMm) : null);
     const over = radiusMm > 0 && Math.abs(mm) > radiusMm;
     card.classList.toggle("submerged", over);
     note.textContent = over
       ? mm > 0
-        ? `above the bottle top (radius ${radiusMm.toFixed(0)}mm): bottle under water`
-        : `below the bottle bottom (radius ${radiusMm.toFixed(0)}mm): bottle clear of the water`
+        ? `above the bottle top (radius ${(radiusMm / 10).toFixed(1)}cm): bottle under water`
+        : `below the bottle bottom (radius ${(radiusMm / 10).toFixed(1)}cm): bottle clear of the water`
       : "from the bottle centre, middle of the fin";
     const [lo, hi] = state.geometry?.rulers?.find((g) => g.id === rr[0].id)
       ?.range_mm ?? [-Infinity, Infinity];
     if (mm < lo || mm > hi) note.textContent += " · beyond the engraved scale";
   }
+  // Roll/pitch gauges: the bottle lines tilt by the angle about the panel
+  // centre (the turtle's middle); the level water sits at the midpoint of the
+  // front and rear readings. Roll is seen from astern (port on the left), so
+  // + roll (port up) is a clockwise turn; pitch is seen from starboard (bow
+  // on the right), so + pitch (bow down) is clockwise too.
+  const mids = Object.values(finMm);
+  const midMm = mids.length
+    ? mids.reduce((a, v) => a + v, 0) / mids.length
+    : null;
+  const midDiameters =
+    midMm != null && radiusMm > 0 ? midMm / (2 * radiusMm) : null;
+  setWaterGauge($("roll").parentElement, midDiameters, e.roll_deg);
+  setWaterGauge($("pitch").parentElement, midDiameters, e.pitch_deg);
   // Roll + raises port; pitch + lowers the bow (the sim's conventions).
   const deg1 = (v) => `${v > 0 ? "+" : ""}${v.toFixed(1)}°`;
   $("roll").textContent = deg1(e.roll_deg);
@@ -1342,50 +1572,41 @@ function showResult(result) {
     ),
     text("p", result.search_note),
   );
+  // Middle: which balanced pose to inspect (stable ones are where the
+  // turtle settles; unstable ones are balance points it falls away from).
+  $("eqchoice").replaceChildren();
   if (result.equilibria.length > 1) {
-    $("results").append(
-      text(
-        "p",
-        `${result.equilibria.length} distinct equilibria found; all poses are retained in the saved result.`,
-      ),
-    );
-    select(
-      $("results"),
+    const chooser = select(
+      $("eqchoice"),
       "Inspect equilibrium",
       String(result.selected),
       result.equilibria.map((pose, i) => [
         String(i),
-        `${i + 1}: roll ${pose.roll_deg.toFixed(1)}°, pitch ${pose.pitch_deg.toFixed(1)}°`,
+        `${i + 1}: roll ${pose.roll_deg.toFixed(1)}°, pitch ${pose.pitch_deg.toFixed(1)}° · ${pose.stable ? "stable: it settles here" : "unstable: it tips away"}`,
       ]),
-      (v) => {
-        result.selected = Number(v);
-        showResult(result);
-      },
+      () => {},
     );
-    const chooser = $("results").querySelector("select");
     chooser.onchange = () => {
       result.selected = Number(chooser.value);
       showResult(result);
     };
+    $("results").append(
+      text(
+        "p",
+        `${result.equilibria.length} balanced poses found. Only a stable one (restoring in both roll and pitch) is a place the turtle comes to rest; an unstable one balances only in theory and tips off at the slightest nudge. All poses are kept in the saved result.`,
+      ),
+    );
   }
   for (const w of result.warnings) $("results").append(text("p", w));
   $("graphs").replaceChildren();
+  $("graphs").append(
+    text(
+      "p",
+      "If a wave tips the turtle a little away from its resting pose, how hard does the water twist it, and which way? Green zones: the water twists it back (good). Red zones: the water tips it further over.",
+    ),
+  );
   for (const curve of e.stability) {
-    const f = document.createElement("figure");
-    f.append(text("figcaption", curve.axis + " · " + curve.classification));
-    const vals = curve.samples,
-      limit = Math.max(...vals.map((s) => Math.abs(s.moment_nm)), 0.000001);
-    const points = vals
-      .map(
-        (s) => `${100 + s.offset_deg * 18},${50 - (s.moment_nm / limit) * 42}`,
-      )
-      .join(" ");
-    f.insertAdjacentHTML(
-      "beforeend",
-      `<svg viewBox="0 0 200 100" role="img" aria-label="Restoring moment versus angle"><path d="M10 50H190M100 5V95" stroke="#a5b8a4"/><polyline points="${points}" stroke="#315d4c" fill="none" stroke-width="2"/></svg>`,
-    );
-    f.append(text("small", `−5° to +5° · ±${limit.toPrecision(3)} N·m`));
-    $("graphs").append(f);
+    $("graphs").append(stabilityFigure(curve, e));
   }
   $("comparisons").replaceChildren();
   for (const comp of result.configuration.observations
@@ -1495,9 +1716,11 @@ function makeKnob(el, { label, kind, colour, min = 1, max = 60, onChange }) {
     r * Math.sin(bearing * deg),
     -r * Math.cos(bearing * deg),
   ];
-  // Value <-> dial bearing, per kind.
+  // Value <-> dial bearing, per kind. Sail: the handle marks the way the sail
+  // FACES (perpendicular to the crossbar), so square across (0°) points at the
+  // bow and the servo's dead zone sits directly behind it.
   const angleOf = (v) =>
-    kind === "sail" ? 90 - v : kind === "minutes" ? v * 6 : v;
+    kind === "sail" ? -v : kind === "minutes" ? v * 6 : v;
   const limits = () =>
     kind === "sail" ? sailLimits() : kind === "minutes" ? [min, max] : [0, 359];
   const clampValue = (v) => {
@@ -1508,7 +1731,7 @@ function makeKnob(el, { label, kind, colour, min = 1, max = 60, onChange }) {
   const fromBearing = (b, fine) => {
     if (kind === "sail") {
       const step = fine ? 1 : 5;
-      const a = ((90 - b + 540) % 360) - 180;
+      const a = ((-b + 540) % 360) - 180;
       const [lo, hi] = sailLimits();
       // In the unreachable arc, snap to the nearer end stop.
       const v =
@@ -1565,11 +1788,12 @@ function makeKnob(el, { label, kind, colour, min = 1, max = 60, onChange }) {
           ["45", 270],
         ])
       );
-    // Sail: greyed arc where the servo cannot reach.
+    // Sail: greyed arc where the servo cannot reach (behind the bow when
+    // servo mid-travel = square across).
     const [lo, hi] = sailLimits();
     return (
       ticks(24, 6) +
-      `<path d="${arc(90 - lo, 90 - hi + 360, 50)}" stroke="#c9d3cc" stroke-width="8" fill="none"/>` +
+      `<path d="${arc(-lo, -hi + 360, 50)}" stroke="#c9d3cc" stroke-width="8" fill="none"/>` +
       labels([["bow", 0, true]])
     );
   };
@@ -1776,6 +2000,7 @@ function scenarioToForm(sc) {
   knobs.duration.set(Math.round(sc.duration_s / 60));
   syncSailChange();
   $("sc_description").textContent = sc.description ?? "";
+  refreshTrack();
 }
 function formToScenario() {
   const custom = $("scenario").value === CUSTOM;
@@ -1847,6 +2072,7 @@ $("scenario").onchange = () => {
   const sc = sail.scenarios.find((s) => s.id === $("scenario").value);
   if (sc) scenarioToForm(sc);
   else markCustom();
+  dropSailRun();
 };
 function markCustom() {
   const sel = $("scenario");
@@ -1863,10 +2089,14 @@ function markCustom() {
 }
 // Any change to a dial or field (but not the scenario menu itself) = Custom.
 $("sailing").addEventListener("input", (e) => {
-  if (e.target.closest(".knobs")) markCustom();
+  if (!e.target.closest(".knobs")) return;
+  markCustom();
+  dropSailRun();
 });
 $("sailing").addEventListener("change", (e) => {
-  if (e.target.closest(".knobs")) markCustom();
+  if (!e.target.closest(".knobs")) return;
+  markCustom();
+  dropSailRun();
 });
 $("sailrun").onclick = async () => {
   let scenario;
@@ -1919,6 +2149,7 @@ function showSail(run) {
   sail.run = run;
   const n = run.samples.t_s.length;
   $("sailresult").hidden = false;
+  $("sailtimebar").hidden = false;
   $("sailtime").max = n - 1;
   $("sailtime").value = n - 1;
   const m = run.model;
@@ -1958,10 +2189,8 @@ function showSail(run) {
   updateSail();
 }
 $("sailtime").oninput = () => updateSail();
-window.addEventListener(
-  "resize",
-  () => sail.run && !$("sailresult").hidden && updateSail(),
-);
+window.addEventListener("resize", () => refreshTrack());
+new ResizeObserver(() => refreshTrack()).observe($("track"));
 function updateSail() {
   const run = sail.run,
     s = run.samples,
@@ -2030,7 +2259,8 @@ function niceStep(span) {
   const p = 10 ** Math.floor(Math.log10(span));
   return [1, 2, 5, 10].map((m) => m * p).find((s) => span / s <= 6);
 }
-function drawTrack(run, k) {
+// Size the overhead canvas to its box (crisp on high-DPI screens).
+function trackCanvas() {
   const c = $("track"),
     dpr = window.devicePixelRatio || 1,
     W = c.clientWidth,
@@ -2039,6 +2269,213 @@ function drawTrack(run, k) {
   c.height = H * dpr;
   const g = c.getContext("2d");
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { g, W, H };
+}
+// A turtle seen from above: circle, the sail as a line through it, and an
+// arrowhead at the bow. At sail 0° the line spans port-starboard (heading −
+// 90°); + sail angle turns it counter-clockwise seen from above.
+function drawTurtleSprite(g, x, y, r, headingDeg, sailDeg, weight) {
+  const at = (b, d) => [x + d * Math.sin(b * deg), y - d * Math.cos(b * deg)];
+  const sb = headingDeg - 90 - sailDeg;
+  g.lineWidth = weight;
+  g.strokeStyle = "#173d3c";
+  g.fillStyle = "rgba(251,252,247,0.9)";
+  g.beginPath();
+  g.arc(x, y, r, 0, 2 * Math.PI);
+  g.fill();
+  g.stroke();
+  g.lineWidth = weight + 1;
+  g.beginPath();
+  g.moveTo(...at(sb + 180, 1.5 * r));
+  g.lineTo(...at(sb, 1.5 * r));
+  g.stroke();
+  g.fillStyle = "#173d3c";
+  g.beginPath();
+  g.moveTo(...at(headingDeg, 1.9 * r));
+  g.lineTo(...at(headingDeg - 28, 0.95 * r));
+  g.lineTo(...at(headingDeg + 28, 0.95 * r));
+  g.closePath();
+  g.fill();
+}
+function drawCompassRose(g, rx, ry) {
+  g.fillStyle = "rgba(251,252,247,0.85)";
+  g.strokeStyle = "#9fb5aa";
+  g.lineWidth = 1;
+  g.beginPath();
+  g.arc(rx, ry, 20, 0, 2 * Math.PI);
+  g.fill();
+  g.stroke();
+  g.fillStyle = "#c9473a";
+  g.beginPath();
+  g.moveTo(rx, ry - 15);
+  g.lineTo(rx - 4, ry);
+  g.lineTo(rx + 4, ry);
+  g.closePath();
+  g.fill();
+  g.fillStyle = "#9fb5aa";
+  g.beginPath();
+  g.moveTo(rx, ry + 15);
+  g.lineTo(rx - 4, ry);
+  g.lineTo(rx + 4, ry);
+  g.closePath();
+  g.fill();
+  g.font = "bold 10px Mulish, sans-serif";
+  g.textAlign = "center";
+  g.fillStyle = "#173d3c";
+  g.fillText("N", rx, ry - 23);
+  g.font = "9px Mulish, sans-serif";
+  g.fillStyle = "#4d6f73";
+  g.fillText("E", rx + 27, ry + 3);
+  g.fillText("S", rx, ry + 31);
+  g.fillText("W", rx - 27, ry + 3);
+  g.textAlign = "left";
+}
+// Short labelled arrow pointing the way the wind/current flows.
+function drawFlowArrow(g, x, y, bearing, colour, label) {
+  const b = bearing * deg,
+    dx = Math.sin(b),
+    dy = -Math.cos(b);
+  g.strokeStyle = g.fillStyle = colour;
+  g.lineWidth = 2;
+  g.beginPath();
+  g.moveTo(x - 16 * dx, y - 16 * dy);
+  g.lineTo(x + 16 * dx, y + 16 * dy);
+  g.stroke();
+  g.beginPath();
+  g.moveTo(x + 16 * dx, y + 16 * dy);
+  g.lineTo(x + 8 * dx - 5 * dy, y + 8 * dy + 5 * dx);
+  g.lineTo(x + 8 * dx + 5 * dy, y + 8 * dy - 5 * dx);
+  g.fill();
+  g.font = "11px Mulish, sans-serif";
+  g.fillText(label, x + 24, y + 4);
+}
+// A run that no longer matches the dials or measurements is dropped, and the
+// overhead view goes back to previewing the dials.
+function dropSailRun() {
+  sail.run = null;
+  $("sailresult").hidden = true;
+  $("sailtimebar").hidden = true;
+  $("destsummary").textContent = "Set the dials, then run the scenario.";
+  $("destsummary").className = "destsummary idle";
+  refreshTrack();
+}
+function refreshTrack() {
+  if (sail.run) updateSail();
+  else drawPreview();
+}
+// Before a run: the turtle in the middle, bow and sail from the dials, with
+// the wind and current arrows flowing in toward it.
+function drawPreview() {
+  if (!knobs?.heading) return;
+  const { g, W, H } = trackCanvas();
+  if (!W || !H) return;
+  const cx = W / 2,
+    cy = H / 2,
+    r = 24;
+  g.strokeStyle = "#cfe0e2";
+  g.lineWidth = 1;
+  for (let x = cx % 40; x < W; x += 40) {
+    g.beginPath();
+    g.moveTo(x, 0);
+    g.lineTo(x, H);
+    g.stroke();
+  }
+  for (let y = cy % 40; y < H; y += 40) {
+    g.beginPath();
+    g.moveTo(0, y);
+    g.lineTo(W, y);
+    g.stroke();
+  }
+  const speed = (id) => {
+    const v = Number($(id).value);
+    return Number.isFinite(v) ? v : 0;
+  };
+  const wind = { from: knobs.wind.value, v: speed("sc_wind_speed") },
+    cur = { from: knobs.current.value, v: speed("sc_cur_speed") };
+  const reach = Math.min(W, H) / 2 - 14;
+  // Big arrow from the upwind (up-current) side toward the turtle.
+  const inflow = (from, colour, side, tailFrac, label) => {
+    const b = from * deg,
+      ux = Math.sin(b),
+      uy = -Math.cos(b),
+      px = -uy * side,
+      py = ux * side;
+    const tail = [
+        cx + ux * reach * tailFrac + px,
+        cy + uy * reach * tailFrac + py,
+      ],
+      head = [cx + ux * r * 2.4 + px, cy + uy * r * 2.4 + py];
+    g.strokeStyle = g.fillStyle = colour;
+    g.globalAlpha = 0.85;
+    g.lineWidth = 4;
+    g.lineCap = "round";
+    g.beginPath();
+    g.moveTo(...tail);
+    g.lineTo(head[0] + ux * 10, head[1] + uy * 10);
+    g.stroke();
+    g.beginPath();
+    g.moveTo(...head);
+    g.lineTo(head[0] + ux * 16 - uy * 8, head[1] + uy * 16 + ux * 8);
+    g.lineTo(head[0] + ux * 16 + uy * 8, head[1] + uy * 16 - ux * 8);
+    g.closePath();
+    g.fill();
+    g.globalAlpha = 1;
+    g.lineCap = "butt";
+    g.font = "600 11px Mulish, sans-serif";
+    // Label just beyond the tail, kept inside the canvas and clear of the
+    // caption line at the bottom.
+    const half = g.measureText(label).width / 2 + 4;
+    let lx = tail[0] + ux * 14,
+      ly = tail[1] + uy * 14;
+    if (ly > H - 30 || ly < 14) {
+      // No room beyond the tail: beside it, on the arrow's outer side.
+      const out = px > 0 ? 1 : px < 0 ? -1 : 1;
+      lx = tail[0] + out * (half + 6);
+      ly = Math.min(H - 30, Math.max(14, tail[1] - uy * 10));
+    }
+    lx = Math.min(W - half, Math.max(half, lx));
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.fillText(label, lx, ly);
+    g.textAlign = "left";
+    g.textBaseline = "alphabetic";
+  };
+  // Side-by-side when wind and current come from about the same way.
+  const close = Math.abs(((wind.from - cur.from + 540) % 360) - 180) < 25;
+  if (wind.v > 0)
+    inflow(wind.from, "#2f5f8a", close && cur.v > 0 ? -12 : 0, 0.95, "wind");
+  if (cur.v > 0)
+    inflow(cur.from, "#2b7a6a", close && wind.v > 0 ? 12 : 0, 0.8, "current");
+  drawTurtleSprite(g, cx, cy, r, knobs.heading.value, knobs.sail0.value, 2.5);
+  drawCompassRose(g, W - 42, 32);
+  if (wind.v > 0)
+    drawFlowArrow(
+      g,
+      26,
+      26,
+      wind.from + 180,
+      "#2f5f8a",
+      `wind ${wind.v} m/s from ${wind.from}° (${compassName(wind.from)})`,
+    );
+  if (cur.v > 0)
+    drawFlowArrow(
+      g,
+      26,
+      62,
+      cur.from + 180,
+      "#2b7a6a",
+      `current ${cur.v} m/s from ${cur.from}° (${compassName(cur.from)})`,
+    );
+  g.font = "11px Mulish, sans-serif";
+  g.fillStyle = "#4d6f73";
+  g.fillText(
+    `Preview: bow ${knobs.heading.value}°, sail at start ${knobs.sail0.value > 0 ? "+" : ""}${knobs.sail0.value}°. Not run yet.`,
+    10,
+    H - 10,
+  );
+}
+function drawTrack(run, k) {
+  const { g, W, H } = trackCanvas();
   const s = run.samples,
     sc = run.scenario;
   const dest = run.destination;
@@ -2132,32 +2569,7 @@ function drawTrack(run, k) {
     g.fillText(`arrived ${clock(dest.arrival_t_s)}`, ax + 9, ay + 4);
     g.font = "11px Mulish, sans-serif";
   }
-  // A turtle: circle, the sail as a line through it, and an arrowhead at the bow.
-  // Sail line bearing: at sail 0° it spans port-starboard (heading − 90°);
-  // + sail angle turns it counter-clockwise seen from above.
-  const turtle = (x, y, r, headingDeg, sailDeg, weight) => {
-    const at = (b, d) => [x + d * Math.sin(b * deg), y - d * Math.cos(b * deg)];
-    const sb = headingDeg - 90 - sailDeg;
-    g.lineWidth = weight;
-    g.strokeStyle = "#173d3c";
-    g.fillStyle = "rgba(251,252,247,0.9)";
-    g.beginPath();
-    g.arc(x, y, r, 0, 2 * Math.PI);
-    g.fill();
-    g.stroke();
-    g.lineWidth = weight + 1;
-    g.beginPath();
-    g.moveTo(...at(sb + 180, 1.5 * r));
-    g.lineTo(...at(sb, 1.5 * r));
-    g.stroke();
-    g.fillStyle = "#173d3c";
-    g.beginPath();
-    g.moveTo(...at(headingDeg, 1.9 * r));
-    g.lineTo(...at(headingDeg - 28, 0.95 * r));
-    g.lineTo(...at(headingDeg + 28, 0.95 * r));
-    g.closePath();
-    g.fill();
-  };
+  const turtle = (...args) => drawTurtleSprite(g, ...args);
   const dot = (x, y, colour) => {
     g.fillStyle = colour;
     g.strokeStyle = "#ffffff";
@@ -2175,39 +2587,7 @@ function drawTrack(run, k) {
   dot(...P(s.x_m[n - 1], s.y_m[n - 1]), "#c9473a");
   // The turtle at the slider's time.
   turtle(...P(s.x_m[k], s.y_m[k]), 9, s.heading_deg[k], s.sail_deg[k], 2);
-  // Compass rose, top right.
-  const rx = W - 42,
-    ry = 32;
-  g.fillStyle = "rgba(251,252,247,0.85)";
-  g.strokeStyle = "#9fb5aa";
-  g.lineWidth = 1;
-  g.beginPath();
-  g.arc(rx, ry, 20, 0, 2 * Math.PI);
-  g.fill();
-  g.stroke();
-  g.fillStyle = "#c9473a";
-  g.beginPath();
-  g.moveTo(rx, ry - 15);
-  g.lineTo(rx - 4, ry);
-  g.lineTo(rx + 4, ry);
-  g.closePath();
-  g.fill();
-  g.fillStyle = "#9fb5aa";
-  g.beginPath();
-  g.moveTo(rx, ry + 15);
-  g.lineTo(rx - 4, ry);
-  g.lineTo(rx + 4, ry);
-  g.closePath();
-  g.fill();
-  g.font = "bold 10px Mulish, sans-serif";
-  g.textAlign = "center";
-  g.fillStyle = "#173d3c";
-  g.fillText("N", rx, ry - 23);
-  g.font = "9px Mulish, sans-serif";
-  g.fillStyle = "#4d6f73";
-  g.fillText("E", rx + 27, ry + 3);
-  g.fillText("S", rx, ry + 31);
-  g.fillText("W", rx - 27, ry + 3);
+  drawCompassRose(g, W - 42, 32);
   // Key, bottom right; wraps to a second row on narrow screens.
   g.font = "11px Mulish, sans-serif";
   g.textAlign = "right";
@@ -2239,24 +2619,7 @@ function drawTrack(run, k) {
   key("end", (x, y) => dot(x, y, "#c9473a"));
   key("start", (x, y) => dot(x, y, "#2e9a4e"));
   g.textAlign = "left";
-  // Wind and current arrows, pointing where they flow.
-  const arrow = (x, y, bearing, colour, label) => {
-    const b = bearing * deg,
-      dx = Math.sin(b),
-      dy = -Math.cos(b);
-    g.strokeStyle = g.fillStyle = colour;
-    g.lineWidth = 2;
-    g.beginPath();
-    g.moveTo(x - 16 * dx, y - 16 * dy);
-    g.lineTo(x + 16 * dx, y + 16 * dy);
-    g.stroke();
-    g.beginPath();
-    g.moveTo(x + 16 * dx, y + 16 * dy);
-    g.lineTo(x + 8 * dx - 5 * dy, y + 8 * dy + 5 * dx);
-    g.lineTo(x + 8 * dx + 5 * dy, y + 8 * dy - 5 * dx);
-    g.fill();
-    g.fillText(label, x + 24, y + 4);
-  };
+  const arrow = (...args) => drawFlowArrow(g, ...args);
   if (sc.wind_speed_mps > 0)
     arrow(
       26,
@@ -2275,16 +2638,3 @@ function drawTrack(run, k) {
     );
 }
 loadScenarios().catch((e) => status("Scenarios: " + e.message, true));
-// The left column is sticky so the 3D view stays in sight while editing the
-// measurements. When it is taller than the window, stick by its bottom edge
-// instead, otherwise the sailing results below would be unreachable.
-{
-  const visual = document.querySelector(".visual");
-  const fit = () => {
-    visual.style.top =
-      Math.min(15, window.innerHeight - visual.offsetHeight - 15) + "px";
-  };
-  new ResizeObserver(fit).observe(visual);
-  window.addEventListener("resize", fit);
-  fit();
-}

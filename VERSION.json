@@ -1,6 +1,6 @@
 {
-  "version": "6.7.2",
-  "updated": "2026-11-17",
+  "version": "6.7.3",
+  "updated": "2026-11-18",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
     "patch": "+0.0.1  component-scoped change (one lib/<subsystem>.scad or one src/components/*.scad)",
@@ -8,6 +8,12 @@
     "major": "+1.0.0  bottle / board / hardware interface break (existing builds no longer fit)"
   },
   "changelog": [
+    {
+      "version": "6.7.3",
+      "date": "2026-11-18",
+      "files": ["lib/sand_ballast.scad", "scads_v1/Sand_Ballast_Container_Bottom.scad", "scads_v1/Sand_Ballast_Container_Lid.scad", "Full_Turtle_v1.scad", "CLAUDE.md"],
+      "note": "Sand ballast container: front overhang 50 -> 60 (same as the back), and both ends now cut 45 deg upward from the floor (the front top cut is gone), so the top and the lid are flat. Box 215 -> 225 long, fin slot 147 -> 157, sand space 355 -> 372 cm3."
+    },
     {
       "version": "6.7.2",
       "date": "2026-11-17",
