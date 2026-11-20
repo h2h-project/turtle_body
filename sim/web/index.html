@@ -175,29 +175,9 @@
           ></label>
         </div>
         <section class="panel" id="sailing">
-          <div class="sectionhead">
-            <h2>Sailing &amp; turning</h2>
-          </div>
-          <p class="hint">
-            <b>How a run works.</b> The turtle starts at the green dot, still in
-            the water, with its bow pointing the way you set. Wind and current
-            stay steady for the whole run. Nobody steers: the only control is
-            the sail, set with the dials below. Heading, speed and drift all
-            come from the forces, so the turtle usually turns away from its
-            start heading within seconds.
-          </p>
-          <label>Scenario<select id="scenario"></select></label>
-          <p class="hint">
-            Pick a starting point, then change anything: as soon as you touch a
-            dial or field the scenario becomes <b>Custom</b>.
-          </p>
-          <p class="hint" id="sc_description"></p>
-          <p class="hint">
-            Drag a dial, or click it and use the arrow keys (Shift for 1°
-            steps). Directions are compass degrees: 0 north, 90 east, 180 south,
-            270 west.
-          </p>
-          <div class="knobs">
+          <!-- Every dial on one row, directly under the overhead view;
+               the row scrolls sideways. -->
+          <div class="knobs knobstrip" role="group" aria-label="Scenario dials">
             <div class="knobcard">
               <span class="knobtitle" tabindex="0"
                 >Bow points at start<span class="knobtip" role="tooltip"
@@ -269,16 +249,7 @@
               >
             </div>
             -->
-          </div>
-          <p class="hint">
-            <b>Sail and timing.</b> The sail is the turtle's only control. Set
-            where it starts, and optionally one change partway through the trip.
-            Sail angles are measured from the hull: 0° = square across (catches
-            wind from behind). On the dial the purple line is the crossbar and
-            the dot shows the way the sail faces: straight at the bow when
-            square. The grey arc behind the bow is beyond the servo's reach.
-          </p>
-          <div class="knobs">
+
             <div class="knobcard">
               <span class="knobtitle" tabindex="0"
                 >Sail at start<span class="knobtip" role="tooltip"
@@ -315,6 +286,12 @@
               <div class="knob" id="k_duration"></div>
             </div>
           </div>
+          <label>Scenario<select id="scenario"></select></label>
+          <p class="hint">
+            Pick a starting point, then change anything: as soon as you touch a
+            dial or field the scenario becomes <b>Custom</b>.
+          </p>
+          <p class="hint" id="sc_description"></p>
           <div class="runrow">
             <p id="destsummary" class="destsummary idle" role="status">
               Set the dials, then run the scenario.
@@ -325,6 +302,30 @@
             <div id="sailplots"></div>
             <ul id="sailwarnings" class="warnings"></ul>
           </div>
+          <div class="sectionhead">
+            <h2>Sailing &amp; turning</h2>
+          </div>
+          <p class="hint">
+            <b>How a run works.</b> The turtle starts at the green dot, still in
+            the water, with its bow pointing the way you set. Wind and current
+            stay steady for the whole run. Nobody steers: the only control is
+            the sail, set with the dials above. Heading, speed and drift all
+            come from the forces, so the turtle usually turns away from its
+            start heading within seconds.
+          </p>
+          <p class="hint">
+            Drag a dial, or click it and use the arrow keys (Shift for 1°
+            steps). Directions are compass degrees: 0 north, 90 east, 180 south,
+            270 west.
+          </p>
+          <p class="hint">
+            <b>Sail and timing.</b> The sail is the turtle's only control. Set
+            where it starts, and optionally one change partway through the trip.
+            Sail angles are measured from the hull: 0° = square across (catches
+            wind from behind). On the dial the purple line is the crossbar and
+            the dot shows the way the sail faces: straight at the bow when
+            square. The grey arc behind the bow is beyond the servo's reach.
+          </p>
         </section>
       </section>
       <!-- Components and measurements: a drawer opened by the gear in the

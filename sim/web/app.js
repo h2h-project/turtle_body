@@ -2271,10 +2271,113 @@ function trackCanvas() {
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
   return { g, W, H };
 }
-// A turtle seen from above: circle, the sail as a line through it, and an
-// arrowhead at the bow. At sail 0° the line spans port-starboard (heading −
-// 90°); + sail angle turns it counter-clockwise seen from above.
+// The overhead turtle drawing from sim/turtle_sprite.svg. Its two groups
+// become two square images centred on the sail hub (the circle in
+// turtle_sail_system), so the sail image can turn on top of the body image.
+// In the drawing the bow points up and the sail bar spans port-starboard
+// (sail 0°). Until it loads (or if it fails) the plain sprite is drawn.
+const turtleArt = { body: null, sail: null };
+(async function loadTurtleArt() {
+  try {
+    const res = await fetch("/turtle_sprite.svg");
+    if (!res.ok) return;
+    const doc = new DOMParser().parseFromString(
+      await res.text(),
+      "image/svg+xml",
+    );
+    const svg = doc.documentElement;
+    if (svg.nodeName !== "svg") return;
+    // Measure in a hidden live copy: positions in root (viewBox) units.
+    const live = document.importNode(svg, true);
+    live.setAttribute(
+      "style",
+      "position:absolute;left:-9999px;top:0;visibility:hidden",
+    );
+    document.body.append(live);
+    const toRoot = live.getScreenCTM().inverse();
+    const rootPt = (el, x, y) => {
+      const p = live.createSVGPoint();
+      p.x = x;
+      p.y = y;
+      return p.matrixTransform(toRoot.multiply(el.getScreenCTM()));
+    };
+    const corners = (el) => {
+      const b = el.getBBox();
+      return [
+        [b.x, b.y],
+        [b.x + b.width, b.y],
+        [b.x, b.y + b.height],
+        [b.x + b.width, b.y + b.height],
+      ].map(([x, y]) => rootPt(el, x, y));
+    };
+    const bodyEl = live.querySelector("#turtle_body"),
+      sailEl = live.querySelector("#turtle_sail_system");
+    const hub =
+      sailEl?.querySelector("circle") ?? sailEl?.querySelector("ellipse");
+    if (!bodyEl || !sailEl || !hub) {
+      live.remove();
+      return;
+    }
+    const c = rootPt(hub, +hub.getAttribute("cx"), +hub.getAttribute("cy"));
+    // Radius that holds the body and the sail at any angle (+ stroke room).
+    const R =
+      Math.max(
+        ...[...bodyEl.children, ...sailEl.children]
+          .flatMap(corners)
+          .map((p) => Math.hypot(p.x - c.x, p.y - c.y)),
+      ) + 1;
+    live.remove();
+    // One standalone SVG per group: same viewBox, everything else stripped.
+    const image = (keepId) => {
+      const s = svg.cloneNode(true);
+      s.querySelectorAll("#turtle_body, #turtle_sail_system").forEach((el) => {
+        if (el.id !== keepId) el.remove();
+      });
+      s.setAttribute("viewBox", `${c.x - R} ${c.y - R} ${2 * R} ${2 * R}`);
+      s.setAttribute("width", "512");
+      s.setAttribute("height", "512");
+      const img = new Image();
+      const url = URL.createObjectURL(
+        new Blob([new XMLSerializer().serializeToString(s)], {
+          type: "image/svg+xml",
+        }),
+      );
+      return new Promise((ok, fail) => {
+        img.onload = () => ok(img);
+        img.onerror = fail;
+        img.src = url;
+      });
+    };
+    const [body, sailImg] = await Promise.all([
+      image("turtle_body"),
+      image("turtle_sail_system"),
+    ]);
+    turtleArt.body = body;
+    turtleArt.sail = sailImg;
+    refreshTrack();
+  } catch (e) {
+    console.warn("turtle_sprite.svg not used:", e);
+  }
+})();
+// A turtle seen from above, the body turned to the heading and the sail
+// system turned on top of it. At sail 0° the sail spans port-starboard
+// (heading − 90°); + sail angle turns it counter-clockwise seen from above.
+// r sets the size: the drawing is about 4r across. weight is the line width
+// of the plain fallback sprite.
 function drawTurtleSprite(g, x, y, r, headingDeg, sailDeg, weight) {
+  if (turtleArt.body && turtleArt.sail) {
+    const side = 4 * r;
+    const layer = (img, turnDeg) => {
+      g.save();
+      g.translate(x, y);
+      g.rotate(turnDeg * deg);
+      g.drawImage(img, -side / 2, -side / 2, side, side);
+      g.restore();
+    };
+    layer(turtleArt.body, headingDeg);
+    layer(turtleArt.sail, headingDeg - sailDeg);
+    return;
+  }
   const at = (b, d) => [x + d * Math.sin(b * deg), y - d * Math.cos(b * deg)];
   const sb = headingDeg - 90 - sailDeg;
   g.lineWidth = weight;
@@ -2605,7 +2708,12 @@ function drawTrack(run, k) {
     draw(kx, ky - 4);
     kx -= 22;
   };
-  key("turtle (arrow = bow, line = sail)", (x, y) => turtle(x, y, 5, 0, 0, 1));
+  key(
+    turtleArt.body
+      ? "turtle from above (long bar = sail)"
+      : "turtle (arrow = bow, line = sail)",
+    (x, y) => turtle(x, y, 5, 0, 0, 1),
+  );
   if (dest)
     key("destination", (x, y) => {
       g.strokeStyle = AMBER;

@@ -57,7 +57,7 @@ Turtle Wrangler talks to the turtle over Bluetooth during water trials and alrea
 
 The import uses the field names, units and "no data" sentinels of the TurtleOS GATT contract (`../turtleOS/docs/wrangler/README.md`). It does not invent a parallel format. Wrangler is a short-range link. A log covers only the stretch the operator was in range for, or whatever the turtle buffered and handed over afterward. Mark gaps as unavailable, never interpolated.
 
-Wrangler does not record any of this yet. See *Wrangler and TurtleOS changes for sim compatibility* below.
+Wrangler does not record any of this yet. The changes it needs are now in the Wrangler roadmap (`../turtleOS/docs/wrangler/02_android_app.md` → *Phase 11 — trial recording for Turtle_Sim*).
 
 Wrangler also hosts the luff tests. The simulator can consume their *results* (for example, an estimated apparent-wind angle with its quality) as recorded observations. It does not reproduce the detection itself.
 
@@ -115,104 +115,48 @@ Later stages can introduce Mediterranean wind/current datasets and more detailed
 
 ## Wrangler and TurtleOS changes for sim compatibility
 
-This section is written to be moved into the Wrangler roadmap
-(`../turtleOS/docs/wrangler/02_android_app.md`). It reflects Wrangler v0.3.0 and GATT
-contract v1 as inspected on 2026-11-17. Wrangler's own rule applies: any new Bluetooth field
-goes into the TurtleOS contract first, then both sides.
-
-### What Wrangler has today
-
-| Already there | Use to the sim |
-| --- | --- |
-| Live Position, Nav, Sail and IMU notifications at 1 Hz (Sail 2 Hz while sweeping) | The raw channels a trial needs. 1 Hz is enough for tracks and slow turns |
-| Journey records (`JourneyStore`): departure, destination, arrival, end time, and a route of `(t, lat, lon)` merged from the phone's view and the turtle's `JOURNEY_TRACK` | A ground track with start/finish, but no heading or sail data |
-| Find the Wind panel: luff bench sweep, turtle heading vs phone compass (true north at the turtle's position) | An observed wind direction with confidence. The phone compass is a practical way to note true wind on the bank |
-| Servo dial and manual sail hold (`SERVO_SET_ANGLE`) | The way an operator runs controlled sail-angle trials |
-
-What's missing: heading, sail angle, servo command and pitch/roll are shown live but never
-stored. Battery and environment histories live in memory for one connection. Nothing can be
-exported as a file.
-
-### W1. Trial recorder (Wrangler only, no contract change)
-
-A **Record trial** control (Navigate or Diagnostics) that, while running, appends every
-notification it receives from Position `0110`, Nav `0111`, Sail `0113`, IMU `0115` and
-Journey `0117`/`0119` to a per-trial file. Each row carries:
-
-- the phone receive time (ms) and the turtle's `device_now` with its `clock_source`;
-- the decoded fields under their contract names (`lat`, `lon`, `sats`, `fix_quality`,
-  `fix_age_s`, `imu_heading`, `compass_offset_deg`, `machine_state`, `trim`,
-  `sail_angle`, `servo_pos`, `wind_angle`, `imu_pitch`, `imu_roll`);
-- null for a sentinel. The recorder never fills gaps, and never drops a row because a field
-  is missing.
-
-Also log **every command sent** (opcode, payload, send time, result code), especially
-`SERVO_SET_ANGLE` and manual holds. Replay depends on knowing when the sail was told to move,
-not only where it ended up. Mark link drops and reconnects as events, so the sim can tell
-"no data" from "turtle stopped".
-
-### W2. Trial notes (Wrangler only)
-
-A short form at the start and end of a trial, saved in the same file:
-
-- wind: direction (the phone compass as in Find the Wind, plus any luff result with
-  confidence) and a speed estimate or handheld anemometer reading;
-- water: current estimate, sea state, location name;
-- turtle configuration: Turtle Body version (`VERSION.json`, e.g. 6.6.3), ballast/loading
-  notes, a pointer to the sim's measurement set (`sim/data/`) if one exists, and free text;
-- calibration readings taken that day: fin-ruler readings at rest (front/rear, face) and the
-  AS5600 reading with the sail on the hull centreline (see W4).
-
-### W3. Export (Wrangler only)
-
-Export a trial (and optionally a plain journey) through Android's share sheet as one file.
-Suggested shape: a JSON header (format version, app version, contract version, turtle name,
-notes) followed by JSON Lines rows, one per notification or event. The field names are the
-contract's own. The sim's stage 4 importer reads that file. A `trial_format` version number
-lets either side evolve. Wrangler's privacy rule still holds: no phone location, and the file
-leaves the phone only when the operator shares it.
-
-### W4. Sail-angle reference (calibration, small)
-
-The sim needs the sail angle relative to the hull. Today `sail_angle` is raw AS5600 encoder
-degrees with no defined zero, and `servo_pos` is a 0–180 command spanning ~270° of servo
-travel. Add a Diagnostics step that records the AS5600 reading with the sail on the hull
-centreline (bow-pointing), and the readings at both servo end stops. Store these with the
-trial (W2). This is a per-turtle calibration, so it is a recording, not a firmware constant.
-
-### W5. Out-of-range coverage (TurtleOS + contract change)
-
-Bluetooth reaches a few metres, so W1 alone covers only trials where the operator follows
-the turtle. To cover a whole sail, the turtle's journey track (`journey_<id>.trk`, served by
-`JOURNEY_TRACK`) would need more than `(recorded_at, lat, lon, machine_state)`. It would need
-at least `imu_heading`, `sail_angle`, `servo_pos` and `imu_pitch`/`imu_roll`, and possibly a
-faster logging rate during a trial. This is a contract change, so it starts in TurtleOS
-(`docs/wrangler/README.md`): new track-point fields, the track file format, storage limits on
-the turtle, and a contract version note. Wrangler then decodes the longer points and merges
-them into the trial file as it does with journey routes today.
-
-### W6. Optional, later
-
-- A faster notify rate (for example 5 Hz Nav/Sail/IMU) while a trial is recording, if 1 Hz
-  proves too coarse for turning. Contract change; check the power cost with Wrangler's power
-  test first.
-- Shore data: once hopeturtles.org serves journey tracks (app API Phase D), the sim could
-  import long-range tracks from the server too. Those would be position only, unless W5's
-  fields also reach the telemetry JSON.
-- `xte_m` is defined in the contract but not computed yet. The sim can compute cross-track
-  error itself from the track and destination, so this is not a blocker.
-
-### Order
-
-W1 + W3 first (one recorded, exportable trial is enough to start stage 4), then W2 and W4
-(they make the trial calibratable), then W5 when trials outgrow Bluetooth range. Luff-test
-work in Wrangler is independent of all of these.
+Moved on 2026-11-19 to the Wrangler roadmap, `../turtleOS/docs/wrangler/02_android_app.md`
+→ *Phase 11 — trial recording for Turtle_Sim*. It lists what Wrangler (and, for W5,
+TurtleOS) needs before a trial can be imported here: W1 trial recorder, W2 trial notes,
+W3 export, W4 sail-angle reference, W5 out-of-range coverage, W6 optional extras. Order
+there: W1 + W3 first, then W2 + W4, then W5.
 
 ## Next steps
 
-1. Finish stage 2 calibration with fin-ruler (and IMU pitch/roll) float tests.
-2. Build stage 3 sailing and turning on true state.
-3. In parallel, build the Wrangler trial recorder and export (W1, W3) so that the first sailing trials are recorded in a form stage 4 can import.
+Updated 2026-11-19. Stages 1–3 are built; the sim app is stable enough to wait on
+field data.
+
+1. **Fin-ruler labels in turtle_labels.** Add the fin calibration rulers to
+   `turtle_labels/scripts/export_labels.sh` so they come out on the printed sticker
+   sheets. That way a turtle whose fins were not laser-engraved can still be read in a
+   float test. `master/fin-ruler.svg` (20.4 × 123 mm) is already flattened by the
+   exporter but has no place in its `SHEET_LAYOUT`, so it never reaches a sheet.
+   - Place enough copies per turtle: two fins, read from either side, so up to four.
+     Decide whether face B needs its own variant, as the engraving does (face B is
+     mirrored about X = 0, `build/export_fin_dxf.py`).
+   - Keep the sticker in step with this repo's ruler. The source of truth is
+     `fin_ruler_scale_2d()` (`lib/fin_ruler.scad`), printed 1:1 by
+     `build/export_ruler_svg.py` as `scads_v1/fin_ruler_scale_v<version>.svg`
+     (±60 mm since v6.6.9). Check the master's span, tick spacing and zero against it,
+     and consider having `export_ruler_svg.py` copy the generated file into
+     turtle_labels the way `build/export_inventory.py` does for the inventory.
+   - Say on the label, or in the build guide, where the zero line goes on each fin (the
+     bottle-axis centre plane, section 11 of `CLAUDE.md`). A sticker placed off that
+     datum gives wrong waterline readings.
+2. **Finish stage 2 calibration with a float test.** Fill in the survey in
+   `buoyancy_measurements.md`, float the turtle in calm water, and compare the fin-ruler
+   readings (plus IMU pitch/roll) with the workbench's predicted waterline. Needs
+   readable rulers on both fins, engraved or from step 1.
+3. **Wrangler trial recorder and export (Wrangler Phase 11, W1 + W3).** This is the
+   blocker for stage 4: one recorded, exportable trial is enough to start the importer.
+   W2 (notes) and W4 (sail-angle zero) follow, because without them a trial cannot
+   calibrate anything.
+4. **Stage 4 importer** (`sim/turtle_sim/trials/`). Write the trial file format down
+   first, using the TurtleOS contract's field names, so Wrangler and the sim build
+   against the same spec. Then import, replay and overlay one real trial and report the
+   mismatch.
+5. **Stage 3 open items as trials demand them:** ballast-fin lift, heel feedback, waves
+   and gusts. Hold these until real trials show which one matters.
 
 ## Buoyancy calibration datum
 

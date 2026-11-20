@@ -97,8 +97,9 @@ reads read-only shore data from hopeturtles.org. Commands go only over Bluetooth
   phone's location: "here" means the turtle's GPS. Wrangler is GPL-3.0; this repo is
   CERN-OHL-S. Exchange data files between them, never code.
 - **Sim relationship:** the changes Wrangler (and TurtleOS) need before the sim can import a
-  trial are listed in `docs/sim_roadmap.md` → *Wrangler and TurtleOS changes for sim
-  compatibility*. They are proposals for the Wrangler roadmap, not built.
+  trial are in the Wrangler roadmap, `../turtleOS/docs/wrangler/02_android_app.md` →
+  *Phase 11 — trial recording for Turtle_Sim* (moved there from `docs/sim_roadmap.md` on
+  2026-11-19). They are planned, not built.
 
 ## 3. Actual repository map
 
@@ -519,21 +520,21 @@ Current references: 12 mm stock, 82 mm port length (derived: top dome 62 + 20 mm
 
 ## 13a. Pressor — EXPERIMENTAL, v6.6.1
 
-`lib/pressor.scad` + wrapper `src/components/Turtle_Pressor.scad` → `scads_v1/Turtle_Pressor.scad` (parts `assembly` / `pressor` / `profile`). The file always outputs ONE piece (v6.6.3): the default is `part="pressor"`, and the assembly view shows one pressor in its port, with the bottle and John as F5-only references. It does not model the M5 screws (v6.6.2). `part="pressor"` is exported as `stls_v1/Turtle_Pressor_v<version>.stl` for a 3D-printed prototype, printed flat on its board face; the edge slots print as horizontal bores. The first v6.6.3 print was 3 mm too long for the port and its holes did not line up with the John's screws; v6.6.4 fixes both (trim + pill slots). This is meant to replace the acorn nut on each Little John's M5 pair. Two pressors per port, one each side of the bottle, hug it between them. Not built, fitted or tested. **Standalone only:** the Ecojoiner and full-turtle assemblies still show acorns (section 13), no website generator emits it, and it is not in the slat inventory (section 21).
+`lib/pressor.scad` + wrapper `src/components/Turtle_Pressor.scad` → `scads_v1/Turtle_Pressor.scad` (parts `assembly` / `pressor` / `profile`). The file always outputs ONE piece (v6.6.3): the default is `part="pressor"`, and the assembly view shows one pressor in its port, with the bottle and John as F5-only references. It does not model the M5 screws (v6.6.2). `part="pressor"` is exported as `stls_v1/Turtle_Pressor_v<version>.stl` for a 3D-printed prototype, printed flat on its board face; the edge holes print as horizontal bores. The first v6.6.3 print was 3 mm too long for the port and its holes did not line up with the John's screws; v6.6.4 fixed both (trim + pill slots), and v6.7.4 swapped the slots for plain Ø6 clearance holes and the board for 15 mm. A 1:1 carpenter's drawing can be made with a pycairo script (not in `build/`) into git-ignored `fabrication/pressor/`. This is meant to replace the acorn nut on each Little John's M5 pair. Two pressors per port, one each side of the bottle, hug it between them. Not built, fitted or tested. **Standalone only:** the Ecojoiner and full-turtle assemblies still show acorns (section 13), no website generator emits it, and it is not in the slat inventory (section 21).
 
 | Feature | Default |
 | --- | ---: |
-| Stock | one 12 mm board (`p_wood_t()`); the sketched shape is the board face, thickness runs along the bottle axis, centred on the screw pair 17 mm in from the John end |
+| Stock | one **15 mm** board (`p_pressor_t()`, v6.7.4; the Johns stay on 12 mm `p_wood_t()`); the sketched shape is the board face, thickness runs along the bottle axis, centred on the screw pair 17 mm in from the John end |
 | Width (back edge → inner edge) | 32 = port gap 12 − travel 1 + wrap 21 |
 | Height | 80.8 = port height − 0.2 fit clearance − 2 × 1.5 end trim (`p_pressor_end_trim()`, v6.6.4: the 83.8 print was 3 mm too long to enter the port) |
 | Inner cut | concave arc, bottle radius, centred on the bottle axis; symmetric top/bottom (no diagonal); runs out at ±36.4, corners beyond stay square |
 | Wrap past the bottle tangent | `p_pressor_wrap()` = d/4 = 21 |
 | Screw travel | `p_pressor_travel()` = 1: pressed, the back edge stands 1 mm off the John face |
-| M5 openings | two Ø5.3 **pill slots** (`p_pressor_hole_d()`; the Johns keep Ø5.2) centred on ±18 (`p_eco_screw_pair_offset()`), stretched ±10 along the edge (`p_pressor_slot_ext()`, v6.6.4) so they span Y 5.35…30.65, mid-thickness, 8 deep (`p_pressor_hole_depth()`, was 10) |
-| Wood around a slot / behind it | 3.35 each face / 3.34 to the bottle at the slot's inner end, the thinnest point (asserted ≥ `p_pressor_min_wall()` = 3) |
+| M5 openings | two plain **Ø6 clearance holes** (`p_pressor_hole_d()`, v6.7.4; the Johns keep Ø5.2) on ±18 (`p_eco_screw_pair_offset()`), mid-thickness, 8 deep (`p_pressor_hole_depth()`). v6.6.4's ±10 mm pill slots (5.3 wide) are gone; do not restore them |
+| Wood around a hole / behind it | 4.5 each face / 5.77 to the bottle at the hole's inner edge, the thinnest point (asserted ≥ `p_pressor_min_wall()` = 3) |
 | M5 × 30 head standoff (pressed) | 9 mm off the John's outer face |
 
-How it works: each screw bites into the John and pushes on the floor of its pill slot, so turning it in drives the pressor onto the bottle. Since v6.6.4 the slots are wider than the screw, so the screw no longer bites the pressor and backing it out does not pull the pressor back. Local frame: X = 0 at the pressor's back edge, +X toward the bottle; Y across the port, centred on the bottle axis; Z = board thickness. `pressor_assert_valid()` checks the travel leaves wood on the centreline, the arc stays inside the block and covers the screw lines, there is enough wood around and beyond the holes, the screw reaches, and the width fits the board. Unverified: whether a Ø5 screw in the 12 mm edge splits the board, how much clamping force the pair gives, and whether 1 mm of travel is enough for real bottle variation.
+How it works: each screw bites into the John and pushes on the floor of its Ø6 hole, so turning it in drives the pressor onto the bottle. The hole clears the M5, so the screw does not bite the pressor and backing it out does not pull the pressor back. Local frame: X = 0 at the pressor's back edge, +X toward the bottle; Y across the port, centred on the bottle axis; Z = board thickness (0..15). `pressor_assert_valid()` checks the travel leaves wood on the centreline, the arc stays inside the block and covers the screw lines, there is enough wood around and beyond the holes, the screw reaches, and the width fits the board. Unverified: whether the Ø6 holes in the 15 mm edge split the board, whether a plain Ø6 hole (no slot) lines up with real John screw positions, how much clamping force the pair gives, and whether 1 mm of travel is enough for real bottle variation.
 
 ## 14. Python generation logic
 

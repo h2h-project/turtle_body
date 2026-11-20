@@ -1,6 +1,6 @@
 {
-  "version": "6.7.3",
-  "updated": "2026-11-18",
+  "version": "6.7.4",
+  "updated": "2026-11-20",
   "source_commit": "015a162f2bcac592a70c50a740c1671a10352732",
   "bump_rules": {
     "patch": "+0.0.1  component-scoped change (one lib/<subsystem>.scad or one src/components/*.scad)",
@@ -8,6 +8,12 @@
     "major": "+1.0.0  bottle / board / hardware interface break (existing builds no longer fit)"
   },
   "changelog": [
+    {
+      "version": "6.7.4",
+      "date": "2026-11-20",
+      "files": ["lib/pressor.scad", "lib/params.scad", "src/components/Turtle_Pressor.scad", "scads_v1/Turtle_Pressor.scad", "build/params.json", "CLAUDE.md"],
+      "note": "Pressor: own 15 mm board thickness (new p_pressor_t(); Johns stay on 12 mm p_wood_t()); the two 5.3 x 25.3 pill slots replaced by plain 6 mm clearance holes for the John's M5 screws on the +-18 screw lines, 8 deep (p_pressor_hole_d() 5.3 -> 6, p_pressor_slot_ext() removed). Head standoff now uses the John's thickness. Component-scoped; build/lint clean."
+    },
     {
       "version": "6.7.3",
       "date": "2026-11-18",

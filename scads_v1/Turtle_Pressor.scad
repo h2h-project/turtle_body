@@ -1,16 +1,16 @@
 // ==========================================================================
 //  GENERATED FILE -- DO NOT EDIT.
 //  Produced by build/build.py from components/Turtle_Pressor.scad
-//  Turtle Body version 6.7.3
+//  Turtle Body version 6.7.4
 //  Edit lib/ and src/ instead, then run: python3 build/build.py
 // ==========================================================================
 /*
  Hope Turtle pressor -- Ecojoiner bottle clamp block. Units: mm. License: CERN-OHL-S-2.0.
  EXPERIMENTAL -- not built, fitted or tested. Not yet used by the Ecojoiner
  or full-turtle assemblies (they still show acorn nuts).
- A 12 mm board block in the port gap between a Little John and the bottle,
+ A 15 mm board block in the port gap between a Little John and the bottle,
  its inner edge cut concave to the bottle radius. The John's two M5 cap
- screws drive into two 5.3 mm pill slots (+-10 mm along the edge, v6.6.4) in its back edge and push it onto the
+ screws drive into two plain 6 mm clearance holes (v6.7.4) in its back edge and push it onto the
  bottle as they are turned in (screws not modelled). Two are used per port; this file always
  outputs ONE (default part="pressor", already in the print pose). Print part="pressor"
  flat on its board face; the edge holes are horizontal bores. Two per port, one each side of the bottle (24 for six ports).
@@ -32,13 +32,13 @@ fn = 128;
 //  Turtle Body -- pressor: bottle clamp block for an Ecojoiner port
 //  (lib module, EXPERIMENTAL, v6.6.1)
 // --------------------------------------------------------------------------
-//  A flat block cut from the 12 mm board stock that sits in the port gap
-//  between a Little John's port face and the bottle. Its inner edge is cut
-//  concave to the bottle radius so it wraps the bottle flush. The John's two
-//  M5 cap screws pass through the John into Ø5.3 holes (p_pressor_hole_d()) in the
-//  pressor's straight back edge. Because the screw bites both pieces, turning
-//  it in carries the pressor toward the bottle: the screws push it, with no
-//  acorn nut. Two pressors per port, one each side, hug the bottle between
+//  A flat block cut from 15 mm board (p_pressor_t(); the Johns stay 12 mm)
+//  that sits in the port gap between a Little John's port face and the
+//  bottle. Its inner edge is cut concave to the bottle radius so it wraps the
+//  bottle flush. The John's two M5 cap screws pass through the John into two
+//  plain Ø6 clearance holes (p_pressor_hole_d(), v6.7.4) in the pressor's
+//  straight back edge and push on the hole floors, so turning them in drives
+//  the pressor toward the bottle, with no acorn nut. Two pressors per port, one each side, hug the bottle between
 //  them. Not built, fitted or tested.
 //
 //  Local frame (one pressor, as installed on the -X side of the bottle):
@@ -46,7 +46,7 @@ fn = 128;
 //        pressor's straight back edge (faces the John).
 //    Y = across the port, along the John height, centred on the bottle axis.
 //        The block spans the full port height between the Long Johns.
-//    Z = along the bottle axis = the board thickness, Z = 0..t.
+//    Z = along the bottle axis = the pressor board thickness, Z = 0..p_pressor_t().
 //  The concave arc is centred at X = back-to-bottle-axis, Y = 0, radius =
 //  bottle radius. The block's inner (straight) edge stands
 //  p_pressor_wrap() past the bottle's tangent line, so the arc runs out at
@@ -167,21 +167,22 @@ function p_eco_screw_pair_offset() =
     (p_port_height() - 2 * p_wood_t()) / 2 - p_eco_screw_edge_inset();   // 18
 
 // ---- pressor (EXPERIMENTAL, v6.6.1; lib/pressor.scad, CLAUDE.md s13a) ----
-//  A 12 mm board block in the port gap between a Little John and the bottle,
-//  concave-cut to the bottle radius. It rides on the John's M5 pair (both
-//  ends bite) and is pushed onto the bottle as the screws are turned in --
-//  replaces the acorn nut. Two per port, one each side of the bottle.
+//  A board block in the port gap between a Little John and the bottle,
+//  concave-cut to the bottle radius. The John's M5 pair passes into two
+//  plain clearance holes in its back edge and pushes it onto the bottle as
+//  the screws are turned in -- replaces the acorn nut. Two per port, one
+//  each side of the bottle.
+function p_pressor_t()          = 15;    // v6.7.4: pressor board thickness (along the bottle axis);
+                                          // its own stock, the Johns stay on p_wood_t() 12
 function p_pressor_wrap()       = p_bottle_d() / 4;  // 21: inner edge reaches this far past the
                                                       // bottle's tangent line, toward its axis
 function p_pressor_travel()     = 1;     // screw-in travel: gap left at the John face when pressed
-function p_pressor_hole_d()     = 5.3;   // M5 hole in the pressor's back edge (v6.6.2; the Johns keep p_m5_hole_d() 5.2)
-function p_pressor_hole_depth() = 8;     // M5 slot depth into the pressor's back edge (v6.6.4: was 10;
-                                          // the slot's inner end sits where the bottle curve is closest)
+function p_pressor_hole_d()     = 6;     // v6.7.4: plain Ø6 clearance hole for the John's M5 screw
+                                          // (was a 5.3 x 25.3 pill slot; the Johns keep p_m5_hole_d() 5.2)
+function p_pressor_hole_depth() = 8;     // hole depth into the pressor's back edge (v6.6.4: was 10)
 function p_pressor_min_wall()   = 3;     // least wood around / beyond a screw hole (asserted)
 function p_pressor_end_trim()   = 1.5;   // v6.6.4: taken off EACH end (top/bottom edge) -- the printed
                                           // prototype was 3 mm too long to enter the port
-function p_pressor_slot_ext()   = 10;    // v6.6.4: each M5 hole stretched this far EACH way along the
-                                          // edge into a pill slot, so the John's screws find it easily
 
 // ---- control cap (large stationary disk; see CLAUDE.md s7) ----------
 //  TB-03 resolution: repository 5 mm roof / 2 mm boss is authoritative;
@@ -800,7 +801,7 @@ module eco_echo_clamp() {
 }
 // [bundle] end   <ecojoiner.scad>
 
-function pr_t()         = p_wood_t();
+function pr_t()         = p_pressor_t();                         // 15 (v6.7.4; was the 12 mm stock)
 function pr_r()         = p_bottle_d() / 2;
 function pr_gap()       = eco_port_gap();                         // 12: John face -> bottle
 function pr_core_w()    = pr_gap() - p_pressor_travel();          // 11: back edge -> bottle, on the centreline
@@ -815,15 +816,16 @@ function pr_screw_ys()  = [-p_eco_screw_pair_offset(), p_eco_screw_pair_offset()
 // wood along a screw line, back edge -> bottle surface (the bottle has curved away off-centre)
 function pr_wood_at_screw() = let(v = p_eco_screw_pair_offset())
     pr_axis_x() - sqrt(pr_r() * pr_r() - v * v);                  // 15.05
-// pill slot along the edge (v6.6.4): screw line +- p_pressor_slot_ext()
-function pr_slot_inner_y() = p_eco_screw_pair_offset() - p_pressor_slot_ext() - p_pressor_hole_d() / 2; // 5.35
-function pr_slot_outer_y() = p_eco_screw_pair_offset() + p_pressor_slot_ext() + p_pressor_hole_d() / 2; // 30.65
-// wood behind the slot at its inner end -- the thinnest point (bottle closest)
-function pr_wood_at_slot() = let(v = pr_slot_inner_y())
-    pr_axis_x() - sqrt(pr_r() * pr_r() - v * v);                  // 11.34 at Ø84
+// round hole edges along the back edge (v6.7.4: plain holes, the v6.6.4 pill slots are gone)
+function pr_hole_inner_y() = p_eco_screw_pair_offset() - p_pressor_hole_d() / 2;  // 15
+function pr_hole_outer_y() = p_eco_screw_pair_offset() + p_pressor_hole_d() / 2;  // 21
+// wood behind the hole at its inner edge -- the thinnest point (bottle closest)
+function pr_wood_at_hole() = let(v = pr_hole_inner_y())
+    pr_axis_x() - sqrt(pr_r() * pr_r() - v * v);                  // 13.77 at Ø84
 // how far the cap-screw head stands off the John's outer face when pressed
-function pr_head_standoff() = p_m5_bolt_len() - pr_t() - p_pressor_travel()
-                              - p_pressor_hole_depth();            // 7
+// (the John is p_wood_t() thick, not the pressor's p_pressor_t())
+function pr_head_standoff() = p_m5_bolt_len() - p_wood_t() - p_pressor_travel()
+                              - p_pressor_hole_depth();            // 9
 
 function pr_yellow() = [0.95, 0.55, 0.15];
 
@@ -838,12 +840,14 @@ module pressor_assert_valid() {
            "Pressor: M5 pair sits outside the arc -- the screw lines miss the bottle contact.");
     assert(pr_t() - p_pressor_hole_d() >= 2 * p_pressor_min_wall(),
            "Pressor: board too thin around the M5 holes.");
-    assert(pr_wood_at_slot() - p_pressor_hole_depth() >= p_pressor_min_wall(),
-           "Pressor: M5 slot too deep -- its inner end would break through toward the bottle.");
-    assert(pr_slot_inner_y() > 0,
-           "Pressor: the two M5 slots would merge across the centreline.");
-    assert(pr_slot_outer_y() <= pr_height() / 2 - p_pressor_min_wall(),
-           "Pressor: M5 slot runs too close to the top/bottom edge.");
+    assert(p_pressor_hole_d() > p_m5_hole_d(),
+           "Pressor: hole must clear the John's M5 screw.");
+    assert(pr_wood_at_hole() - p_pressor_hole_depth() >= p_pressor_min_wall(),
+           "Pressor: M5 hole too deep -- it would break through toward the bottle.");
+    assert(pr_hole_inner_y() > 0,
+           "Pressor: the two M5 holes would merge across the centreline.");
+    assert(pr_hole_outer_y() <= pr_height() / 2 - p_pressor_min_wall(),
+           "Pressor: M5 hole runs too close to the top/bottom edge.");
     assert(pr_head_standoff() >= 0,
            "Pressor: M5 screw too short to reach the hole depth through the John.");
     assert(pr_width() <= p_fin_board_w(),
@@ -858,20 +862,17 @@ module pressor_2d(fn = 128) {
     }
 }
 
-// One pressor, board thickness on Z = 0..t, with the two M5 openings cut
-// into the back edge at mid-thickness. v6.6.4: each opening is a pill slot,
-// the Ø5.3 hole stretched p_pressor_slot_ext() each way along the edge (Y),
-// so the John's screws locate without exact alignment.
+// One pressor, board thickness on Z = 0..p_pressor_t(), with the two M5
+// clearance holes drilled into the back edge at mid-thickness, on the John's
+// screw lines. v6.7.4: plain Ø6 holes (v6.6.4's pill slots removed).
 module pressor(fn = 128, colored = true) {
     pressor_assert_valid();
-    e = p_pressor_slot_ext();
     wood_color(pr_yellow(), colored)
         difference() {
             linear_extrude(height = pr_t()) pressor_2d(fn);
             for (y = pr_screw_ys())
-                hull() for (dy = [-e, e])
-                    translate([-0.01, y + dy, pr_t() / 2]) rotate([0, 90, 0])
-                        cylinder(d = p_pressor_hole_d(), h = p_pressor_hole_depth() + 0.01, $fn = 32);
+                translate([-0.01, y, pr_t() / 2]) rotate([0, 90, 0])
+                    cylinder(d = p_pressor_hole_d(), h = p_pressor_hole_depth() + 0.01, $fn = 32);
         }
 }
 
@@ -887,8 +888,8 @@ module pressor_port_assembly(fn = 128, colored = true, show_references = true) {
     // pressed: back edge p_pressor_travel() off the John face
     translate([-face_x + p_pressor_travel(), 0, 0]) pressor(fn, colored);
     if (show_references)
-        %translate([-face_x - pr_t(), -eco_john_height() / 2, -pr_t()])
-            cube([pr_t(), eco_john_height(), 3 * pr_t()]);
+        %translate([-face_x - p_wood_t(), -eco_john_height() / 2, -pr_t()])
+            cube([p_wood_t(), eco_john_height(), 3 * pr_t()]);
     if (show_references)
         %translate([0, 0, -pr_t()]) cylinder(r = pr_r(), h = 3 * pr_t(), $fn = fn);
 }
@@ -897,9 +898,9 @@ module pressor_echo() {
     echo(str("PRESSOR: ", pr_width(), " x ", pr_height(), " x ", pr_t(),
              " mm | centreline wood ", pr_core_w(), " | arc +-", pr_arc_half(),
              " | wood on screw line ", pr_wood_at_screw(),
-             " | M5 slot d/depth ", p_pressor_hole_d(), "/", p_pressor_hole_depth(),
-             " y ", pr_slot_inner_y(), "..", pr_slot_outer_y(),
-             " | wood behind slot ", pr_wood_at_slot(),
+             " | M5 hole d/depth ", p_pressor_hole_d(), "/", p_pressor_hole_depth(),
+             " at y +-", p_eco_screw_pair_offset(),
+             " | wood behind hole ", pr_wood_at_hole(),
              " | head standoff ", pr_head_standoff()));
 }
 // [bundle] end   <../../lib/pressor.scad>

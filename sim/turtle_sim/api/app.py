@@ -234,6 +234,14 @@ def guide():
     return FileResponse(ROOT/'docs/buoyancy_measurements.md',media_type='text/plain')
 
 
+@app.get('/turtle_sprite.svg')
+def turtle_sprite():
+    # Overhead turtle drawing (groups turtle_body + turtle_sail_system); kept
+    # in sim/ as the editable source, not copied into sim/web.
+    return FileResponse(ROOT/'sim/turtle_sprite.svg',media_type='image/svg+xml',
+                        headers={'Cache-Control':'no-cache'})
+
+
 class WebFiles(StaticFiles):
     """The UI files, revalidated on every load. Without this a browser can
     heuristically cache an old style.css next to a new app.js after an update."""
